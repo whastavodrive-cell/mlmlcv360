@@ -4,12 +4,21 @@ import { supabaseAuthService } from './supabaseAuth';
 import { supabaseStorageService } from './supabaseStorage';
 import { supabaseDatabaseService } from './supabaseDatabase';
 
-const supabaseBackend: BackendServices = {
-  auth: supabaseAuthService,
-  storage: supabaseStorageService,
-  database: supabaseDatabaseService,
-  config: supabaseDatabaseService,
-};
+let backendInstance: BackendServices;
+
+export function createBackendServices(): BackendServices {
+  if (!backendInstance) {
+    backendInstance = {
+      auth: supabaseAuthService,
+      storage: supabaseStorageService,
+      database: supabaseDatabaseService,
+      config: supabaseDatabaseService,
+    };
+  }
+  return backendInstance;
+}
+
+const supabaseBackend = createBackendServices();
 
 const BackendContext = createContext<BackendServices>(supabaseBackend);
 const AuthContext = createContext<{

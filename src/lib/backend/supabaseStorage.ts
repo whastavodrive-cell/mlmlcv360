@@ -1,5 +1,5 @@
 import { StorageInterface, FileUploadResult, FileMetadata, DeleteResult } from './types';
-import { supabase } from '../supabase';
+import { supabase } from './client';
 
 export const supabaseStorageService: StorageInterface = {
   async upload(bucket, path, file): Promise<FileUploadResult> {

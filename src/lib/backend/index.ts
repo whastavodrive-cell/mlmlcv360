@@ -4,3 +4,4 @@ export * from './supabaseAuth';
 export * from './supabaseStorage';
 export * from './supabaseDatabase';
 export * from './backup';
+export { supabase } from './client';

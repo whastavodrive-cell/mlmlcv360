@@ -1,5 +1,5 @@
 import { AuthInterface, AuthResult, Session, User } from './types';
-import { supabase } from '../supabase';
+import { supabase } from './client';
 
 function mapUser(supabaseUser: unknown): User | null {
   if (!supabaseUser || typeof supabaseUser !== 'object') return null;

@@ -1,5 +1,5 @@
 import { DatabaseInterface, QueryOptions, QueryResult, InsertResult, UpdateResult, DeleteResult } from './types';
-import { supabase } from '../supabase';
+import { supabase } from './client';
 
 export const supabaseDatabaseService: DatabaseInterface = {
   async select<T>(table: string, options: QueryOptions = {}): Promise<QueryResult<T>> {
@@ -89,3 +89,6 @@ export const supabaseDatabaseService: DatabaseInterface = {
     };
   },
 };
+
+// Exporta el cliente para funciones adicionales como invoke
+export { supabase } from './client';

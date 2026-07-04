@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { supabase } from '@/lib/supabase';
+import { useDatabase } from '@/lib/backend';
 
 export interface Plan {
   id: string;
@@ -69,6 +69,7 @@ const ConfigContext = createContext<ConfigState>({
 });
 
 export function ConfigProvider({ children }: { children: ReactNode }) {
+  const database = useDatabase();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [ranks, setRanks] = useState<Rank[]>([]);
   const [currency, setCurrency] = useState('PEN');
@@ -81,30 +82,30 @@ export function ConfigProvider({ children }: { children: ReactNode }) {
 
   const refresh = useCallback(async () => {
     try {
-      const withTimeout = (p: PromiseLike<any>): Promise<any> =>
+      const withTimeout = <T,>(p: Promise<T>): Promise<T | null> =>
         Promise.race([
-          Promise.resolve(p),
-          new Promise<any>((_, rej) => setTimeout(() => rej(new Error('timeout')), 5000)),
-        ]);
+          p,
+          new Promise<null>((_, rej) => setTimeout(() => rej(new Error('timeout')), 5000)),
+        ]).catch(() => null);
 
-      const [plansRes, ranksRes, configRes] = await Promise.allSettled([
-        withTimeout(supabase.from('plans').select('*').order('sort_order')),
-        withTimeout(supabase.from('ranks').select('*').order('sort_order')),
-        withTimeout(supabase.from('system_config').select('key, value')),
+      const [plansRes, ranksRes, configRes] = await Promise.all([
+        withTimeout(database.select<Plan>('plans', { order: { column: 'sort_order' } })),
+        withTimeout(database.select<Rank>('ranks', { order: { column: 'sort_order' } })),
+        withTimeout(database.select<{ key: string; value: string }>('system_config')),
       ]);
 
-      if (plansRes.status === 'fulfilled' && plansRes.value.data) {
-        setPlans(plansRes.value.data.map((p: any) => ({
+      if (plansRes && 'data' in plansRes && Array.isArray(plansRes.data)) {
+        setPlans(plansRes.data.map((p: Plan) => ({
           ...p,
-          features: Array.isArray(p.features) ? p.features : (() => { try { return JSON.parse(p.features || '[]'); } catch { return []; } })(),
+          features: Array.isArray(p.features) ? p.features : (() => { try { return JSON.parse(p.features as unknown as string || '[]'); } catch { return []; } })(),
         })));
       }
-      if (ranksRes.status === 'fulfilled' && ranksRes.value.data) {
-        setRanks(ranksRes.value.data as Rank[]);
+      if (ranksRes && 'data' in ranksRes && Array.isArray(ranksRes.data)) {
+        setRanks(ranksRes.data as Rank[]);
       }
-      if (configRes.status === 'fulfilled' && configRes.value.data) {
+      if (configRes && 'data' in configRes && Array.isArray(configRes.data)) {
         const map: Record<string, string> = {};
-        configRes.value.data.forEach((r: any) => { map[r.key] = r.value; });
+        (configRes.data as { key: string; value: string }[]).forEach((r) => { map[r.key] = r.value; });
         if (map.default_currency) setCurrency(map.default_currency);
         if (map.currency_symbol) setCurrencySymbol(map.currency_symbol);
         const rate = parseFloat(map.exchange_rate_usd || '3.72');
@@ -118,33 +119,27 @@ export function ConfigProvider({ children }: { children: ReactNode }) {
         });
       }
     } catch {
+      }
       // Non-fatal: use defaults already set in state
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [database]);
 
   useEffect(() => {
+    }
     refresh();
 
-    const plansChannel = supabase.channel('plans-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'plans' }, () => refresh())
-      .subscribe();
-
-    const ranksChannel = supabase.channel('ranks-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'ranks' }, () => refresh())
-      .subscribe();
-
-    const configChannel = supabase.channel('config-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'system_config' }, () => refresh())
-      .subscribe();
+    const unsubPlans = database.subscribe('plans', () => refresh());
+    const unsubRanks = database.subscribe('ranks', () => refresh());
+    const unsubConfig = database.subscribe('system_config', () => refresh());
 
     return () => {
-      supabase.removeChannel(plansChannel);
-      supabase.removeChannel(ranksChannel);
-      supabase.removeChannel(configChannel);
+      unsubPlans();
+      unsubRanks();
+      unsubConfig();
     };
-  }, [refresh]);
+  }, [refresh, database]);
 
   return (
     <ConfigContext.Provider value={{ plans, ranks, currency, currencySymbol, exchangeRate, company, tax, loading, showUsd, setShowUsd, refresh }}>
@@ -154,6 +149,8 @@ export function ConfigProvider({ children }: { children: ReactNode }) {
 }
 
 export function useConfig() {
+  }
+  )
   return useContext(ConfigContext);
 }
 
