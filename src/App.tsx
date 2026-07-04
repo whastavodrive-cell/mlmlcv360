@@ -4,6 +4,7 @@ import { AuthProvider, useAuthStore } from '@/store/authStore';
 import { ThemeProvider } from '@/store/themeStore';
 import { UIProvider } from '@/store/uiStore';
 import { ConfigProvider, useConfig } from '@/store/configStore';
+import { BackendProvider } from '@/lib/backend';
 import { Router, Routes, Route, Navigate, useLocation } from '@/lib/router';
 
 import LandingPage from '@/pages/landing/LandingPage';
@@ -148,19 +149,21 @@ function AppRoutes() {
 export default function App() {
   return (
     <ThemeProvider>
-      <AuthProvider>
-        <ConfigProvider>
-          <UIProvider>
-            <CartProvider>
-              <Router>
-                <AppRoutes />
-                <WhatsAppGate />
-                <Toaster position="top-right" richColors closeButton toastOptions={{ duration: 4000 }} />
-              </Router>
-            </CartProvider>
-          </UIProvider>
-        </ConfigProvider>
-      </AuthProvider>
+      <BackendProvider>
+        <AuthProvider>
+          <ConfigProvider>
+            <UIProvider>
+              <CartProvider>
+                <Router>
+                  <AppRoutes />
+                  <WhatsAppGate />
+                  <Toaster position="top-right" richColors closeButton toastOptions={{ duration: 4000 }} />
+                </Router>
+              </CartProvider>
+            </UIProvider>
+          </ConfigProvider>
+        </AuthProvider>
+      </BackendProvider>
     </ThemeProvider>
   );
 }
