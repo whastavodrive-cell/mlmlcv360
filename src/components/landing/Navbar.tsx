@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from '@/lib/router';
 import {
   X, Sun, Moon, ChevronDown, LogOut, LayoutDashboard, User,
-  ShoppingBag, ShoppingCart, Package, Heart, ArrowRight, Menu,
+  ShoppingBag, ShoppingCart, Package, Heart, Menu,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useThemeStore } from '@/store/themeStore';
@@ -26,12 +26,12 @@ function CartButton() {
   return (
     <button
       onClick={() => navigate('/carrito')}
-      className="relative w-10 h-10 rounded-lg flex items-center justify-center hover:bg-muted text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-2 focus-visible:outline-primary"
+      className="relative w-9 h-9 rounded-lg flex items-center justify-center hover:bg-muted text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-2 focus-visible:outline-primary"
       aria-label="Carrito de compras"
     >
-      <ShoppingCart className="w-4 h-4" />
+      <ShoppingCart className="w-[18px] h-[18px]" />
       {itemCount > 0 && (
-        <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary text-primary-foreground rounded-full text-[9px] font-black flex items-center justify-center leading-none">
+        <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 bg-primary text-primary-foreground rounded-full text-[10px] font-bold flex items-center justify-center">
           {itemCount > 9 ? '9+' : itemCount}
         </span>
       )}
@@ -62,65 +62,59 @@ function UserMenu() {
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen(v => !v)}
-        className="flex items-center gap-2 pl-1 pr-3 py-1 rounded-xl border border-border hover:bg-muted transition-colors"
+        className="flex items-center gap-2 pl-1.5 pr-2.5 py-1.5 rounded-full border border-border hover:bg-muted/60 transition-colors"
       >
-        <div className="w-7 h-7 rounded-full overflow-hidden border border-primary/30 flex-shrink-0">
+        <div className="w-7 h-7 rounded-full overflow-hidden bg-primary/10 flex-shrink-0 flex items-center justify-center">
           {user.avatar_url
             ? <img src={user.avatar_url} alt={user.full_name} className="w-full h-full object-cover" />
-            : <div className="w-full h-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary">{initials}</div>}
+            : <span className="text-xs font-bold text-primary">{initials}</span>}
         </div>
-        <span className="text-sm font-medium text-foreground hidden sm:block max-w-[90px] truncate">
+        <span className="text-sm font-medium text-foreground hidden sm:block max-w-[80px] truncate">
           {user.full_name?.split(' ')[0] || 'Usuario'}
         </span>
-        <ChevronDown className={cn('w-3.5 h-3.5 text-muted-foreground transition-transform duration-200', open && 'rotate-180')} />
+        <ChevronDown className={cn('w-3.5 h-3.5 text-muted-foreground transition-transform', open && 'rotate-180')} />
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-60 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden z-50">
-          <div className="px-4 py-3 border-b border-border bg-muted/40 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-primary/20 flex-shrink-0">
+        <div className="absolute right-0 top-full mt-1.5 w-56 bg-card border border-border rounded-xl shadow-xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-1 duration-150">
+          <div className="px-3 py-2.5 border-b border-border bg-muted/30 flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-full overflow-hidden bg-primary/10 flex-shrink-0 flex items-center justify-center">
               {user.avatar_url
                 ? <img src={user.avatar_url} alt={user.full_name} className="w-full h-full object-cover" />
-                : <div className="w-full h-full bg-primary/20 flex items-center justify-center text-sm font-bold text-primary">{initials}</div>}
+                : <span className="text-sm font-bold text-primary">{initials}</span>}
             </div>
-            <div className="min-w-0">
-              <div className="text-sm font-bold text-foreground truncate">{user.full_name}</div>
-              <div className="text-xs text-muted-foreground truncate">{user.email}</div>
-              {user.plan && (
-                <div className="text-[10px] text-primary font-semibold capitalize mt-0.5 bg-primary/10 px-1.5 py-0.5 rounded-full inline-block">{user.plan}</div>
-              )}
+            <div className="min-w-0 flex-1">
+              <div className="text-sm font-semibold text-foreground truncate">{user.full_name}</div>
+              <div className="text-[11px] text-muted-foreground truncate">{user.email}</div>
             </div>
           </div>
-          <div className="py-1">
-            <p className="px-4 pt-2 pb-1 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Mi cuenta</p>
+          <div className="py-1.5">
             {[
               { icon: LayoutDashboard, label: 'Mi Panel', path: '/dashboard' },
               { icon: User, label: 'Mi Perfil', path: '/dashboard/perfil' },
             ].map(item => (
               <button key={item.path} onClick={() => { navigate(item.path); setOpen(false); }}
-                className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-muted text-sm text-foreground transition-colors text-left">
+                className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-muted text-sm text-foreground transition-colors text-left">
                 <item.icon className="w-4 h-4 text-muted-foreground" /> {item.label}
               </button>
             ))}
           </div>
-          <div className="py-1 border-t border-border">
-            <p className="px-4 pt-2 pb-1 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Tienda</p>
+          <div className="py-1.5 border-t border-border">
             {[
-              { icon: ShoppingBag, label: 'Ver Tienda', path: '/tienda' },
-              { icon: ShoppingCart, label: 'Mi Carrito', path: '/carrito' },
+              { icon: ShoppingBag, label: 'Tienda', path: '/tienda' },
               { icon: Package, label: 'Mis Pedidos', path: '/dashboard/pedidos' },
               { icon: Heart, label: 'Favoritos', path: '/favoritos' },
             ].map(item => (
               <button key={item.path} onClick={() => { navigate(item.path); setOpen(false); }}
-                className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-muted text-sm text-foreground transition-colors text-left">
+                className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-muted text-sm text-foreground transition-colors text-left">
                 <item.icon className="w-4 h-4 text-muted-foreground" /> {item.label}
               </button>
             ))}
           </div>
-          <div className="py-1 border-t border-border">
+          <div className="py-1.5 border-t border-border">
             <button onClick={async () => { await signOut(); setOpen(false); }}
-              className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-red-500/10 text-sm text-red-500 transition-colors text-left">
-              <LogOut className="w-4 h-4" /> Cerrar sesión
+              className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-red-500/10 text-sm text-red-500 transition-colors text-left">
+              <LogOut className="w-4 h-4" /> Cerrar sesion
             </button>
           </div>
         </div>
@@ -135,7 +129,6 @@ export default function Navbar() {
   const { theme, setTheme } = useThemeStore();
   const { user, signOut } = useAuthStore();
   const { company, logoValue } = useConfig();
-  const { itemCount } = useCart();
   const companyName = company.company_name || 'MLM 360';
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -148,7 +141,7 @@ export default function Navbar() {
   }, [mobileOpen]);
 
   useEffect(() => {
-    const handler = () => setScrolled(window.scrollY > 20);
+    const handler = () => setScrolled(window.scrollY > 10);
     window.addEventListener('scroll', handler, { passive: true });
     return () => window.removeEventListener('scroll', handler);
   }, []);
@@ -161,237 +154,198 @@ export default function Navbar() {
 
   return (
     <>
-      {/* ── Desktop / tablet top bar ───────────────────────────────────────── */}
+      {/* Main navigation bar - always visible */}
       <nav className={cn(
-        'fixed top-0 left-0 right-0 z-50 transition-all duration-300',
+        'fixed top-0 left-0 right-0 z-50 transition-all duration-200',
         scrolled
-          ? 'bg-background/95 backdrop-blur-md border-b border-border shadow-sm'
-          : 'bg-transparent',
+          ? 'bg-background/95 backdrop-blur-md border-b border-border/60'
+          : 'bg-background',
       )}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center gap-2">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="h-15 flex items-center gap-3" style={{ height: '60px' }}>
+            {/* Logo */}
+            <Link to="/" className="flex-shrink-0">
+              <LogoWithText
+                value={logoValue}
+                fallbackText={companyName}
+                size="w-8 h-8"
+                textClass="text-lg font-bold text-foreground"
+              />
+            </Link>
 
-          {/* Logo — ONE instance only in the top bar */}
-          <Link to="/" className="flex-shrink-0 mr-4">
-            <LogoWithText
-              value={logoValue}
-              fallbackText={companyName}
-              size="w-8 h-8"
-              textClass="text-lg font-bold text-foreground"
-            />
-          </Link>
-
-          {/* Desktop nav links */}
-          <div className="hidden lg:flex items-center gap-0.5 flex-1">
-            {navLinks.map(link => (
-              <Link key={link.href} to={link.href}
-                className={cn(
-                  'px-3 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap',
-                  location.pathname === link.href || location.pathname.startsWith(link.href + '/')
-                    ? 'text-primary bg-primary/10'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-muted',
-                )}>
-                {link.label}
-              </Link>
-            ))}
-          </div>
-
-          {/* Right controls */}
-          <div className="ml-auto flex items-center gap-1.5">
-            <CartButton />
-
-            <button
-              onClick={() => setTheme(isDark ? 'light' : 'dark')}
-              className="w-10 h-10 rounded-lg flex items-center justify-center hover:bg-muted text-muted-foreground transition-colors"
-              aria-label="Cambiar tema"
-            >
-              {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            </button>
-
-            {isLoggedIn ? (
-              <div className="hidden md:block"><UserMenu /></div>
-            ) : (
-              <div className="hidden md:flex items-center gap-2">
-                <Link to="/login"
-                  className="px-4 py-2 text-sm font-medium text-muted-foreground border border-border rounded-lg hover:bg-muted transition-colors">
-                  Ingresar
+            {/* Desktop nav links */}
+            <div className="hidden lg:flex items-center gap-1 flex-1 ml-4">
+              {navLinks.map(link => (
+                <Link key={link.href} to={link.href}
+                  className={cn(
+                    'px-3.5 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap',
+                    location.pathname === link.href || location.pathname.startsWith(link.href + '/')
+                      ? 'text-primary bg-primary/8'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/60',
+                  )}>
+                  {link.label}
                 </Link>
-                <Link to="/registro"
-                  className="px-4 py-2 text-sm font-semibold text-primary-foreground bg-primary rounded-lg hover:bg-primary/90 transition-colors shadow-sm shadow-primary/20">
-                  Registrarse
-                </Link>
-              </div>
-            )}
+              ))}
+            </div>
 
-            {/* Hamburger — visible below lg breakpoint */}
-            <button
-              onClick={() => setMobileOpen(v => !v)}
-              className="lg:hidden relative w-10 h-10 rounded-lg flex items-center justify-center hover:bg-muted text-foreground transition-colors"
-              aria-label={mobileOpen ? 'Cerrar menú' : 'Abrir menú'}
-              aria-expanded={mobileOpen}
-            >
-              <Menu className={cn('w-5 h-5 absolute transition-all duration-200', mobileOpen ? 'opacity-0 scale-75' : 'opacity-100 scale-100')} />
-              <X className={cn('w-5 h-5 absolute transition-all duration-200', mobileOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-75')} />
-            </button>
+            {/* Right controls */}
+            <div className="ml-auto flex items-center gap-1">
+              <CartButton />
+
+              <button
+                onClick={() => setTheme(isDark ? 'light' : 'dark')}
+                className="w-9 h-9 rounded-lg flex items-center justify-center hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                aria-label="Cambiar tema"
+              >
+                {isDark ? <Sun className="w-[18px] h-[18px]" /> : <Moon className="w-[18px] h-[18px]" />}
+              </button>
+
+              {isLoggedIn ? (
+                <div className="hidden md:block ml-1"><UserMenu /></div>
+              ) : (
+                <div className="hidden md:flex items-center gap-2 ml-2">
+                  <Link to="/login"
+                    className="h-9 px-4 flex items-center text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+                    Ingresar
+                  </Link>
+                  <Link to="/registro"
+                    className="h-9 px-4 flex items-center text-sm font-semibold bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
+                    Registrarse
+                  </Link>
+                </div>
+              )}
+
+              {/* Hamburger */}
+              <button
+                onClick={() => setMobileOpen(v => !v)}
+                className="lg:hidden w-9 h-9 rounded-lg flex items-center justify-center hover:bg-muted text-foreground transition-colors ml-1"
+                aria-label={mobileOpen ? 'Cerrar menu' : 'Abrir menu'}
+                aria-expanded={mobileOpen}
+              >
+                {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              </button>
+            </div>
           </div>
         </div>
       </nav>
 
-      {/* ── Full-screen mobile overlay ─────────────────────────────────────── */}
+      {/* Mobile slide-out menu - NO duplicate logo or theme button */}
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="Menú de navegación"
+        aria-label="Menu de navegacion"
         className={cn(
-          'fixed inset-0 z-40 lg:hidden flex flex-col',
-          'transition-opacity duration-300',
+          'fixed inset-0 z-40 lg:hidden',
+          'transition-opacity duration-200',
           mobileOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none',
         )}
-        style={{ background: 'hsl(var(--background))' }}
       >
-        {/* Subtle ambient blobs */}
-        <div className="absolute inset-0 -z-10 pointer-events-none overflow-hidden">
-          <div className="absolute -top-20 -right-20 w-72 h-72 bg-primary/6 rounded-full blur-[90px]" />
-          <div className="absolute -bottom-16 -left-16 w-60 h-60 bg-primary/4 rounded-full blur-[80px]" />
-        </div>
+        {/* Backdrop */}
+        <div
+          className="absolute inset-0 bg-black/30 backdrop-blur-sm"
+          onClick={() => setMobileOpen(false)}
+        />
 
-        {/* Header row — logo + close */}
-        <div className="h-16 flex items-center justify-between px-5 border-b border-border/60 flex-shrink-0">
-          <Link to="/" onClick={() => setMobileOpen(false)}>
-            <LogoWithText
-              value={logoValue}
-              fallbackText={companyName}
-              size="w-8 h-8"
-              textClass="text-base font-bold text-foreground"
-            />
-          </Link>
-          <button
-            onClick={() => setMobileOpen(false)}
-            className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl hover:bg-muted text-foreground transition-colors"
-            aria-label="Cerrar menú"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Logged-in user card */}
-        {isLoggedIn && user && (
-          <div className={cn(
-            'mx-4 mt-4 p-4 bg-muted/50 border border-border rounded-2xl flex items-center gap-3',
-            'transition-all duration-300 delay-75',
-            mobileOpen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2',
-          )}>
-            <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-primary/25 flex-shrink-0">
-              {user.avatar_url
-                ? <img src={user.avatar_url} alt={user.full_name} className="w-full h-full object-cover" />
-                : <div className="w-full h-full bg-primary/20 flex items-center justify-center text-sm font-bold text-primary">{initials}</div>}
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-sm font-bold text-foreground truncate">{user.full_name}</div>
-              <div className="text-xs text-muted-foreground truncate">{user.email}</div>
-            </div>
-          </div>
-        )}
-
-        {/* ── Zone 1: Navigation links ─────────────────────────────────── */}
-        <nav className="flex-1 overflow-y-auto px-4 py-5" aria-label="Navegación principal">
-          <div className="space-y-1.5">
-            {navLinks.map((link, i) => (
-              <Link
-                key={link.href}
-                to={link.href}
-                onClick={() => setMobileOpen(false)}
-                className={cn(
-                  'flex items-center justify-between min-h-[56px] px-5 rounded-2xl text-[1.1rem] font-semibold',
-                  'transition-all duration-300 focus-visible:outline-2 focus-visible:outline-primary',
-                  location.pathname === link.href
-                    ? 'text-primary bg-primary/10'
-                    : 'text-foreground hover:bg-muted hover:text-primary',
-                  mobileOpen ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-3',
-                )}
-                style={{ transitionDelay: mobileOpen ? `${i * 40 + 60}ms` : '0ms' }}
-              >
-                {link.label}
-                {location.pathname === link.href && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-                )}
-              </Link>
-            ))}
-
-            {/* Cart */}
-            <button
-              onClick={() => { navigate('/carrito'); setMobileOpen(false); }}
-              className={cn(
-                'w-full flex items-center justify-between min-h-[56px] px-5 rounded-2xl text-[1.1rem] font-semibold',
-                'text-foreground hover:bg-muted hover:text-primary transition-all duration-300',
-                mobileOpen ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-3',
-              )}
-              style={{ transitionDelay: mobileOpen ? `${navLinks.length * 40 + 60}ms` : '0ms' }}
-            >
-              Carrito
-              {itemCount > 0 && (
-                <span className="bg-primary text-primary-foreground text-xs font-black px-2 py-0.5 rounded-full">{itemCount}</span>
-              )}
-            </button>
-          </div>
-        </nav>
-
-        {/* ── Zone 2: Account CTAs — visually distinct bottom zone ───────── */}
+        {/* Slide-out panel */}
         <div
           className={cn(
-            'flex-shrink-0 bg-muted/30 border-t-2 border-border/70 px-4 pb-8 pt-5 space-y-3',
-            'transition-all duration-300',
-            mobileOpen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3',
+            'absolute top-[60px] right-0 bottom-0 w-[85%] max-w-sm bg-background overflow-y-auto',
+            'border-l border-border shadow-2xl',
+            'transition-transform duration-200 ease-out',
+            mobileOpen ? 'translate-x-0' : 'translate-x-full',
           )}
-          style={{ transitionDelay: mobileOpen ? '320ms' : '0ms' }}
         >
-          {/* Theme row */}
-          <div className="flex items-center justify-between pb-3 border-b border-border/50">
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Apariencia</span>
-            <button
-              onClick={() => setTheme(isDark ? 'light' : 'dark')}
-              className="min-h-[44px] min-w-[44px] flex items-center gap-2 px-4 py-2 rounded-xl border border-border hover:bg-background text-muted-foreground hover:text-foreground text-sm font-medium transition-colors"
-            >
-              {isDark
-                ? <><Sun className="w-4 h-4" /> Modo claro</>
-                : <><Moon className="w-4 h-4" /> Modo oscuro</>}
-            </button>
-          </div>
-
-          {isLoggedIn ? (
-            <>
-              <button
-                onClick={() => { navigate('/dashboard'); setMobileOpen(false); }}
-                className="flex items-center justify-center gap-2 w-full min-h-[52px] px-4 rounded-2xl bg-primary text-white text-sm font-bold hover:bg-primary/90 transition-colors shadow-md shadow-primary/20"
-              >
-                <LayoutDashboard className="w-4 h-4" /> Ir a mi panel <ArrowRight className="w-4 h-4 ml-0.5" />
-              </button>
-              <button
-                onClick={async () => { await signOut(); setMobileOpen(false); }}
-                className="flex items-center justify-center gap-2 w-full min-h-[48px] px-4 rounded-2xl border border-red-400/40 text-red-500 text-sm font-semibold hover:bg-red-500/8 transition-colors"
-              >
-                <LogOut className="w-4 h-4" /> Cerrar sesión
-              </button>
-            </>
-          ) : (
-            <>
-              <Link
-                to="/registro"
-                onClick={() => setMobileOpen(false)}
-                className="flex items-center justify-center gap-2 w-full min-h-[52px] px-4 rounded-2xl bg-primary text-white text-sm font-bold hover:bg-primary/90 transition-colors shadow-md shadow-primary/20"
-              >
-                Registrarse gratis <ArrowRight className="w-4 h-4" />
-              </Link>
-              <Link
-                to="/login"
-                onClick={() => setMobileOpen(false)}
-                className="flex items-center justify-center w-full min-h-[48px] px-4 rounded-2xl border border-border text-foreground text-sm font-semibold hover:bg-muted transition-colors"
-              >
-                Ingresar al sistema
-              </Link>
-            </>
+          {/* User card if logged in */}
+          {isLoggedIn && user && (
+            <div className="mx-4 mt-4 p-3 bg-muted/40 border border-border/60 rounded-xl flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full overflow-hidden bg-primary/10 flex-shrink-0 flex items-center justify-center">
+                {user.avatar_url
+                  ? <img src={user.avatar_url} alt={user.full_name} className="w-full h-full object-cover" />
+                  : <span className="text-sm font-bold text-primary">{initials}</span>}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-semibold text-foreground truncate">{user.full_name}</div>
+                <div className="text-xs text-muted-foreground truncate">{user.email}</div>
+              </div>
+            </div>
           )}
+
+          {/* Navigation links */}
+          <nav className="px-4 py-5">
+            <div className="space-y-1">
+              {navLinks.map(link => (
+                <Link
+                  key={link.href}
+                  to={link.href}
+                  onClick={() => setMobileOpen(false)}
+                  className={cn(
+                    'flex items-center justify-between h-12 px-4 rounded-xl text-base font-medium',
+                    'transition-colors',
+                    location.pathname === link.href
+                      ? 'text-primary bg-primary/8'
+                      : 'text-foreground hover:bg-muted',
+                  )}
+                >
+                  {link.label}
+                </Link>
+              ))}
+
+              {/* Cart */}
+              <button
+                onClick={() => { navigate('/carrito'); setMobileOpen(false); }}
+                className="w-full flex items-center justify-between h-12 px-4 rounded-xl text-base font-medium text-foreground hover:bg-muted transition-colors"
+              >
+                Carrito
+                {useCart().itemCount > 0 && (
+                  <span className="bg-primary text-primary-foreground text-xs font-bold px-2 py-0.5 rounded-full">
+                    {useCart().itemCount}
+                  </span>
+                )}
+              </button>
+            </div>
+          </nav>
+
+          {/* Bottom actions */}
+          <div className="px-4 pb-6 pt-2 border-t border-border">
+            {isLoggedIn ? (
+              <div className="space-y-2.5">
+                <button
+                  onClick={() => { navigate('/dashboard'); setMobileOpen(false); }}
+                  className="w-full h-11 flex items-center justify-center gap-2 bg-primary text-primary-foreground rounded-xl text-sm font-semibold hover:bg-primary/90 transition-colors"
+                >
+                  <LayoutDashboard className="w-4 h-4" /> Mi Panel
+                </button>
+                <button
+                  onClick={async () => { await signOut(); setMobileOpen(false); }}
+                  className="w-full h-10 flex items-center justify-center gap-2 border border-red-400/40 text-red-500 rounded-xl text-sm font-medium hover:bg-red-500/8 transition-colors"
+                >
+                  <LogOut className="w-4 h-4" /> Cerrar sesion
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-2.5">
+                <Link
+                  to="/registro"
+                  onClick={() => setMobileOpen(false)}
+                  className="w-full h-11 flex items-center justify-center bg-primary text-primary-foreground rounded-xl text-sm font-semibold hover:bg-primary/90 transition-colors"
+                >
+                  Registrarse gratis
+                </Link>
+                <Link
+                  to="/login"
+                  onClick={() => setMobileOpen(false)}
+                  className="w-full h-10 flex items-center justify-center border border-border rounded-xl text-sm font-medium text-foreground hover:bg-muted transition-colors"
+                >
+                  Ingresar
+                </Link>
+              </div>
+            )}
+          </div>
         </div>
       </div>
+
+      {/* Spacer to push content below fixed nav */}
+      <div style={{ height: '60px' }} />
     </>
   );
 }

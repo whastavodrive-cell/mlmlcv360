@@ -8,83 +8,125 @@ export default function Footer() {
   const companyName = company.company_name || 'MLM 360';
   const companyEmail = company.company_email || 'contacto@mlm360.pe';
   const companyPhone = company.company_phone || '+51 1 234-5678';
-  const companyAddress = company.company_address || 'Av. Javier Prado Este 4200, San Isidro, Lima, Perú';
+  const companyAddress = company.company_address || 'Av. Javier Prado Este 4200, San Isidro, Lima, Peru';
 
   return (
-    <footer className="bg-card border-t border-border">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
-          {/* Brand */}
-          <div>
-            <div className="mb-4">
-              <LogoWithText value={logoValue} fallbackText={companyName} size="w-9 h-9" textClass="font-bold text-foreground" />
-              <div className="text-xs text-muted-foreground mt-1 ml-0.5">Sistema Empresarial</div>
+    <footer className="bg-muted/30 border-t border-border">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Main footer content */}
+        <div className="py-12 lg:py-16">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-10 lg:gap-8">
+            {/* Brand section - wider */}
+            <div className="md:col-span-5 lg:col-span-4">
+              <LogoWithText
+                value={logoValue}
+                fallbackText={companyName}
+                size="w-8 h-8"
+                textClass="text-lg font-bold text-foreground"
+              />
+              <p className="text-sm text-muted-foreground leading-relaxed mt-4 max-w-xs">
+                Sistema empresarial ML M 360. Gestion tu red y maximiza tus ingresos.
+              </p>
+              <div className="flex gap-2 mt-6">
+                {[Facebook, Instagram, Linkedin, Twitter].map((Icon, i) => (
+                  <a
+                    key={i}
+                    href="#"
+                    className="w-9 h-9 rounded-lg bg-background border border-border flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary/30 hover:bg-primary/5 transition-colors"
+                  >
+                    <Icon className="w-4 h-4" />
+                  </a>
+                ))}
+              </div>
             </div>
-            <p className="text-sm text-muted-foreground leading-relaxed mb-5">
-              El sistema MLM empresarial más completo del Perú. Gestiona tu red y multiplica tus ingresos.
-            </p>
-            <div className="flex gap-3">
-              {[Facebook, Instagram, Linkedin, Twitter].map((Icon, i) => (
-                <a key={i} href="#"
-                  className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors">
-                  <Icon className="w-4 h-4" />
-                </a>
-              ))}
+
+            {/* Links - compact grid */}
+            <div className="md:col-span-7 lg:col-span-8">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-8">
+                {/* Plataforma */}
+                <div>
+                  <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider mb-4">Plataforma</h4>
+                  <ul className="space-y-2.5">
+                    {[
+                      { href: '/planes', label: 'Planes' },
+                      { href: '/tienda', label: 'Tienda' },
+                      { href: '/nosotros', label: 'Nosotros' },
+                      { href: '/empresa', label: 'Empresa' },
+                      { href: '/blog', label: 'Blog' },
+                    ].map(l => (
+                      <li key={l.href}>
+                        <Link
+                          to={l.href}
+                          className="text-sm text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1 group"
+                        >
+                          {l.label}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Legal */}
+                <div>
+                  <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider mb-4">Legal</h4>
+                  <ul className="space-y-2.5">
+                    {[
+                      'Terminos de servicio',
+                      'Politica de privacidad',
+                      'Politica de cookies',
+                      'Aviso legal',
+                    ].map(l => (
+                      <li key={l}>
+                        <a
+                          href="#"
+                          className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          {l}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Contact */}
+                <div>
+                  <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider mb-4">Contacto</h4>
+                  <ul className="space-y-3">
+                    <li>
+                      <a
+                        href={`mailto:${companyEmail}`}
+                        className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-start gap-2"
+                      >
+                        <Mail className="w-4 h-4 text-primary/70 flex-shrink-0 mt-0.5" />
+                        <span className="break-all">{companyEmail}</span>
+                      </a>
+                    </li>
+                    <li>
+                      <a
+                        href={`tel:${companyPhone}`}
+                        className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-start gap-2"
+                      >
+                        <Phone className="w-4 h-4 text-primary/70 flex-shrink-0 mt-0.5" />
+                        <span>{companyPhone}</span>
+                      </a>
+                    </li>
+                    <li className="text-sm text-muted-foreground flex items-start gap-2">
+                      <MapPin className="w-4 h-4 text-primary/70 flex-shrink-0 mt-0.5" />
+                      <span>{companyAddress}</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
             </div>
-          </div>
-
-          {/* Plataforma */}
-          <div>
-            <h4 className="font-semibold text-foreground mb-4">Plataforma</h4>
-            <ul className="space-y-2.5">
-              {[
-                { href: '/planes', label: 'Planes' },
-                { href: '/precios', label: 'Precios' },
-                { href: '/nosotros', label: 'Nosotros' },
-                { href: '/empresa', label: 'Empresa' },
-                { href: '/blog', label: 'Blog' },
-              ].map(l => (
-                <li key={l.href}>
-                  <Link to={l.href} className="text-sm text-muted-foreground hover:text-foreground transition-colors">{l.label}</Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Legal */}
-          <div>
-            <h4 className="font-semibold text-foreground mb-4">Legal</h4>
-            <ul className="space-y-2.5">
-              {['Términos de servicio', 'Política de privacidad', 'Política de cookies', 'Aviso legal'].map(l => (
-                <li key={l}>
-                  <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">{l}</a>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Contacto */}
-          <div>
-            <h4 className="font-semibold text-foreground mb-4">Contacto</h4>
-            <ul className="space-y-3">
-              <li className="flex items-center gap-2.5 text-sm text-muted-foreground">
-                <Mail className="w-4 h-4 text-primary flex-shrink-0" />{companyEmail}
-              </li>
-              <li className="flex items-center gap-2.5 text-sm text-muted-foreground">
-                <Phone className="w-4 h-4 text-primary flex-shrink-0" />{companyPhone}
-              </li>
-              <li className="flex items-start gap-2.5 text-sm text-muted-foreground">
-                <MapPin className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />{companyAddress}
-              </li>
-            </ul>
           </div>
         </div>
-      </div>
 
-      <div className="border-t border-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p className="text-sm text-muted-foreground">© {new Date().getFullYear()} {companyName}. Todos los derechos reservados.</p>
-          <p className="text-xs text-muted-foreground">Hecho con amor en Lima, Perú 🇵🇪</p>
+        {/* Bottom bar */}
+        <div className="border-t border-border/60 py-5 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <p className="text-sm text-muted-foreground">
+            © {new Date().getFullYear()} {companyName}. Todos los derechos reservados.
+          </p>
+          <p className="text-xs text-muted-foreground">Hecho en Lima, Peru</p>
         </div>
       </div>
     </footer>
