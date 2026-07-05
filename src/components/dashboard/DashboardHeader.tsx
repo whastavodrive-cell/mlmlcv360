@@ -72,6 +72,16 @@ export default function DashboardHeader() {
     return () => document.removeEventListener('mousedown', handler);
   }, [query]);
 
+  // Close mobile search panel on scroll
+  useEffect(() => {
+    const handler = () => {
+      setSearchOpen(false);
+      if (!query) { setResults([]); }
+    };
+    window.addEventListener('scroll', handler, { passive: true } as EventListenerOptions);
+    return () => window.removeEventListener('scroll', handler);
+  }, [query]);
+
   // Close user menu on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -189,11 +199,70 @@ export default function DashboardHeader() {
           />
         </Link>
 
+        {/* Search — large inline on desktop, icon-collapsible on mobile */}
+        <div ref={searchRef} className="relative flex-1 max-w-md mx-2 hidden lg:block">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <input
+              type="text"
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+              onFocus={() => setSearchOpen(true)}
+              placeholder="Buscar usuarios, productos..."
+              className="w-full pl-10 pr-4 py-2 bg-muted/50 border border-border rounded-xl text-sm text-foreground outline-none focus:border-primary focus:bg-card transition-colors"
+            />
+            {query && (
+              <button onClick={() => { setQuery(''); setResults([]); inputRef.current?.focus(); }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+
+          {/* Results dropdown */}
+          {searchOpen && query.length >= 2 && (
+            <div className="absolute left-0 right-0 top-full mt-2 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden z-50">
+              {loadingSearch ? (
+                <div className="py-3">
+                  {[1, 2, 3].map(i => (
+                    <div key={i} className="flex items-center gap-3 px-4 py-2.5">
+                      <Skeleton className="w-8 h-8 rounded-xl flex-shrink-0" />
+                      <div className="flex-1 space-y-1.5"><Skeleton className="h-3.5 w-3/4 rounded" /><Skeleton className="h-2.5 w-1/2 rounded" /></div>
+                    </div>
+                  ))}
+                </div>
+              ) : results.length > 0 ? (
+                <div className="py-1.5">
+                  {results.map(r => {
+                    const Icon = iconFor(r.type);
+                    return (
+                      <button key={`${r.type}-${r.id}`} onClick={() => go(r.href)}
+                        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/60 transition-colors text-left">
+                        <div className="w-8 h-8 rounded-xl bg-muted flex items-center justify-center flex-shrink-0">
+                          <Icon className="w-4 h-4 text-muted-foreground" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-foreground truncate">{r.title}</p>
+                          <p className="text-xs text-muted-foreground truncate">{r.subtitle}</p>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="px-4 py-6 text-center">
+                  <p className="text-sm text-muted-foreground">Sin resultados para "{query}"</p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
         {/* Right controls */}
         <div className="ml-auto flex items-center gap-1 flex-shrink-0">
 
-          {/* Search icon — opens floating input */}
-          <div ref={searchRef} className="relative">
+          {/* Mobile search icon */}
+          <div className="relative lg:hidden">
             <button
               onClick={() => { setSearchOpen(v => !v); setTimeout(() => inputRef.current?.focus(), 50); }}
               className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted text-foreground/70 hover:text-foreground transition-colors"
@@ -204,7 +273,7 @@ export default function DashboardHeader() {
 
             {/* Floating search panel */}
             {searchOpen && (
-              <div className="absolute right-0 top-full mt-2 w-80 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden z-50">
+              <div className="absolute right-0 top-full mt-2 w-80 max-w-[calc(100vw-2rem)] bg-card border border-border rounded-2xl shadow-2xl overflow-hidden z-50">
                 <div className="flex items-center gap-2 px-3 py-2.5 border-b border-border">
                   <Search className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                   <input
@@ -212,7 +281,6 @@ export default function DashboardHeader() {
                     type="text"
                     value={query}
                     onChange={e => setQuery(e.target.value)}
-
                     placeholder="Buscar usuarios, productos..."
                     className="bg-transparent text-sm outline-none flex-1 text-foreground placeholder:text-muted-foreground"
                     autoFocus
