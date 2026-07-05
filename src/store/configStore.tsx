@@ -51,6 +51,12 @@ interface ConfigState {
   loading: boolean;
   showUsd: boolean;
   logoValue: string;
+  logoSizes: {
+    navbar: number;
+    sidebar: number;
+    collapsed: number;
+    login: number;
+  };
   setShowUsd: (v: boolean) => void;
   refresh: () => Promise<void>;
 }
@@ -66,6 +72,7 @@ const ConfigContext = createContext<ConfigState>({
   loading: true,
   showUsd: false,
   logoValue: '',
+  logoSizes: { navbar: 32, sidebar: 36, collapsed: 40, login: 48 },
   setShowUsd: () => {},
   refresh: async () => {},
 });
@@ -89,6 +96,7 @@ export function ConfigProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [showUsd, setShowUsd] = useState(false);
   const [logoValue, setLogoValue] = useState('');
+  const [logoSizes, setLogoSizes] = useState({ navbar: 32, sidebar: 36, collapsed: 40, login: 48 });
 
   const refresh = useCallback(async () => {
     try {
@@ -124,6 +132,12 @@ export function ConfigProvider({ children }: { children: ReactNode }) {
           name: map.tax_name || 'IGV',
         });
         setLogoValue(map.logo_value || '');
+        setLogoSizes({
+          navbar: parseInt(map.logo_size_navbar) || 32,
+          sidebar: parseInt(map.logo_size_sidebar) || 36,
+          collapsed: parseInt(map.logo_size_collapsed) || 40,
+          login: parseInt(map.logo_size_login) || 48,
+        });
       }
     } catch {
       // Non-fatal: use defaults already set in state
@@ -147,7 +161,7 @@ export function ConfigProvider({ children }: { children: ReactNode }) {
   }, [refresh, database]);
 
   return (
-    <ConfigContext.Provider value={{ plans, ranks, currency, currencySymbol, exchangeRate, company, tax, loading, showUsd, logoValue, setShowUsd, refresh }}>
+    <ConfigContext.Provider value={{ plans, ranks, currency, currencySymbol, exchangeRate, company, tax, loading, showUsd, logoValue, logoSizes, setShowUsd, refresh }}>
       {children}
     </ConfigContext.Provider>
   );

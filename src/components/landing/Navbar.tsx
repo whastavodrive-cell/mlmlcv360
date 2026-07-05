@@ -126,7 +126,7 @@ export default function Navbar() {
   const navigate = useNavigate();
   const { theme, setTheme } = useThemeStore();
   const { user, signOut } = useAuthStore();
-  const { company, logoValue, plans } = useConfig();
+  const { company, logoValue, logoSizes, plans } = useConfig();
   const { itemCount } = useCart();
   const { mobileNavOpen, setMobileNavOpen } = useUIStore();
   const companyName = company.company_name || 'MLM 360';
@@ -176,19 +176,21 @@ export default function Navbar() {
       {/* Fixed top bar */}
       <nav className={cn(
         'fixed top-0 left-0 right-0 z-50 transition-all duration-300',
-        scrolled || mobileNavOpen
-          ? 'bg-background/95 backdrop-blur-md border-b border-border/50 shadow-sm'
-          : 'bg-background',
+        mobileNavOpen
+          ? 'bg-background border-b-0'
+          : scrolled
+            ? 'bg-background/95 backdrop-blur-md border-b border-border/50 shadow-sm'
+            : 'bg-background',
       )}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="h-16 flex items-center gap-4">
 
             {/* Logo */}
-            <Link to="/" className="flex-shrink-0">
+            <Link to="/" className="flex-shrink-0" onClick={() => mobileNavOpen && setMobileNavOpen(false)}>
               <LogoWithText
                 value={logoValue}
                 fallbackText={companyName}
-                size="w-8 h-8"
+                pixelSize={logoSizes.navbar || 32}
                 textClass="text-lg font-bold text-foreground"
               />
             </Link>
@@ -245,7 +247,12 @@ export default function Navbar() {
               {/* Hamburger */}
               <button
                 onClick={() => setMobileNavOpen(!mobileNavOpen)}
-                className="lg:hidden w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted/60 text-foreground transition-colors ml-1"
+                className={cn(
+                  'lg:hidden w-9 h-9 rounded-full flex items-center justify-center transition-colors ml-1',
+                  mobileNavOpen
+                    ? 'bg-muted/60 text-foreground'
+                    : 'hover:bg-muted/60 text-foreground',
+                )}
                 aria-label={mobileNavOpen ? 'Cerrar menu' : 'Abrir menu'}>
                 {mobileNavOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               </button>
@@ -254,36 +261,31 @@ export default function Navbar() {
         </div>
       </nav>
 
-      {/* Mobile overlay - raised to z-[60] to be above WhatsApp */}
+      {/* Mobile overlay - full screen drawer */}
       <div
         role="dialog"
         aria-modal="true"
         className={cn(
-          'fixed top-16 left-0 right-0 bottom-0 z-[60] lg:hidden',
+          'fixed inset-0 z-[55] lg:hidden',
           'transition-opacity duration-250',
           mobileNavOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none',
         )}
       >
         {/* Backdrop */}
         <div
-          className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+          className="absolute inset-0 bg-black/50"
           onClick={() => setMobileNavOpen(false)}
         />
 
-        {/* Bottom-sheet panel */}
+        {/* Bottom-sheet panel - starts BELOW navbar */}
         <div
           className={cn(
-            'absolute bottom-0 left-0 right-0 bg-background rounded-t-3xl border-t border-border shadow-2xl',
+            'absolute top-16 left-0 right-0 bottom-0 bg-background shadow-2xl',
             'transition-transform duration-300 ease-out',
             mobileNavOpen ? 'translate-y-0' : 'translate-y-full',
           )}
         >
-          {/* Handle */}
-          <div className="flex justify-center pt-3 pb-1">
-            <div className="w-10 h-1 rounded-full bg-muted-foreground/20" />
-          </div>
-
-          <div className="px-4 pt-3 pb-8 overflow-y-auto max-h-[calc(100vh-5rem)]">
+          <div className="px-4 pt-4 pb-8 overflow-y-auto h-full">
 
             {/* User card — only when logged in */}
             {isLoggedIn && user && (

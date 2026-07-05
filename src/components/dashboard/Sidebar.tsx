@@ -4,7 +4,7 @@ import { useConfig } from '@/store/configStore';
 import { useDatabase } from '@/lib/backend';
 import { cn } from '@/lib/utils';
 import { Link, useLocation } from '@/lib/router';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { LayoutDashboard, Users, GitBranch, DollarSign, Award, ChartBar as BarChart3, Settings, ChevronDown, ChevronRight, X, UserCog, CreditCard, User, ShoppingBag, Package, Truck, Tag, ChartBar as BarChart2, ShoppingCart, FolderOpen, MessageSquare, Shield, Chrome as Home, Crown, Star } from 'lucide-react';
 import { LogoWithText } from '@/components/Logo';
 
@@ -105,12 +105,14 @@ function NavItemComponent({
   onNavigate,
   onExpandSidebar,
   pathname,
+  forceClosed,
 }: {
   item: NavItem;
   collapsed: boolean;
   onNavigate?: () => void;
   onExpandSidebar?: () => void;
   pathname: string;
+  forceClosed?: boolean;
 }) {
   const isActiveLeaf = item.href
     ? item.href === '/dashboard'
@@ -124,6 +126,18 @@ function NavItemComponent({
 
   const isActive = isActiveLeaf || isActiveParent;
   const [open, setOpen] = useState(() => Boolean(isActiveParent));
+  const prevCollapsed = useRef(collapsed);
+
+  // Auto-close expanded groups when sidebar collapses
+  useEffect(() => {
+    if (collapsed && !prevCollapsed.current && open) {
+      setOpen(false);
+    }
+    prevCollapsed.current = collapsed;
+  }, [collapsed, open]);
+
+  // Override open state when forceClosed is true (during collapse transition)
+  const effectiveOpen = forceClosed ? false : open;
 
   if (item.children) {
     // Collapsed: clicking a group item expands the sidebar
@@ -131,7 +145,6 @@ function NavItemComponent({
       return (
         <button
           type="button"
-          title={item.label}
           onClick={() => {
             onExpandSidebar?.();
             setOpen(true);
@@ -149,7 +162,7 @@ function NavItemComponent({
     }
 
     return (
-      <div>
+      <div className="overflow-hidden">
         <button
           type="button"
           onClick={() => setOpen(v => !v)}
@@ -162,37 +175,35 @@ function NavItemComponent({
         >
           <item.icon className="w-4 h-4 flex-shrink-0" />
           <span className="flex-1 text-left">{item.label}</span>
-          {open
-            ? <ChevronDown className="w-3.5 h-3.5" />
-            : <ChevronRight className="w-3.5 h-3.5" />
-          }
+          <ChevronDown className={cn('w-3.5 h-3.5 transition-transform duration-200', !effectiveOpen && '-rotate-90')} />
         </button>
 
-        {open && (
-          <div className="ml-7 mt-0.5 space-y-0.5 border-l border-border/50 pl-3">
-            {item.children.map(child => {
-              const childActive = child.href
-                ? pathname === child.href || pathname.startsWith(child.href + '/')
-                : false;
-              return (
-                <Link
-                  key={child.href}
-                  to={child.href!}
-                  onClick={onNavigate}
-                  className={cn(
-                    'flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors',
-                    childActive
-                      ? 'text-primary font-semibold bg-primary/5'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-muted',
-                  )}
-                >
-                  <child.icon className="w-3.5 h-3.5 flex-shrink-0" />
-                  {child.label}
-                </Link>
-              );
-            })}
-          </div>
-        )}
+        <div className={cn(
+          'ml-7 mt-0.5 space-y-0.5 border-l border-border/50 pl-3 transition-all duration-200',
+          effectiveOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0 overflow-hidden',
+        )}>
+          {item.children.map(child => {
+            const childActive = child.href
+              ? pathname === child.href || pathname.startsWith(child.href + '/')
+              : false;
+            return (
+              <Link
+                key={child.href}
+                to={child.href!}
+                onClick={onNavigate}
+                className={cn(
+                  'flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors',
+                  childActive
+                    ? 'text-primary font-semibold bg-primary/5'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted',
+                )}
+              >
+                <child.icon className="w-3.5 h-3.5 flex-shrink-0" />
+                {child.label}
+              </Link>
+            );
+          })}
+        </div>
       </div>
     );
   }
@@ -287,7 +298,7 @@ function MobileExpandableSection({
 export default function Sidebar() {
   const { user } = useAuthStore();
   const { sidebarOpen, setSidebarOpen, sidebarCollapsed, setSidebarCollapsed } = useUIStore();
-  const { company, logoValue, plans, ranks } = useConfig();
+  const { company, logoValue, logoSizes, plans, ranks } = useConfig();
   const database = useDatabase();
   const location = useLocation();
   const pathname = location.pathname;
@@ -296,18 +307,34 @@ export default function Sidebar() {
   const navItems = getNavForRole(role);
   const name = company.company_name || 'MLM360';
 
-  const [roleLabel, setRoleLabel] = useState(role.replace(/_/g, ' '));
+  // Role label state - fetch from custom_roles table
+  const [roleLabel, setRoleLabel] = useState<string>(() => {
+    // Initial fallback based on common roles
+    const labels: Record<string, string> = {
+      super_admin: 'Super Admin',
+      admin: 'Administrador',
+      inspector: 'Inspector',
+      support: 'Soporte',
+      user: 'Usuario',
+    };
+    return labels[role] || role.replace(/_/g, ' ');
+  });
 
   // Fetch display label for role from custom_roles table
   useEffect(() => {
+    let mounted = true;
     database.select<{ name: string; label: string; color: string }>('custom_roles', {
       filter: { name: role },
       single: true,
-    }).then(({ data }) => {
-      if (data && (data as any).label) {
-        setRoleLabel((data as any).label);
+    }).then(({ data, error }) => {
+      if (mounted && data && !error) {
+        const roleData = Array.isArray(data) ? data[0] : data;
+        if (roleData?.label) {
+          setRoleLabel(roleData.label);
+        }
       }
     }).catch(() => {});
+    return () => { mounted = false; };
   }, [role, database]);
 
   const initials = user
@@ -352,26 +379,39 @@ export default function Sidebar() {
           sidebarCollapsed ? 'justify-center px-3' : 'px-4',
         )}>
           {sidebarCollapsed ? (
-            /* Collapsed: square logo container */
-            <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center bg-muted flex-shrink-0">
+            /* Collapsed: square logo container with dynamic size */
+            <div
+              className="rounded-xl overflow-hidden flex items-center justify-center bg-muted/50 border border-border/50 flex-shrink-0 transition-all duration-300"
+              style={{
+                width: `${(logoSizes.collapsed || 40) + 4}px`,
+                height: `${(logoSizes.collapsed || 40) + 4}px`,
+              }}
+            >
               {logoValue ? (
                 logoValue.trim().toLowerCase().startsWith('<svg') ? (
                   <span
-                    className="w-full h-full inline-flex items-center justify-center [&>svg]:w-full [&>svg]:h-full"
+                    className="inline-flex items-center justify-center [&_svg]:w-full [&_svg]:h-full"
+                    style={{ width: `${logoSizes.collapsed || 40}px`, height: `${logoSizes.collapsed || 40}px` }}
                     dangerouslySetInnerHTML={{ __html: logoValue }}
                   />
                 ) : (
-                  <img src={logoValue} alt={name} className="w-full h-full object-cover" />
+                  <img
+                    src={logoValue}
+                    alt={name}
+                    style={{ width: `${logoSizes.collapsed || 40}px`, height: `${logoSizes.collapsed || 40}px` }}
+                    className="object-contain"
+                  />
                 )
               ) : (
-                <span className="text-xs font-black text-primary">{name.slice(0, 2).toUpperCase()}</span>
+                <span className="text-sm font-black text-primary leading-none">{name.slice(0, 2).toUpperCase()}</span>
               )}
             </div>
           ) : (
             <LogoWithText
               value={logoValue}
               fallbackText={name}
-              size="w-9 h-9"
+              size={`w-[${logoSizes.sidebar || 36}px] h-[${logoSizes.sidebar || 36}px]`}
+              pixelSize={logoSizes.sidebar || 36}
               textClass="text-sm font-black text-foreground truncate"
             />
           )}
@@ -388,6 +428,23 @@ export default function Sidebar() {
 
         {/* Nav items */}
         <nav className="flex-1 overflow-y-auto px-2 py-3 space-y-0.5">
+          {/* Home link - always visible at top */}
+          {sidebarCollapsed ? (
+            <Link
+              to="/"
+              className="flex items-center justify-center p-3 rounded-xl transition-colors text-sm text-muted-foreground hover:text-foreground hover:bg-muted"
+            >
+              <Home className="w-4 h-4 flex-shrink-0" />
+            </Link>
+          ) : (
+            <Link
+              to="/"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors text-sm text-muted-foreground hover:text-foreground hover:bg-muted"
+            >
+              <Home className="w-4 h-4 flex-shrink-0" />
+              <span className="font-medium">Inicio</span>
+            </Link>
+          )}
           {navItems.map((item, i) => (
             <NavItemComponent
               key={i}

@@ -307,35 +307,57 @@ export default function SettingsPage() {
               Logo del Sistema
             </h3>
 
+            {/* Logo dimension controls */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              {[
+                { k: 'logo_size_navbar', label: 'Navbar (px)', default: '32' },
+                { k: 'logo_size_sidebar', label: 'Sidebar (px)', default: '36' },
+                { k: 'logo_size_collapsed', label: 'Colapsado (px)', default: '40' },
+                { k: 'logo_size_login', label: 'Login (px)', default: '48' },
+              ].map(f => (
+                <div key={f.k}>
+                  <label className="block text-xs font-medium text-foreground mb-1.5">{f.label}</label>
+                  <input
+                    type="number"
+                    min="16"
+                    max="128"
+                    value={c(f.k) || f.default}
+                    onChange={e => setC(f.k, e.target.value)}
+                    className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-sm text-foreground outline-none focus:border-primary transition-colors text-center"
+                  />
+                </div>
+              ))}
+            </div>
+
             {/* Live preview panels */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {/* Navbar preview */}
               <div className="bg-muted/30 border border-border rounded-xl p-4 text-center">
                 <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">Navbar</p>
                 <div className="flex items-center justify-center gap-2 bg-background border border-border rounded-lg px-3 py-2 mx-auto">
-                  <LogoPreview value={c('logo_value')} size={32} />
+                  <LogoPreview value={c('logo_value')} size={parseInt(c('logo_size_navbar')) || 32} />
                   <span className="text-xs font-bold text-foreground truncate max-w-[80px]">{c('company_name') || 'MLM 360'}</span>
                 </div>
-                <p className="text-[10px] text-muted-foreground mt-2">32 × 32 px</p>
+                <p className="text-[10px] text-muted-foreground mt-2">{c('logo_size_navbar') || 32} px</p>
               </div>
 
               {/* Sidebar expanded */}
               <div className="bg-muted/30 border border-border rounded-xl p-4 text-center">
                 <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">Sidebar expandido</p>
                 <div className="flex items-center justify-center gap-2.5 bg-card border border-border rounded-lg px-3 py-2.5 mx-auto">
-                  <LogoPreview value={c('logo_value')} size={36} />
+                  <LogoPreview value={c('logo_value')} size={parseInt(c('logo_size_sidebar')) || 36} />
                   <span className="text-xs font-black text-foreground truncate max-w-[70px]">{c('company_name') || 'MLM 360'}</span>
                 </div>
-                <p className="text-[10px] text-muted-foreground mt-2">36 × 36 px</p>
+                <p className="text-[10px] text-muted-foreground mt-2">{c('logo_size_sidebar') || 36} px</p>
               </div>
 
               {/* Sidebar collapsed */}
               <div className="bg-muted/30 border border-border rounded-xl p-4 text-center">
                 <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">Sidebar colapsado</p>
-                <div className="flex items-center justify-center bg-card border border-border rounded-lg p-2 w-14 h-14 mx-auto">
-                  <LogoPreview value={c('logo_value')} size={40} square />
+                <div className="flex items-center justify-center bg-card border border-border rounded-xl p-2 w-14 h-14 mx-auto">
+                  <LogoPreview value={c('logo_value')} size={parseInt(c('logo_size_collapsed')) || 40} square />
                 </div>
-                <p className="text-[10px] text-muted-foreground mt-2">40 × 40 px · cuadrado</p>
+                <p className="text-[10px] text-muted-foreground mt-2">{c('logo_size_collapsed') || 40} px · cuadrado</p>
               </div>
             </div>
 
@@ -357,7 +379,7 @@ export default function SettingsPage() {
             </div>
 
             <button
-              onClick={() => saveConfig(['logo_value', 'company_name'])}
+              onClick={() => saveConfig(['logo_value', 'company_name', 'logo_size_navbar', 'logo_size_sidebar', 'logo_size_collapsed', 'logo_size_login'])}
               disabled={saving}
               className="flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-lg hover:bg-primary/90 text-sm font-medium transition-colors disabled:opacity-50"
             >

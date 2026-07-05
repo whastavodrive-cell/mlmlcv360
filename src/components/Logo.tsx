@@ -46,6 +46,8 @@ interface LogoProps {
   fallbackText?: string;
   /** Tailwind size for the mark wrapper. Default: 'w-8 h-8' */
   size?: string;
+  /** Pixel size for dynamic sizing (overrides Tailwind size) */
+  pixelSize?: number;
   /** Extra className on the img tag */
   imgClass?: string;
 }
@@ -62,15 +64,18 @@ export default function Logo({
   value = '',
   fallbackText = 'MLM 360',
   size = 'w-8 h-8',
+  pixelSize,
   imgClass,
 }: LogoProps) {
   const type = useMemo(() => detectLogoType(value), [value]);
   const safeSvg = useMemo(() => (type === 'svg' ? sanitizeSvg(value) : ''), [type, value]);
+  const pxStyle = pixelSize ? { width: `${pixelSize}px`, height: `${pixelSize}px` } : {};
 
   if (type === 'svg') {
     return (
       <span
-        className={cn(size, 'inline-flex items-center justify-center [&>svg]:w-full [&>svg]:h-full flex-shrink-0')}
+        className={cn(pixelSize ? '' : size, 'inline-flex items-center justify-center [&>svg]:w-full [&>svg]:h-full flex-shrink-0')}
+        style={pxStyle}
         // sanitised above — no scripts, no event handlers
         // eslint-disable-next-line react/no-danger
         dangerouslySetInnerHTML={{ __html: safeSvg }}
@@ -85,7 +90,8 @@ export default function Logo({
       <img
         src={value.trim()}
         alt={fallbackText}
-        className={cn(size, 'object-contain flex-shrink-0', imgClass)}
+        className={cn(pixelSize ? '' : size, 'object-contain flex-shrink-0', imgClass)}
+        style={pxStyle}
         onError={(e) => {
           const el = e.currentTarget;
           el.style.display = 'none';
@@ -99,7 +105,7 @@ export default function Logo({
 
   // Fallback: branded icon box
   return (
-    <div className={cn(size, 'rounded-lg bg-primary flex items-center justify-center flex-shrink-0')}>
+    <div className={cn(pixelSize ? '' : size, 'rounded-lg bg-primary flex items-center justify-center flex-shrink-0')} style={pxStyle}>
       <Boxes className="w-[55%] h-[55%] text-primary-foreground" />
     </div>
   );
@@ -114,12 +120,14 @@ export function LogoWithText({
   value = '',
   fallbackText = 'MLM 360',
   size = 'w-8 h-8',
+  pixelSize,
   textClass = 'text-lg font-bold text-foreground',
   forceText = false,
 }: {
   value?: string;
   fallbackText?: string;
   size?: string;
+  pixelSize?: number;
   textClass?: string;
   forceText?: boolean;
 }) {
@@ -128,7 +136,7 @@ export function LogoWithText({
 
   return (
     <span className="flex items-center gap-2.5 min-w-0">
-      <Logo value={value} fallbackText={fallbackText} size={size} />
+      <Logo value={value} fallbackText={fallbackText} size={size} pixelSize={pixelSize} />
       {showLabel && <span className={cn(textClass, 'truncate')}>{fallbackText}</span>}
     </span>
   );
