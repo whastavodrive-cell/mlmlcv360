@@ -6,6 +6,39 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { DollarSign, Sun, Moon, Monitor, Save, RefreshCw, GitBranch, Building2, Bell, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Boxes } from 'lucide-react';
+
+function LogoPreview({ value, size, square }: { value: string; size: number; square?: boolean }) {
+  const t = (value || '').trim();
+  const px = `${size}px`;
+
+  if (!t) {
+    return (
+      <div style={{ width: px, height: px }} className={cn('rounded-lg bg-primary flex items-center justify-center flex-shrink-0', square && 'rounded-xl')}>
+        <Boxes style={{ width: `${size * 0.55}px`, height: `${size * 0.55}px` }} className="text-primary-foreground" />
+      </div>
+    );
+  }
+
+  if (t.toLowerCase().startsWith('<svg')) {
+    return (
+      <span
+        style={{ width: px, height: px }}
+        className="inline-flex items-center justify-center flex-shrink-0 [&>svg]:w-full [&>svg]:h-full"
+        dangerouslySetInnerHTML={{ __html: t }}
+      />
+    );
+  }
+
+  return (
+    <img
+      src={t}
+      alt="Logo"
+      style={{ width: px, height: px }}
+      className={cn('flex-shrink-0', square ? 'object-cover rounded-xl' : 'object-contain')}
+    />
+  );
+}
 
 type Tab = 'general' | 'mlm' | 'appearance' | 'notifications' | 'email' | 'auth';
 
@@ -245,6 +278,7 @@ export default function SettingsPage() {
       {/* ── Appearance ── */}
       {activeTab === 'appearance' && (
         <div className="space-y-4">
+          {/* Theme selector */}
           <div className="bg-card border border-border rounded-xl p-6">
             <h3 className="font-semibold text-foreground flex items-center gap-2 mb-5"><Sun className="w-4 h-4 text-primary" /> Tema Visual</h3>
             <div className="grid grid-cols-3 gap-3">
@@ -265,9 +299,71 @@ export default function SettingsPage() {
               ))}
             </div>
           </div>
-          <div className="bg-card border border-border rounded-xl p-6">
-            <h3 className="font-semibold text-foreground flex items-center gap-2 mb-5"><Building2 className="w-4 h-4 text-primary" /> Tema del Sistema</h3>
-            <p className="text-sm text-muted-foreground">El tema visual se configura desde el panel de administración. Los cambios afectan a todo el sistema.</p>
+
+          {/* Logo configuration */}
+          <div className="bg-card border border-border rounded-xl p-6 space-y-5">
+            <h3 className="font-semibold text-foreground flex items-center gap-2">
+              <Building2 className="w-4 h-4 text-primary" />
+              Logo del Sistema
+            </h3>
+
+            {/* Live preview panels */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {/* Navbar preview */}
+              <div className="bg-muted/30 border border-border rounded-xl p-4 text-center">
+                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">Navbar</p>
+                <div className="flex items-center justify-center gap-2 bg-background border border-border rounded-lg px-3 py-2 mx-auto">
+                  <LogoPreview value={c('logo_value')} size={32} />
+                  <span className="text-xs font-bold text-foreground truncate max-w-[80px]">{c('company_name') || 'MLM 360'}</span>
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-2">32 × 32 px</p>
+              </div>
+
+              {/* Sidebar expanded */}
+              <div className="bg-muted/30 border border-border rounded-xl p-4 text-center">
+                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">Sidebar expandido</p>
+                <div className="flex items-center justify-center gap-2.5 bg-card border border-border rounded-lg px-3 py-2.5 mx-auto">
+                  <LogoPreview value={c('logo_value')} size={36} />
+                  <span className="text-xs font-black text-foreground truncate max-w-[70px]">{c('company_name') || 'MLM 360'}</span>
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-2">36 × 36 px</p>
+              </div>
+
+              {/* Sidebar collapsed */}
+              <div className="bg-muted/30 border border-border rounded-xl p-4 text-center">
+                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">Sidebar colapsado</p>
+                <div className="flex items-center justify-center bg-card border border-border rounded-lg p-2 w-14 h-14 mx-auto">
+                  <LogoPreview value={c('logo_value')} size={40} square />
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-2">40 × 40 px · cuadrado</p>
+              </div>
+            </div>
+
+            {/* Logo value input */}
+            <div>
+              <label className="block text-xs font-medium text-foreground mb-1.5">
+                URL de imagen o código SVG
+              </label>
+              <textarea
+                rows={3}
+                value={c('logo_value')}
+                onChange={e => setC('logo_value', e.target.value)}
+                placeholder="https://ejemplo.com/logo.png  ·  o pega código SVG aquí"
+                className="w-full px-3 py-2.5 bg-muted border border-border rounded-lg text-sm text-foreground outline-none focus:border-primary transition-colors placeholder:text-muted-foreground font-mono resize-none"
+              />
+              <p className="text-[11px] text-muted-foreground mt-1">
+                Acepta: URL de imagen (PNG, JPG, WebP, SVG) o código SVG completo empezando por &lt;svg
+              </p>
+            </div>
+
+            <button
+              onClick={() => saveConfig(['logo_value', 'company_name'])}
+              disabled={saving}
+              className="flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-lg hover:bg-primary/90 text-sm font-medium transition-colors disabled:opacity-50"
+            >
+              {saving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+              Guardar logo
+            </button>
           </div>
         </div>
       )}

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useDatabase } from '@/lib/backend';
 import { Link, useNavigate } from '@/lib/router';
-import { Bell, Search, Moon, Sun, Menu, LogOut, User, Settings, ChevronDown, ExternalLink, CheckCheck, Trash2, X, Users, Package, ShoppingBag } from 'lucide-react';
+import { Bell, Search, Moon, Sun, Menu, LogOut, User, Settings, ChevronDown, ExternalLink, CheckCheck, Trash2, X, Users, Package, ShoppingBag, LayoutDashboard, GitBranch, CreditCard } from 'lucide-react';
 import { useThemeStore } from '@/store/themeStore';
 import { useAuthStore } from '@/store/authStore';
 import { useUIStore } from '@/store/uiStore';
@@ -11,6 +11,7 @@ import {
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 
 interface SearchResult {
@@ -77,6 +78,19 @@ function SearchOverlay({ onClose }: { onClose: () => void }) {
 
   const iconFor = (type: string) => type === 'user' ? Users : type === 'product' ? Package : ShoppingBag;
 
+  const isAdmin = user?.role === 'super_admin' || user?.role === 'admin' || user?.role === 'inspector';
+
+  const quickLinks = [
+    { icon: LayoutDashboard, label: 'Dashboard', href: '/dashboard' },
+    { icon: User, label: 'Mi Perfil', href: '/dashboard/perfil' },
+    { icon: CreditCard, label: 'Mi Plan', href: '/dashboard/mi-plan' },
+    { icon: GitBranch, label: 'Mi Red', href: '/dashboard/red' },
+    ...(isAdmin ? [
+      { icon: Users, label: 'Usuarios', href: '/dashboard/usuarios' },
+      { icon: Settings, label: 'Configuración', href: '/dashboard/configuracion' },
+    ] : []),
+  ];
+
   return (
     <div className="fixed inset-0 z-[70] flex flex-col bg-background">
       {/* Search input bar */}
@@ -90,35 +104,73 @@ function SearchOverlay({ onClose }: { onClose: () => void }) {
           placeholder="Buscar usuarios, productos, pedidos..."
           className="flex-1 bg-transparent text-base outline-none text-foreground placeholder:text-muted-foreground"
         />
-        <button onClick={onClose} className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted text-muted-foreground transition-colors">
-          <X className="w-5 h-5" />
+        {query && (
+          <button onClick={() => setQuery('')} className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-muted text-muted-foreground transition-colors">
+            <X className="w-4 h-4" />
+          </button>
+        )}
+        <button onClick={onClose} className="ml-1 px-3 py-1.5 rounded-full text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+          Cancelar
         </button>
       </div>
 
       {/* Results */}
       <div className="flex-1 overflow-y-auto">
-        {query.length < 2 ? (
-          <div className="px-6 py-12 text-center">
-            <Search className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
-            <p className="text-muted-foreground text-sm">Escribe al menos 2 caracteres para buscar</p>
-          </div>
-        ) : loading ? (
-          <div className="px-6 py-12 text-center">
-            <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-            <p className="text-muted-foreground text-sm">Buscando...</p>
-          </div>
-        ) : results.length > 0 ? (
+        {/* Idle state — show quick links */}
+        {query.length < 2 && (
           <div className="py-2">
+            <p className="px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Accesos rápidos
+            </p>
+            {quickLinks.map(link => (
+              <button
+                key={link.href}
+                onClick={() => go(link.href)}
+                className="w-full flex items-center gap-4 px-4 py-3.5 hover:bg-muted transition-colors"
+              >
+                <div className="w-9 h-9 rounded-xl bg-muted/70 flex items-center justify-center flex-shrink-0">
+                  <link.icon className="w-4 h-4 text-muted-foreground" />
+                </div>
+                <span className="text-sm font-medium text-foreground">{link.label}</span>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Loading — skeletons */}
+        {query.length >= 2 && loading && (
+          <div className="py-2">
+            <p className="px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Buscando...
+            </p>
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} className="flex items-center gap-4 px-4 py-4">
+                <Skeleton className="w-10 h-10 rounded-full flex-shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-3.5 w-3/4 rounded" />
+                  <Skeleton className="h-3 w-1/2 rounded" />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Results */}
+        {query.length >= 2 && !loading && results.length > 0 && (
+          <div className="py-2">
+            <p className="px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Resultados
+            </p>
             {results.map(result => {
               const Icon = iconFor(result.type);
               return (
                 <button
                   key={`${result.type}-${result.id}`}
                   onClick={() => go(result.href)}
-                  className="w-full flex items-center gap-4 px-4 py-4 hover:bg-muted transition-colors active:scale-[0.99]"
+                  className="w-full flex items-center gap-4 px-4 py-3.5 hover:bg-muted transition-colors active:scale-[0.99]"
                 >
-                  <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-                    <Icon className="w-5 h-5 text-muted-foreground" />
+                  <div className="w-9 h-9 rounded-xl bg-muted/70 flex items-center justify-center flex-shrink-0">
+                    <Icon className="w-4 h-4 text-muted-foreground" />
                   </div>
                   <div className="flex-1 min-w-0 text-left">
                     <p className="text-sm font-medium text-foreground truncate">{result.title}</p>
@@ -128,10 +180,16 @@ function SearchOverlay({ onClose }: { onClose: () => void }) {
               );
             })}
           </div>
-        ) : (
-          <div className="px-6 py-12 text-center">
-            <Search className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
-            <p className="text-sm text-muted-foreground">Sin resultados para "{query}"</p>
+        )}
+
+        {/* No results */}
+        {query.length >= 2 && !loading && results.length === 0 && (
+          <div className="px-6 py-16 text-center">
+            <div className="w-16 h-16 rounded-2xl bg-muted/50 flex items-center justify-center mx-auto mb-4">
+              <Search className="w-7 h-7 text-muted-foreground/50" />
+            </div>
+            <p className="text-sm font-medium text-foreground mb-1">Sin resultados</p>
+            <p className="text-xs text-muted-foreground">No encontramos nada para "{query}"</p>
           </div>
         )}
       </div>
@@ -293,8 +351,16 @@ export default function DashboardHeader() {
           {desktopFocused && desktopQuery.length >= 2 && (
             <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-2xl shadow-xl overflow-hidden z-50">
               {desktopLoading ? (
-                <div className="px-4 py-6 text-center">
-                  <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+                <div className="py-2">
+                  {[1, 2, 3].map(i => (
+                    <div key={i} className="flex items-center gap-3 px-3 py-2.5">
+                      <Skeleton className="w-7 h-7 rounded-full flex-shrink-0" />
+                      <div className="flex-1 space-y-1.5">
+                        <Skeleton className="h-3 w-3/4 rounded" />
+                        <Skeleton className="h-2.5 w-1/2 rounded" />
+                      </div>
+                    </div>
+                  ))}
                 </div>
               ) : desktopResults.length > 0 ? (
                 <div className="py-1">
