@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from '@/lib/router';
 import {
   X, Sun, Moon, ChevronDown, LogOut, LayoutDashboard, User,
-  ShoppingBag, Package, Heart, Menu, Settings,
+  ShoppingBag, Package, Heart, Menu, Settings, GitBranch, SlidersHorizontal,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useThemeStore } from '@/store/themeStore';
@@ -19,15 +19,6 @@ const navLinks = [
   { href: '/blog', label: 'Blog' },
   { href: '/contacto', label: 'Contacto' },
 ];
-
-function CartBadge() {
-  const { itemCount } = useCart();
-  return itemCount > 0 ? (
-    <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-primary text-primary-foreground rounded-full text-[10px] font-bold flex items-center justify-center">
-      {itemCount > 9 ? '9+' : itemCount}
-    </span>
-  ) : null;
-}
 
 function DesktopUserMenu() {
   const { user, signOut } = useAuthStore();
@@ -54,57 +45,54 @@ function DesktopUserMenu() {
         onClick={() => setOpen(v => !v)}
         className="flex items-center gap-2 px-2 py-1.5 rounded-full border border-border/60 hover:bg-muted/50 transition-all duration-200"
       >
-        <div className="w-8 h-8 rounded-full overflow-hidden bg-gradient-to-br from-primary/20 to-primary/40 flex items-center justify-center">
+        <div className="w-7 h-7 rounded-full overflow-hidden bg-gradient-to-br from-primary/20 to-primary/40 flex items-center justify-center flex-shrink-0">
           {user.avatar_url ? (
             <img src={user.avatar_url} alt={user.full_name} className="w-full h-full object-cover" />
           ) : (
             <span className="text-xs font-bold text-primary">{initials}</span>
           )}
         </div>
-        <span className="text-sm font-medium text-foreground hidden sm:block max-w-[100px] truncate">
+        <span className="text-sm font-medium text-foreground max-w-[90px] truncate">
           {user.full_name?.split(' ')[0] || 'Usuario'}
         </span>
-        <ChevronDown className={cn('w-4 h-4 text-muted-foreground transition-transform duration-200', open && 'rotate-180')} />
+        <ChevronDown className={cn('w-3.5 h-3.5 text-muted-foreground transition-transform duration-200', open && 'rotate-180')} />
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-64 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden z-50">
-          <div className="p-4 bg-gradient-to-br from-muted/50 to-muted/20 border-b border-border">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full overflow-hidden bg-gradient-to-br from-primary/20 to-primary/40 flex items-center justify-center">
-                {user.avatar_url ? (
-                  <img src={user.avatar_url} alt={user.full_name} className="w-full h-full object-cover" />
-                ) : (
-                  <span className="text-base font-bold text-primary">{initials}</span>
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="font-semibold text-foreground truncate">{user.full_name}</div>
-                <div className="text-xs text-muted-foreground truncate">{user.email}</div>
-              </div>
+        <div className="absolute right-0 top-full mt-2 w-60 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden z-50">
+          <div className="p-4 bg-muted/30 border-b border-border flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-br from-primary/20 to-primary/40 flex items-center justify-center flex-shrink-0">
+              {user.avatar_url ? (
+                <img src={user.avatar_url} alt={user.full_name} className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-sm font-bold text-primary">{initials}</span>
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="font-semibold text-foreground truncate text-sm">{user.full_name}</div>
+              <div className="text-xs text-muted-foreground truncate">{user.email}</div>
             </div>
           </div>
 
-          <div className="p-2">
-            <p className="px-3 py-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Cuenta</p>
+          <div className="p-1.5">
             {[
               { icon: LayoutDashboard, label: 'Mi Panel', path: '/dashboard' },
               { icon: User, label: 'Mi Perfil', path: '/dashboard/perfil' },
+              { icon: GitBranch, label: 'Mi Red', path: '/dashboard/red' },
               { icon: Settings, label: 'Configuracion', path: '/dashboard/configuracion' },
             ].map(item => (
               <button
                 key={item.path}
                 onClick={() => { navigate(item.path); setOpen(false); }}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-muted text-sm text-foreground transition-colors text-left"
+                className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl hover:bg-muted text-sm text-foreground transition-colors text-left"
               >
-                <item.icon className="w-4 h-4 text-muted-foreground" />
+                <item.icon className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                 {item.label}
               </button>
             ))}
           </div>
 
-          <div className="p-2 border-t border-border">
-            <p className="px-3 py-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Tienda</p>
+          <div className="p-1.5 border-t border-border">
             {[
               { icon: ShoppingBag, label: 'Tienda', path: '/tienda' },
               { icon: Package, label: 'Mis Pedidos', path: '/dashboard/pedidos' },
@@ -113,20 +101,20 @@ function DesktopUserMenu() {
               <button
                 key={item.path}
                 onClick={() => { navigate(item.path); setOpen(false); }}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-muted text-sm text-foreground transition-colors text-left"
+                className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl hover:bg-muted text-sm text-foreground transition-colors text-left"
               >
-                <item.icon className="w-4 h-4 text-muted-foreground" />
+                <item.icon className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                 {item.label}
               </button>
             ))}
           </div>
 
-          <div className="p-2 border-t border-border">
+          <div className="p-1.5 border-t border-border">
             <button
               onClick={async () => { await signOut(); setOpen(false); }}
-              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-red-500/10 text-sm text-red-500 transition-colors text-left"
+              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl hover:bg-red-500/10 text-sm text-red-500 transition-colors text-left"
             >
-              <LogOut className="w-4 h-4" />
+              <LogOut className="w-4 h-4 flex-shrink-0" />
               Cerrar sesion
             </button>
           </div>
@@ -142,31 +130,22 @@ export default function Navbar() {
   const { theme, setTheme } = useThemeStore();
   const { user, signOut } = useAuthStore();
   const { company, logoValue } = useConfig();
+  const { itemCount } = useCart();
   const companyName = company.company_name || 'MLM 360';
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const isDark = theme === 'dark';
   const isLoggedIn = !!user;
 
+  // Scroll lock: overflow hidden on html — no layout shift, no position jump
   useEffect(() => {
+    const html = document.documentElement;
     if (mobileOpen) {
-      document.body.style.position = 'fixed';
-      document.body.style.width = '100%';
-      document.body.style.top = `-${window.scrollY}px`;
+      html.style.overflow = 'hidden';
     } else {
-      const scrollY = document.body.style.top;
-      document.body.style.position = '';
-      document.body.style.width = '';
-      document.body.style.top = '';
-      if (scrollY) {
-        window.scrollTo(0, parseInt(scrollY || '0') * -1);
-      }
+      html.style.overflow = '';
     }
-    return () => {
-      document.body.style.position = '';
-      document.body.style.width = '';
-      document.body.style.top = '';
-    };
+    return () => { html.style.overflow = ''; };
   }, [mobileOpen]);
 
   useEffect(() => {
@@ -183,17 +162,18 @@ export default function Navbar() {
 
   return (
     <>
-      {/* Main navigation bar */}
+      {/* ── Fixed top bar ─────────────────────────────────────────────── */}
       <nav className={cn(
         'fixed top-0 left-0 right-0 z-50 transition-all duration-300',
         scrolled
-          ? 'bg-background/80 backdrop-blur-xl border-b border-border/40 shadow-sm'
+          ? 'bg-background/90 backdrop-blur-xl border-b border-border/50 shadow-sm'
           : 'bg-background',
       )}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="h-16 flex items-center justify-between">
+          <div className="h-16 flex items-center gap-4">
+
             {/* Logo */}
-            <Link to="/" className="flex-shrink-0 z-10">
+            <Link to="/" className="flex-shrink-0">
               <LogoWithText
                 value={logoValue}
                 fallbackText={companyName}
@@ -202,14 +182,14 @@ export default function Navbar() {
               />
             </Link>
 
-            {/* Desktop nav links */}
-            <div className="hidden lg:flex items-center gap-1 absolute left-1/2 -translate-x-1/2">
+            {/* Desktop nav links — centered */}
+            <div className="hidden lg:flex items-center gap-0.5 flex-1 justify-center">
               {navLinks.map(link => (
                 <Link
                   key={link.href}
                   to={link.href}
                   className={cn(
-                    'px-4 py-2 rounded-full text-sm font-medium transition-all duration-200',
+                    'px-3.5 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap',
                     location.pathname === link.href || location.pathname.startsWith(link.href + '/')
                       ? 'text-primary bg-primary/10'
                       : 'text-muted-foreground hover:text-foreground hover:bg-muted/50',
@@ -220,32 +200,38 @@ export default function Navbar() {
               ))}
             </div>
 
-            {/* Right actions */}
-            <div className="flex items-center gap-2">
+            {/* Right controls */}
+            <div className="ml-auto flex items-center gap-1">
               {/* Cart */}
               <button
                 onClick={() => navigate('/carrito')}
-                className="relative w-10 h-10 rounded-full flex items-center justify-center hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors"
+                className="relative w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors"
+                aria-label="Carrito"
               >
                 <ShoppingBag className="w-5 h-5" />
-                <CartBadge />
+                {itemCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-0.5 bg-primary text-primary-foreground rounded-full text-[10px] font-bold flex items-center justify-center">
+                    {itemCount > 9 ? '9+' : itemCount}
+                  </span>
+                )}
               </button>
 
               {/* Theme toggle */}
               <button
                 onClick={() => setTheme(isDark ? 'light' : 'dark')}
-                className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors"
+                className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors"
+                aria-label="Cambiar tema"
               >
                 {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
               </button>
 
-              {/* Auth buttons - Desktop */}
+              {/* Auth — desktop only */}
               {isLoggedIn ? (
-                <div className="hidden md:block">
+                <div className="hidden md:block ml-1">
                   <DesktopUserMenu />
                 </div>
               ) : (
-                <div className="hidden md:flex items-center gap-2">
+                <div className="hidden md:flex items-center gap-2 ml-2">
                   <Link
                     to="/login"
                     className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
@@ -254,17 +240,18 @@ export default function Navbar() {
                   </Link>
                   <Link
                     to="/registro"
-                    className="px-5 py-2.5 text-sm font-semibold bg-primary text-primary-foreground rounded-full hover:bg-primary/90 transition-all duration-200 shadow-lg shadow-primary/25 hover:shadow-primary/40"
+                    className="px-5 py-2 text-sm font-semibold bg-primary text-primary-foreground rounded-full hover:bg-primary/90 transition-all shadow-md shadow-primary/20"
                   >
                     Registrarse
                   </Link>
                 </div>
               )}
 
-              {/* Mobile menu button */}
+              {/* Hamburger — mobile only */}
               <button
                 onClick={() => setMobileOpen(v => !v)}
-                className="lg:hidden w-10 h-10 rounded-full flex items-center justify-center hover:bg-muted/50 text-foreground transition-colors"
+                className="lg:hidden w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted/60 text-foreground transition-colors ml-1"
+                aria-label={mobileOpen ? 'Cerrar menu' : 'Abrir menu'}
               >
                 {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               </button>
@@ -273,80 +260,79 @@ export default function Navbar() {
         </div>
       </nav>
 
-      {/* Mobile menu overlay - Full screen, no scroll issues */}
+      {/* ── Mobile bottom-sheet overlay ────────────────────────────────── */}
+      {/* z-[60] keeps it above WhatsApp button (z-40) */}
       <div
+        role="dialog"
+        aria-modal="true"
         className={cn(
-          'fixed inset-0 z-40 lg:hidden',
-          'transition-opacity duration-300 ease-out',
+          'fixed inset-0 z-[60] lg:hidden',
+          'transition-opacity duration-250',
           mobileOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none',
         )}
       >
-        {/* Backdrop */}
+        {/* Blurred backdrop */}
         <div
-          className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+          className="absolute inset-0 bg-black/50 backdrop-blur-sm"
           onClick={() => setMobileOpen(false)}
         />
 
-        {/* Menu panel - slides from bottom */}
+        {/* Slide-up panel */}
         <div
           className={cn(
             'absolute bottom-0 left-0 right-0 bg-background rounded-t-3xl',
-            'max-h-[90vh] overflow-y-auto',
-            'border-t border-border shadow-2xl',
+            'border-t border-border',
             'transition-transform duration-300 ease-out',
             mobileOpen ? 'translate-y-0' : 'translate-y-full',
           )}
         >
-          {/* Handle indicator */}
-          <div className="flex justify-center pt-3 pb-2">
-            <div className="w-10 h-1 bg-muted-foreground/30 rounded-full" />
+          {/* Drag handle */}
+          <div className="flex justify-center pt-3 pb-1">
+            <div className="w-10 h-1 rounded-full bg-muted-foreground/25" />
           </div>
 
-          {/* User section - Show profile photo when logged in */}
-          {isLoggedIn && user ? (
-            <div className="px-4 pb-4">
+          <div className="px-4 pt-3 pb-safe overflow-y-auto max-h-[80vh]">
+            {/* User card — logged in */}
+            {isLoggedIn && user ? (
               <button
                 onClick={() => { navigate('/dashboard/perfil'); setMobileOpen(false); }}
-                className="w-full p-4 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent rounded-2xl flex items-center gap-4 transition-transform active:scale-[0.98]"
+                className="w-full mb-4 p-3.5 bg-muted/40 border border-border/60 rounded-2xl flex items-center gap-3 text-left active:scale-[0.98] transition-transform"
               >
-                <div className="w-14 h-14 rounded-full overflow-hidden bg-gradient-to-br from-primary/30 to-primary/50 flex items-center justify-center ring-2 ring-primary/20">
+                <div className="w-12 h-12 rounded-full overflow-hidden bg-gradient-to-br from-primary/20 to-primary/40 flex items-center justify-center flex-shrink-0 ring-2 ring-primary/15">
                   {user.avatar_url ? (
                     <img src={user.avatar_url} alt={user.full_name} className="w-full h-full object-cover" />
                   ) : (
-                    <span className="text-lg font-bold text-primary">{initials}</span>
+                    <span className="text-base font-bold text-primary">{initials}</span>
                   )}
                 </div>
-                <div className="flex-1 text-left">
-                  <div className="font-semibold text-foreground">{user.full_name}</div>
-                  <div className="text-sm text-muted-foreground">{user.email}</div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-foreground truncate">{user.full_name}</div>
+                  <div className="text-sm text-muted-foreground truncate">{user.email}</div>
                 </div>
-                <ChevronDown className="w-5 h-5 text-muted-foreground -rotate-90" />
+                <ChevronDown className="w-4 h-4 text-muted-foreground -rotate-90 flex-shrink-0" />
               </button>
-            </div>
-          ) : (
-            <div className="px-4 pb-4 pt-2">
-              <div className="flex gap-2">
+            ) : (
+              /* Auth buttons — not logged in */
+              <div className="flex gap-2 mb-4">
                 <Link
                   to="/login"
                   onClick={() => setMobileOpen(false)}
-                  className="flex-1 py-3 text-center text-sm font-medium text-foreground bg-muted/50 rounded-xl"
+                  className="flex-1 py-3 text-center text-sm font-medium text-foreground bg-muted/50 rounded-xl hover:bg-muted/70 transition-colors"
                 >
                   Ingresar
                 </Link>
                 <Link
                   to="/registro"
                   onClick={() => setMobileOpen(false)}
-                  className="flex-1 py-3 text-center text-sm font-semibold bg-primary text-primary-foreground rounded-xl"
+                  className="flex-1 py-3 text-center text-sm font-semibold bg-primary text-primary-foreground rounded-xl hover:bg-primary/90 transition-colors"
                 >
                   Registrarse
                 </Link>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Navigation links */}
-          <nav className="px-4 pb-3">
-            <div className="grid grid-cols-3 gap-2">
+            {/* Navigation links grid */}
+            <div className="grid grid-cols-3 gap-2 mb-3">
               {navLinks.map(link => (
                 <Link
                   key={link.href}
@@ -363,71 +349,66 @@ export default function Navbar() {
                 </Link>
               ))}
             </div>
-          </nav>
 
-          {/* Quick actions grid */}
-          <div className="px-4 pb-4">
-            <div className="grid grid-cols-4 gap-2">
-              <button
-                onClick={() => { navigate('/carrito'); setMobileOpen(false); }}
-                className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-muted/40 hover:bg-muted/60 transition-colors"
-              >
-                <div className="relative">
-                  <ShoppingBag className="w-5 h-5 text-foreground" />
-                  <CartBadge />
-                </div>
-                <span className="text-xs font-medium text-foreground">Carrito</span>
-              </button>
-
-              <button
-                onClick={() => { navigate('/tienda'); setMobileOpen(false); }}
-                className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-muted/40 hover:bg-muted/60 transition-colors"
-              >
-                <Package className="w-5 h-5 text-foreground" />
-                <span className="text-xs font-medium text-foreground">Tienda</span>
-              </button>
-
-              <button
-                onClick={() => { navigate('/favoritos'); setMobileOpen(false); }}
-                className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-muted/40 hover:bg-muted/60 transition-colors"
-              >
-                <Heart className="w-5 h-5 text-foreground" />
-                <span className="text-xs font-medium text-foreground">Favoritos</span>
-              </button>
-
-              <button
-                onClick={() => setTheme(isDark ? 'light' : 'dark')}
-                className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-muted/40 hover:bg-muted/60 transition-colors"
-              >
-                {isDark ? <Sun className="w-5 h-5 text-foreground" /> : <Moon className="w-5 h-5 text-foreground" />}
-                <span className="text-xs font-medium text-foreground">{isDark ? 'Claro' : 'Oscuro'}</span>
-              </button>
+            {/* Quick access icons — MLM-relevant, no duplicates of top bar */}
+            <div className="grid grid-cols-4 gap-2 mb-4">
+              {[
+                {
+                  icon: Heart,
+                  label: 'Favoritos',
+                  action: () => { navigate('/favoritos'); setMobileOpen(false); },
+                },
+                {
+                  icon: Package,
+                  label: 'Pedidos',
+                  action: () => { navigate('/dashboard/pedidos'); setMobileOpen(false); },
+                },
+                {
+                  icon: GitBranch,
+                  label: 'Mi Red',
+                  action: () => { navigate('/dashboard/red'); setMobileOpen(false); },
+                },
+                {
+                  icon: SlidersHorizontal,
+                  label: 'Comparar',
+                  action: () => { navigate('/tienda/comparar'); setMobileOpen(false); },
+                },
+              ].map(({ icon: Icon, label, action }) => (
+                <button
+                  key={label}
+                  onClick={action}
+                  className="flex flex-col items-center gap-1.5 py-3 px-1 rounded-xl bg-muted/40 hover:bg-muted/60 transition-colors"
+                >
+                  <Icon className="w-5 h-5 text-foreground" />
+                  <span className="text-xs font-medium text-foreground">{label}</span>
+                </button>
+              ))}
             </div>
-          </div>
 
-          {/* User actions if logged in */}
-          {isLoggedIn && (
-            <div className="px-4 pb-6 pt-2 border-t border-border">
-              <div className="flex gap-2">
+            {/* Bottom CTA — only if logged in */}
+            {isLoggedIn && (
+              <div className="flex gap-2 pb-4">
                 <button
                   onClick={() => { navigate('/dashboard'); setMobileOpen(false); }}
-                  className="flex-1 py-3 flex items-center justify-center gap-2 bg-primary text-primary-foreground rounded-xl text-sm font-semibold"
+                  className="flex-1 py-3 flex items-center justify-center gap-2 bg-primary text-primary-foreground rounded-xl text-sm font-semibold hover:bg-primary/90 transition-colors"
                 >
-                  <LayoutDashboard className="w-4 h-4" /> Mi Panel
+                  <LayoutDashboard className="w-4 h-4" />
+                  Mi Panel
                 </button>
                 <button
                   onClick={async () => { await signOut(); setMobileOpen(false); }}
-                  className="py-3 px-4 flex items-center justify-center gap-2 border border-red-400/40 text-red-500 rounded-xl text-sm font-medium"
+                  className="w-12 flex items-center justify-center border border-red-400/40 text-red-500 rounded-xl hover:bg-red-500/8 transition-colors"
+                  aria-label="Cerrar sesion"
                 >
                   <LogOut className="w-4 h-4" />
                 </button>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Spacer */}
+      {/* Spacer below fixed nav */}
       <div className="h-16" />
     </>
   );
