@@ -8,6 +8,7 @@ import {
 import { Download, TrendingUp, Users, DollarSign, Award } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const rankColors: Record<string, string> = {
   bronze: '#cd7f32', silver: '#c0c0c0', gold: '#ffd700',
@@ -102,7 +103,38 @@ export default function ReportsPage() {
   };
 
   if (loading) {
-    return <div className="flex items-center justify-center h-64"><div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" /></div>;
+    return (
+      <div className="space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1.5">
+            <Skeleton className="h-8 w-32" />
+            <Skeleton className="h-4 w-48" />
+          </div>
+          <Skeleton className="h-10 w-28 rounded-xl" />
+        </div>
+        {/* 4 stat cards */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="bg-card border border-border rounded-xl p-4 flex items-center gap-3">
+              <Skeleton className="w-9 h-9 rounded-xl flex-shrink-0" />
+              <div className="space-y-1.5 flex-1">
+                <Skeleton className="h-6 w-20" />
+                <Skeleton className="h-3 w-24" />
+              </div>
+            </div>
+          ))}
+        </div>
+        {/* 2×2 chart grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="bg-card border border-border rounded-xl p-4 sm:p-5">
+              <Skeleton className="h-4 w-40 mb-4" />
+              <Skeleton className="h-[220px] w-full rounded-lg" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
   }
 
   return (

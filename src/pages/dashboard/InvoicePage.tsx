@@ -3,6 +3,7 @@ import { useDatabase } from '@/lib/backend';
 import { useConfig } from '@/store/configStore';
 import { useNavigate } from '@/lib/router';
 import { Package, Printer, Download, QrCode, Check, Building2, Mail, Phone, MapPin, Hash, Truck, CreditCard, FileText } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -71,8 +72,23 @@ export default function InvoicePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-muted/30 py-6 px-4">
+        <div className="max-w-4xl mx-auto space-y-4">
+          <div className="flex justify-end gap-3 mb-4">
+            <Skeleton className="h-10 w-28 rounded-xl" />
+            <Skeleton className="h-10 w-36 rounded-xl" />
+          </div>
+          <div className="bg-card rounded-2xl border border-border overflow-hidden">
+            <Skeleton className="h-32 w-full" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
+              <Skeleton className="h-32" />
+              <Skeleton className="h-32" />
+            </div>
+            <div className="p-5 space-y-3">
+              {Array.from({length:4}).map((_,i)=>(<div key={i} className="flex items-center gap-4"><Skeleton className="w-10 h-10 rounded-lg flex-shrink-0" /><div className="flex-1 space-y-1.5"><Skeleton className="h-4 w-48" /><Skeleton className="h-3 w-24" /></div><Skeleton className="h-4 w-20" /></div>))}
+            </div>
+          </div>
+        </div>
       </div>
     );
   }

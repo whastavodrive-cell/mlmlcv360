@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import type { ProductCategory } from '@/lib/storeTypes';
 import { Plus, Save, Loader as Loader2, Trash2, CreditCard as Edit2, X, Image, FolderOpen } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const EMPTY: Partial<ProductCategory> = { name: '', slug: '', description: '', status: 'active', sort_order: 0 };
 
@@ -127,7 +128,12 @@ export default function CategoriesAdminPage() {
 
       {/* Category list */}
       {loading ? (
-        <div className="flex items-center justify-center h-40"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
+        <div className="bg-card border border-border rounded-2xl overflow-hidden">
+          <table className="w-full text-sm">
+            <thead><tr className="border-b border-border bg-muted/30">{['Imagen','Nombre','Slug','Orden','Estado','Acciones'].map(h=><th key={h} className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">{h}</th>)}</tr></thead>
+            <tbody>{Array.from({length:5}).map((_,i)=>(<tr key={i} className="border-b border-border/40"><td className="px-4 py-3"><Skeleton className="w-10 h-10 rounded-xl" /></td><td className="px-4 py-3"><Skeleton className="h-4 w-28" /></td><td className="px-4 py-3"><Skeleton className="h-4 w-24" /></td><td className="px-4 py-3"><Skeleton className="h-7 w-16 rounded-lg" /></td><td className="px-4 py-3"><Skeleton className="h-6 w-16 rounded-full" /></td><td className="px-4 py-3"><div className="flex gap-1"><Skeleton className="w-7 h-7 rounded-lg" /><Skeleton className="w-7 h-7 rounded-lg" /></div></td></tr>))}</tbody>
+          </table>
+        </div>
       ) : (
         <div className="bg-card border border-border rounded-2xl overflow-hidden">
           <table className="w-full text-sm">

@@ -5,6 +5,7 @@ import { useAuthStore } from '@/store/authStore';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { DollarSign, Sun, Moon, Monitor, Save, RefreshCw, GitBranch, Building2, Bell, Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 type Tab = 'general' | 'mlm' | 'appearance' | 'notifications' | 'email' | 'auth';
 
@@ -77,8 +78,16 @@ export default function SettingsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      <div className="space-y-6 max-w-5xl">
+        <div className="space-y-1.5"><Skeleton className="h-8 w-64" /><Skeleton className="h-4 w-56" /></div>
+        <Skeleton className="h-12 w-full rounded-xl" />
+        <div className="bg-card border border-border rounded-xl p-6 space-y-4">
+          <Skeleton className="h-5 w-40" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {Array.from({length:4}).map((_,i)=>(<div key={i} className="space-y-1.5"><Skeleton className="h-3 w-32" /><Skeleton className="h-11 w-full rounded-lg" /></div>))}
+          </div>
+          <Skeleton className="h-10 w-28 rounded-lg" />
+        </div>
       </div>
     );
   }
@@ -444,7 +453,20 @@ function NotificationPreferences() {
     setSaving(false);
   };
 
-  if (loading) return <div className="flex items-center justify-center h-32"><RefreshCw className="w-6 h-6 animate-spin text-muted-foreground" /></div>;
+  if (loading) return (
+    <div className="bg-card border border-border rounded-xl p-5 sm:p-6 space-y-3">
+      <Skeleton className="h-5 w-48" />
+      {Array.from({length:6}).map((_,i)=>(
+        <div key={i} className="flex items-center justify-between py-3 border-b border-border last:border-0">
+          <div className="space-y-1">
+            <Skeleton className="h-4 w-36" />
+            <Skeleton className="h-3 w-56" />
+          </div>
+          <Skeleton className="w-11 h-6 rounded-full" />
+        </div>
+      ))}
+    </div>
+  );
   if (!prefs) return null;
 
   const items = [

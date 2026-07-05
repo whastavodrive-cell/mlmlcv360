@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import type { Coupon, Product, ProductCategory } from '@/lib/storeTypes';
 import { Plus, Trash2, Save, Loader as Loader2, Tag, X, CreditCard as Edit2, Package, Check, Search, ChevronRight, ChevronDown, FolderOpen, Folder } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 function fmt(n: number) { return `S/ ${n.toFixed(2)}`; }
 
@@ -188,7 +189,12 @@ export default function CouponsAdminPage() {
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center h-40"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
+        <div className="bg-card border border-border rounded-2xl overflow-hidden">
+          <table className="w-full text-sm">
+            <thead><tr className="border-b border-border bg-muted/30">{['Código','Tipo/Valor','Mínimo','Aplica a','Usos','Vencimiento','Estado','Acciones'].map(h=><th key={h} className="text-left px-4 py-3 text-xs font-bold text-muted-foreground uppercase">{h}</th>)}</tr></thead>
+            <tbody>{Array.from({length:5}).map((_,i)=>(<tr key={i} className="border-b border-border/40"><td className="px-4 py-3"><Skeleton className="h-4 w-20" /></td><td className="px-4 py-3"><Skeleton className="h-4 w-12" /></td><td className="px-4 py-3"><Skeleton className="h-4 w-14" /></td><td className="px-4 py-3"><Skeleton className="h-5 w-20 rounded-full" /></td><td className="px-4 py-3"><Skeleton className="h-4 w-8" /></td><td className="px-4 py-3"><Skeleton className="h-4 w-20" /></td><td className="px-4 py-3"><Skeleton className="h-6 w-16 rounded-full" /></td><td className="px-4 py-3"><div className="flex gap-1"><Skeleton className="w-7 h-7 rounded-lg" /><Skeleton className="w-7 h-7 rounded-lg" /></div></td></tr>))}</tbody>
+          </table>
+        </div>
       ) : (
         <div className="bg-card border border-border rounded-2xl overflow-hidden">
           <table className="w-full text-sm">

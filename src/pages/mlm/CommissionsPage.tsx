@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useCommissions, useCommissionsPagination, TYPE_LABELS } from '@/modules/mlm';
 import { STATUS_CONFIG } from '@/modules/mlm/services/mlmService';
+import { Skeleton } from '@/components/ui/skeleton';
 
 function CustomTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
@@ -20,6 +21,75 @@ function CustomTooltip({ active, payload, label }: any) {
   );
 }
 
+function CommissionsSkeleton() {
+  return (
+    <div className="space-y-5">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="space-y-1.5">
+          <Skeleton className="h-8 w-36" />
+          <Skeleton className="h-4 w-52" />
+        </div>
+        <Skeleton className="h-10 w-32 rounded-xl" />
+      </div>
+
+      {/* 4 stat cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="bg-card border border-border rounded-xl p-4 flex items-center gap-3">
+            <Skeleton className="w-9 h-9 rounded-xl flex-shrink-0" />
+            <div className="space-y-1.5 flex-1">
+              <Skeleton className="h-6 w-24" />
+              <Skeleton className="h-3 w-16" />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Chart */}
+      <div className="bg-card border border-border rounded-xl p-4 sm:p-5">
+        <Skeleton className="h-4 w-48 mb-4" />
+        <Skeleton className="h-[220px] w-full rounded-lg" />
+      </div>
+
+      {/* Filter pills */}
+      <div className="flex items-center gap-2 overflow-x-auto">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <Skeleton key={i} className="h-8 w-20 rounded-lg flex-shrink-0" />
+        ))}
+      </div>
+
+      {/* Table – 5 columns matching real layout */}
+      <div className="bg-card border border-border rounded-xl overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-border bg-muted/50">
+                {['Fecha', 'Tipo', 'Descripción', 'Estado', 'Monto'].map(h => (
+                  <th key={h} className="text-left py-3 px-4 text-xs font-semibold text-muted-foreground uppercase">
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {Array.from({ length: 8 }).map((_, i) => (
+                <tr key={i} className="border-b border-border">
+                  <td className="py-3 px-4"><Skeleton className="h-4 w-20" /></td>
+                  <td className="py-3 px-4"><Skeleton className="h-4 w-24" /></td>
+                  <td className="py-3 px-4 hidden sm:table-cell"><Skeleton className="h-4 w-36" /></td>
+                  <td className="py-3 px-4"><Skeleton className="h-6 w-20 rounded-full" /></td>
+                  <td className="py-3 px-4 text-right"><Skeleton className="h-4 w-20 ml-auto" /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function CommissionsPage() {
   const { user } = useAuthStore();
   const { commissions, loading, stats, chartData, exportCSV } = useCommissions({ userId: user?.id, autoLoad: true });
@@ -30,9 +100,7 @@ export default function CommissionsPage() {
     toast.success('Exportado a CSV');
   };
 
-  if (loading) {
-    return <div className="flex items-center justify-center h-64"><div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" /></div>;
-  }
+  if (loading) return <CommissionsSkeleton />;
 
   return (
     <div className="space-y-5">

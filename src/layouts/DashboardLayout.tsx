@@ -14,6 +14,7 @@ import RanksPage from '@/pages/mlm/RanksPage';
 import AdminPage from '@/pages/admin/AdminPage';
 import AdminCommissionsPage from '@/pages/admin/AdminCommissionsPage';
 import RolesAdminPage from '@/pages/admin/RolesAdminPage';
+import { Skeleton } from '@/components/ui/skeleton';
 import UsersPage from '@/pages/admin/UsersPage';
 import MyPlanPage from '@/pages/dashboard/MyPlanPage';
 import OrdersPage from '@/pages/dashboard/OrdersPage';
@@ -66,8 +67,38 @@ export default function DashboardLayout() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      <div className="flex h-screen bg-background overflow-hidden">
+        {/* Sidebar placeholder */}
+        <div className="hidden lg:flex flex-col w-[260px] h-full bg-card border-r border-border flex-shrink-0 p-4 gap-3">
+          <div className="flex items-center gap-3 pb-4 border-b border-border">
+            <Skeleton className="w-9 h-9 rounded-xl flex-shrink-0" />
+            <div className="flex-1 space-y-1"><Skeleton className="h-4 w-24" /><Skeleton className="h-3 w-16" /></div>
+          </div>
+          {Array.from({length:8}).map((_,i)=>(<Skeleton key={i} className="h-9 w-full rounded-xl" />))}
+        </div>
+        {/* Main area */}
+        <div className="flex-1 flex flex-col min-w-0">
+          <div className="h-16 border-b border-border bg-card flex items-center gap-3 px-6">
+            <Skeleton className="h-9 flex-1 max-w-xs rounded-xl" />
+            <div className="ml-auto flex items-center gap-2">
+              <Skeleton className="w-9 h-9 rounded-lg" />
+              <Skeleton className="w-9 h-9 rounded-lg" />
+              <Skeleton className="w-32 h-9 rounded-xl" />
+            </div>
+          </div>
+          <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+            <div className="space-y-5">
+              <div className="space-y-1.5"><Skeleton className="h-8 w-48" /><Skeleton className="h-4 w-64" /></div>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                {Array.from({length:4}).map((_,i)=>(<div key={i} className="bg-card border border-border rounded-xl p-5 space-y-3"><Skeleton className="w-10 h-10 rounded-xl" /><Skeleton className="h-7 w-28" /><Skeleton className="h-3 w-20" /></div>))}
+              </div>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <Skeleton className="lg:col-span-2 h-72 rounded-xl" />
+                <Skeleton className="h-72 rounded-xl" />
+              </div>
+            </div>
+          </main>
+        </div>
       </div>
     );
   }

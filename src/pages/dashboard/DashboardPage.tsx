@@ -8,6 +8,7 @@ import {
 import { DollarSign, Users, TrendingUp, Award, ArrowUpRight, ArrowDownRight, Activity, Bell, ChevronRight, UserPlus, Copy, CircleCheck as CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Link } from '@/lib/router';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const COLORS = ['#1d4ed8', '#3b82f6', '#60a5fa', '#93c5fd', '#bfdbfe'];
 
@@ -51,6 +52,98 @@ function CustomTooltip({ active, payload, label }: any) {
   );
 }
 
+function DashboardSkeleton() {
+  return (
+    <div className="space-y-5">
+      {/* Header */}
+      <div className="space-y-1.5">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-4 w-64" />
+      </div>
+
+      {/* 4 stat cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="bg-card border border-border rounded-xl p-4 sm:p-5 space-y-3">
+            <div className="flex items-start justify-between">
+              <Skeleton className="w-10 h-10 rounded-xl" />
+              <Skeleton className="w-14 h-6 rounded-full" />
+            </div>
+            <Skeleton className="h-7 w-28" />
+            <Skeleton className="h-3 w-20" />
+          </div>
+        ))}
+      </div>
+
+      {/* Referral card */}
+      <div className="bg-card border border-border rounded-xl p-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1.5">
+            <Skeleton className="h-5 w-40" />
+            <Skeleton className="h-3 w-56" />
+          </div>
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-12 w-32 rounded-lg" />
+            <Skeleton className="h-10 w-36 rounded-lg" />
+          </div>
+        </div>
+        <Skeleton className="mt-3 h-10 w-full rounded-lg" />
+      </div>
+
+      {/* Charts row */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Area chart – takes 2 cols */}
+        <div className="lg:col-span-2 bg-card border border-border rounded-xl p-4 sm:p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div className="space-y-1">
+              <Skeleton className="h-4 w-40" />
+              <Skeleton className="h-3 w-24" />
+            </div>
+            <Skeleton className="h-4 w-20" />
+          </div>
+          <Skeleton className="h-[240px] w-full rounded-lg" />
+        </div>
+
+        {/* Pie chart */}
+        <div className="bg-card border border-border rounded-xl p-4 sm:p-5">
+          <Skeleton className="h-4 w-36 mb-1" />
+          <Skeleton className="h-3 w-28 mb-4" />
+          <Skeleton className="h-[200px] w-full rounded-full mx-auto" style={{ borderRadius: '50%', maxWidth: 200 }} />
+          <div className="flex flex-wrap gap-2 mt-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} className="h-4 w-16 rounded-full" />
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Activity + Notifications row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {[0, 1].map(col => (
+          <div key={col} className="bg-card border border-border rounded-xl p-4 sm:p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <Skeleton className="w-4 h-4 rounded" />
+              <Skeleton className="h-4 w-32" />
+            </div>
+            <div className="space-y-3">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="flex items-start gap-3 py-2 border-b border-border last:border-0">
+                  <Skeleton className="w-8 h-8 rounded-lg flex-shrink-0" />
+                  <div className="flex-1 space-y-1.5">
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-3 w-1/2" />
+                  </div>
+                  <Skeleton className="h-3 w-16 flex-shrink-0" />
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function DashboardPage() {
   const database = useDatabase();
   const { user } = useAuthStore();
@@ -66,7 +159,6 @@ export default function DashboardPage() {
       if (!user) return;
       setLoading(true);
       try {
-        // Fetch commissions
         const { data: cData } = await database.select<any>('commissions', {
           select: 'amount, status, created_at',
           filter: { user_id: user.id },
@@ -77,16 +169,13 @@ export default function DashboardPage() {
         const total = commissions?.reduce((sum: number, c: any) => sum + Number(c.amount), 0) || 0;
         const pending = commissions?.filter((c: any) => c.status === 'pending').reduce((sum: number, c: any) => sum + Number(c.amount), 0) || 0;
 
-        // Fetch referrals (downline)
         const { data: rData } = await database.select<any>('profiles', {
           select: 'id, status, rank',
           filter: { sponsor_id: user.id },
         });
         const referrals = rData as any;
-
         const activeRef = referrals?.filter((r: any) => r.status === 'active').length || 0;
 
-        // Build chart data from last 6 months of commissions
         const now = new Date();
         const months: any[] = [];
         for (let i = 5; i >= 0; i--) {
@@ -99,16 +188,14 @@ export default function DashboardPage() {
           months.push({
             name: monthName.charAt(0).toUpperCase() + monthName.slice(1),
             comisiones: monthCommissions.reduce((s: number, c: any) => s + Number(c.amount), 0),
-            afiliados: Math.floor(Math.random() * 20) + 5, // placeholder
+            afiliados: Math.floor(Math.random() * 20) + 5,
           });
         }
 
-        // Rank distribution of downline
         const rankMap: Record<string, number> = {};
         (referrals || []).forEach((r: any) => { rankMap[r.rank] = (rankMap[r.rank] || 0) + 1; });
         const rankData = Object.entries(rankMap).map(([name, value]) => ({ name, value }));
 
-        // Recent activity from activity_logs
         const { data: activity } = await database.select<any>('activity_logs', {
           select: 'action, description, created_at',
           filter: { user_id: user.id },
@@ -116,7 +203,6 @@ export default function DashboardPage() {
           limit: 6,
         });
 
-        // Notifications
         const { data: notifs } = await database.select<any>('notifications', {
           select: 'id, title, message, type, read, created_at',
           filter: { user_id: user.id },
@@ -124,18 +210,13 @@ export default function DashboardPage() {
           limit: 5,
         });
 
-        setStats({
-          totalCommissions: total,
-          pendingCommissions: pending,
-          totalReferrals: referrals?.length || 0,
-          activeReferrals: activeRef,
-        });
+        setStats({ totalCommissions: total, pendingCommissions: pending, totalReferrals: referrals?.length || 0, activeReferrals: activeRef });
         setChartData(months);
         setRankDistribution(rankData.length > 0 ? rankData : [{ name: 'Bronce', value: 1 }]);
         setRecentActivity(activity || []);
         setNotifications(notifs || []);
-      } catch (e) {
-        // Graceful fallback — show empty state
+      } catch {
+        // Graceful fallback
       } finally {
         setLoading(false);
       }
@@ -143,25 +224,17 @@ export default function DashboardPage() {
     fetchData();
   }, [user]);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
+  if (loading) return <DashboardSkeleton />;
 
   const firstName = user?.full_name?.split(' ')[0] || 'Usuario';
 
   return (
     <div className="space-y-5">
-      {/* Welcome */}
       <div>
         <h1 className="text-2xl font-bold text-foreground">Hola, {firstName}</h1>
         <p className="text-muted-foreground text-sm mt-1">Aquí está el resumen de tu actividad reciente.</p>
       </div>
 
-      {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <StatCard label="Comisiones totales" value={`S/ ${stats.totalCommissions.toLocaleString('es-PE', { minimumFractionDigits: 2 })}`} change="+18%" icon={DollarSign} color="text-green-500 bg-green-500/10" />
         <StatCard label="Pendientes" value={`S/ ${stats.pendingCommissions.toLocaleString('es-PE', { minimumFractionDigits: 2 })}`} icon={TrendingUp} color="text-yellow-500 bg-yellow-500/10" />
@@ -169,12 +242,9 @@ export default function DashboardPage() {
         <StatCard label="Rango actual" value={user?.rank || 'Bronce'} icon={Award} color="text-purple-500 bg-purple-500/10" />
       </div>
 
-      {/* Referral code card */}
       <ReferralCard />
 
-      {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Commissions area chart */}
         <div className="lg:col-span-2 bg-card border border-border rounded-xl p-4 sm:p-5">
           <div className="flex items-center justify-between mb-4">
             <div>
@@ -202,7 +272,6 @@ export default function DashboardPage() {
           </ResponsiveContainer>
         </div>
 
-        {/* Rank distribution pie */}
         <div className="bg-card border border-border rounded-xl p-4 sm:p-5">
           <h3 className="text-sm font-semibold text-foreground mb-1">Distribución de rangos</h3>
           <p className="text-xs text-muted-foreground mb-4">Tu red de afiliados</p>
@@ -219,7 +288,8 @@ export default function DashboardPage() {
             <div className="h-[200px] flex items-center justify-center text-sm text-muted-foreground">Sin afiliados aún</div>
           )}
           <div className="flex flex-wrap gap-2 mt-3">
-            {rankDistribution.map((r, i) => (              <div key={r.name} className="flex items-center gap-1.5 text-xs">
+            {rankDistribution.map((r, i) => (
+              <div key={r.name} className="flex items-center gap-1.5 text-xs">
                 <div className="w-2.5 h-2.5 rounded-full" style={{ background: COLORS[i % COLORS.length] }} />
                 <span className="text-muted-foreground capitalize">{r.name}</span>
                 <span className="font-semibold text-foreground">{r.value}</span>
@@ -229,9 +299,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Activity + Notifications */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Recent activity */}
         <div className="bg-card border border-border rounded-xl p-4 sm:p-5">
           <div className="flex items-center gap-2 mb-4">
             <Activity className="w-4 h-4 text-primary" />
@@ -257,7 +325,6 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {/* Notifications */}
         <div className="bg-card border border-border rounded-xl p-4 sm:p-5">
           <div className="flex items-center gap-2 mb-4">
             <Bell className="w-4 h-4 text-primary" />
