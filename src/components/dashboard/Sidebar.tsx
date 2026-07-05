@@ -129,14 +129,12 @@ function NavItemComponent({
   onNavigate,
   onExpandSidebar,
   pathname,
-  forceClosed,
 }: {
   item: NavItem;
   collapsed: boolean;
   onNavigate?: () => void;
   onExpandSidebar?: () => void;
   pathname: string;
-  forceClosed?: boolean;
 }) {
   const isActiveLeaf = item.href
     ? (item.href === '/dashboard' || item.exact)
@@ -152,16 +150,15 @@ function NavItemComponent({
   const [open, setOpen] = useState(() => Boolean(isActiveParent));
   const prevCollapsed = useRef(collapsed);
 
-  // Auto-close expanded groups when sidebar collapses
+  // Auto-close expanded groups when sidebar collapses - with immediate response
   useEffect(() => {
-    if (collapsed && !prevCollapsed.current && open) {
+    if (collapsed) {
       setOpen(false);
     }
     prevCollapsed.current = collapsed;
-  }, [collapsed, open]);
+  }, [collapsed]);
 
-  // Override open state when forceClosed is true (during collapse transition)
-  const effectiveOpen = forceClosed ? false : open;
+  const effectiveOpen = !collapsed && open;
 
   if (item.children) {
     // Collapsed: clicking a group item expands the sidebar

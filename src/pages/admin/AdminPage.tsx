@@ -1,6 +1,5 @@
 import { useState, useEffect, Fragment } from 'react';
 import { useDatabase, useStorage } from '@/lib/backend';
-import type { StorageInterface } from '@/lib/backend';
 import { useAuthStore } from '@/store/authStore';
 import { useSearchParams } from '@/lib/router';
 import { cn } from '@/lib/utils';
@@ -103,216 +102,6 @@ function ToggleSwitch({ checked, onChange }: { checked: boolean; onChange: (v: b
   );
 }
 
-// ── Logo admin panel ────────────────────────────────────────────────────────
-interface LogoAdminSectionProps {
-  value: string;
-  collapsedValue?: string;
-  onChange: (v: string) => void;
-  onCollapsedChange?: (v: string) => void;
-  onSave: () => void;
-  saving: boolean;
-  storage: StorageInterface;
-}
-
-function LogoAdminSection({ value, collapsedValue, onChange, onCollapsedChange, onSave, saving, storage }: LogoAdminSectionProps) {
-  const [uploading, setUploading] = useState(false);
-  const [uploadingCollapsed, setUploadingCollapsed] = useState(false);
-
-  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>, isCollapsed = false) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (!file.type.startsWith('image/') && file.type !== 'image/svg+xml') {
-      toast.error('Solo se permiten archivos de imagen (PNG, JPG, SVG, WebP)');
-      return;
-    }
-    if (file.size > 2 * 1024 * 1024) {
-      toast.error('El archivo no debe superar 2 MB');
-      return;
-    }
-    if (isCollapsed) setUploadingCollapsed(true);
-    else setUploading(true);
-    try {
-      const ext = file.name.split('.').pop() || 'png';
-      const path = `logos/logo-${isCollapsed ? 'collapsed-' : ''}${Date.now()}.${ext}`;
-      const result = await storage.upload('logos', path, file, { contentType: file.type, upsert: true });
-      if (result.success && result.url) {
-        if (isCollapsed && onCollapsedChange) {
-          onCollapsedChange(result.url);
-          toast.success('Logo colapsado subido. Presiona Guardar para aplicar.');
-        } else {
-          onChange(result.url);
-          toast.success('Logo subido. Presiona Guardar para aplicar.');
-        }
-      } else {
-        throw new Error(result.error || 'Upload failed');
-      }
-    } catch {
-      toast.error('Error al subir el logo');
-    } finally {
-      setUploading(false);
-      setUploadingCollapsed(false);
-    }
-  };
-
-  const trimmed = (value || '').trim();
-  const isSvg = trimmed.toLowerCase().startsWith('<svg');
-  const isUrl = trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('/');
-  const isEmpty = !trimmed;
-
-  const trimmedCollapsed = (collapsedValue || '').trim();
-  const isEmptyCollapsed = !trimmedCollapsed;
-
-  return (
-    <div className="bg-card border border-border rounded-2xl p-5 sm:p-6">
-      <div className="flex items-center gap-3 mb-5">
-        <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-          <Image className="w-4 h-4 text-primary" />
-        </div>
-        <div>
-          <h3 className="text-sm font-bold text-foreground">Logo del sistema</h3>
-          <p className="text-xs text-muted-foreground">Aparece en navbar, sidebar, login y footer</p>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Input column */}
-        <div className="space-y-4">
-          <div>
-            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide block mb-2">
-              Logo principal (expandido)
-            </label>
-            <label className={cn(
-              'flex flex-col items-center justify-center gap-2 w-full h-28 border-2 border-dashed rounded-xl cursor-pointer transition-colors',
-              'hover:border-primary/50 hover:bg-primary/5',
-              uploading ? 'opacity-50 pointer-events-none' : '',
-              'border-border'
-            )}>
-              <input type="file" accept="image/*,.svg" className="sr-only" onChange={e => handleFile(e, false)} disabled={uploading} />
-              {uploading
-                ? <RefreshCw className="w-5 h-5 text-primary animate-spin" />
-                : <Image className="w-5 h-5 text-muted-foreground" />}
-              <span className="text-xs text-muted-foreground">
-                {uploading ? 'Subiendo...' : 'Haz clic o arrastra tu logo principal'}
-              </span>
-              <span className="text-[10px] text-muted-foreground/60">PNG, JPG, SVG, WebP · máx 2 MB</span>
-            </label>
-          </div>
-
-          <div>
-            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide block mb-2">
-              Logo colapsado (opcional, icono cuadrado)
-            </label>
-            <label className={cn(
-              'flex flex-col items-center justify-center gap-2 w-full h-24 border-2 border-dashed rounded-xl cursor-pointer transition-colors',
-              'hover:border-primary/50 hover:bg-primary/5',
-              uploadingCollapsed ? 'opacity-50 pointer-events-none' : '',
-              'border-border'
-            )}>
-              <input type="file" accept="image/*,.svg" className="sr-only" onChange={e => handleFile(e, true)} disabled={uploadingCollapsed} />
-              {uploadingCollapsed
-                ? <RefreshCw className="w-4 h-4 text-primary animate-spin" />
-                : <Image className="w-4 h-4 text-muted-foreground" />}
-              <span className="text-[11px] text-muted-foreground">
-                {uploadingCollapsed ? 'Subiendo...' : 'Logo para sidebar colapsado'}
-              </span>
-            </label>
-            <p className="text-[10px] text-muted-foreground mt-1">
-              {isEmptyCollapsed ? 'Si no se configura, se usa el logo principal reducido.' : 'Logo alternativo cuando el sidebar se colapsa.'}
-            </p>
-          </div>
-
-          <div>
-            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide block mb-2">
-              O pega una URL o codigo SVG (logo principal)
-            </label>
-            <textarea
-              value={value}
-              onChange={e => onChange(e.target.value)}
-              placeholder={'https://ejemplo.com/logo.png\no pega codigo <svg ...>...</svg>'}
-              rows={3}
-              className="w-full bg-background border border-border rounded-xl px-3 py-2.5 text-sm font-mono text-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary placeholder:text-muted-foreground/50"
-            />
-            <p className="text-[11px] text-muted-foreground mt-1.5">
-              {isEmpty && 'Sin logo configurado — se usara el icono por defecto.'}
-              {isSvg && 'SVG detectado — se renderizara como grafico vectorial inline.'}
-              {isUrl && 'URL detectada — se mostrara como imagen.'}
-            </p>
-          </div>
-
-          {onCollapsedChange && (
-            <div>
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide block mb-2">
-                URL logo colapsado (opcional)
-              </label>
-              <input
-                type="text"
-                value={collapsedValue || ''}
-                onChange={e => onCollapsedChange(e.target.value)}
-                placeholder="https://ejemplo.com/icon.png"
-                className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm font-mono text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary placeholder:text-muted-foreground/50"
-              />
-            </div>
-          )}
-        </div>
-
-        {/* Preview column */}
-        <div className="space-y-3">
-          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide block">
-            Vista previa en vivo
-          </label>
-          {/* Dark preview */}
-          <div className="bg-gray-900 rounded-xl p-4 flex items-center gap-3">
-            <LogoWithText value={value} fallbackText="MLM 360" size="w-10 h-10" textClass="text-base font-bold text-white" />
-          </div>
-          {/* Light preview */}
-          <div className="bg-gray-50 border border-border rounded-xl p-4 flex items-center gap-3">
-            <LogoWithText value={value} fallbackText="MLM 360" size="w-10 h-10" textClass="text-base font-bold text-gray-900" />
-          </div>
-          {/* Navbar bar preview */}
-          <div className="bg-card border border-border rounded-xl p-3 flex items-center justify-between gap-2">
-            <LogoWithText value={value} fallbackText="MLM 360" size="w-7 h-7" textClass="text-sm font-bold text-foreground" />
-            <span className="text-xs text-muted-foreground italic">Navbar</span>
-          </div>
-          {/* Collapsed preview */}
-          <div className="bg-card border border-border rounded-xl p-3 flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-muted/50 border border-border/50 flex items-center justify-center overflow-hidden flex-shrink-0">
-              {trimmedCollapsed ? (
-                trimmedCollapsed.toLowerCase().startsWith('<svg') ? (
-                  <span className="[&_svg]:w-6 [&_svg]:h-6" dangerouslySetInnerHTML={{ __html: trimmedCollapsed }} />
-                ) : (
-                  <img src={trimmedCollapsed} alt="" className="w-6 h-6 object-contain" />
-                )
-              ) : (
-                <LogoWithText value={value} fallbackText="ML" size="w-6 h-6" textClass="text-[10px] font-bold" />
-              )}
-            </div>
-            <span className="text-xs text-muted-foreground italic">Sidebar colapsado</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="mt-5 pt-4 border-t border-border flex items-center justify-between gap-4">
-        {!isEmpty && (
-          <button
-            onClick={() => onChange('')}
-            className="text-xs text-red-500 hover:text-red-600 font-medium transition-colors"
-          >
-            Eliminar logo y usar defecto
-          </button>
-        )}
-        <button
-          onClick={onSave}
-          disabled={saving || uploading || uploadingCollapsed}
-          className="ml-auto flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-lg hover:bg-primary/90 text-sm font-medium transition-colors disabled:opacity-50"
-        >
-          {saving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-          Guardar logo
-        </button>
-      </div>
-    </div>
-  );
-}
-
 export default function AdminPage() {
   const { user } = useAuthStore();
   const database = useDatabase();
@@ -332,6 +121,39 @@ export default function AdminPage() {
   const [savingConfig, setSavingConfig] = useState(false);
   const [showSecrets, setShowSecrets] = useState<Record<string, boolean>>({});
   const [customRoles, setCustomRoles] = useState<{ name: string; label: string; color: string }[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [uploadingCollapsed, setUploadingCollapsed] = useState(false);
+
+  const handleLogoFile = async (e: React.ChangeEvent<HTMLInputElement>, isCollapsed = false) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/') && file.type !== 'image/svg+xml') {
+      toast.error('Solo se permiten archivos de imagen');
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('El archivo no debe superar 2 MB');
+      return;
+    }
+    if (isCollapsed) setUploadingCollapsed(true);
+    else setUploading(true);
+    try {
+      const ext = file.name.split('.').pop() || 'png';
+      const path = `logos/logo-${isCollapsed ? 'collapsed-' : ''}${Date.now()}.${ext}`;
+      const result = await storage.upload('logos', path, file, { contentType: file.type, upsert: true });
+      if (result.success && result.url) {
+        setC(isCollapsed ? 'logo_collapsed_value' : 'logo_value', result.url);
+        toast.success('Logo subido. Presiona Guardar para aplicar.');
+      } else {
+        throw new Error(result.error || 'Upload failed');
+      }
+    } catch {
+      toast.error('Error al subir el logo');
+    } finally {
+      setUploading(false);
+      setUploadingCollapsed(false);
+    }
+  };
 
   const isAdmin = user?.role === 'super_admin' || user?.role === 'admin';
 
@@ -425,42 +247,153 @@ export default function AdminPage() {
         <div className="flex-1 min-w-0">
           {/* Empresa */}
           {activeModule === 'empresa' && (
-            <>
             <div className="bg-card border border-border rounded-xl p-5 sm:p-6">
-              <h2 className="text-lg font-semibold text-foreground mb-5">Información de la Empresa</h2>
-              <div className="space-y-4 max-w-lg">
-                {[
-                  { k: 'company_name', label: 'Nombre de la empresa', placeholder: 'MLM 360' },
-                  { k: 'company_email', label: 'Correo corporativo', placeholder: 'contacto@mlm360.pe' },
-                  { k: 'company_phone', label: 'Teléfono', placeholder: '+51 1 234 5678' },
-                  { k: 'company_address', label: 'Dirección', placeholder: 'Av. Javier Prado, Lima' },
-                  { k: 'company_ruc', label: 'RUC', placeholder: '20123456789' },
-                ].map(f => (
-                  <div key={f.k}>
-                    <label className="block text-sm font-medium text-foreground mb-1.5">{f.label}</label>
-                    <input value={c(f.k)} onChange={e => setC(f.k, e.target.value)} placeholder={f.placeholder}
-                      className="w-full px-3 py-2.5 bg-muted border border-border rounded-lg text-foreground text-sm outline-none focus:border-primary transition-colors" />
+              <h2 className="text-lg font-semibold text-foreground mb-5">Informacion del Sistema</h2>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Left: Company info + sizes */}
+                <div className="space-y-5">
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+                      <Building2 className="w-4 h-4 text-primary" />
+                      Datos de la empresa
+                    </h3>
+                    {[
+                      { k: 'company_name', label: 'Nombre', placeholder: 'MLM 360' },
+                      { k: 'company_email', label: 'Correo', placeholder: 'contacto@mlm360.pe' },
+                      { k: 'company_phone', label: 'Telefono', placeholder: '+51 1 234 5678' },
+                      { k: 'company_address', label: 'Direccion', placeholder: 'Av. Javier Prado, Lima' },
+                      { k: 'company_ruc', label: 'RUC', placeholder: '20123456789' },
+                    ].map(f => (
+                      <div key={f.k}>
+                        <label className="block text-xs font-medium text-foreground mb-1">{f.label}</label>
+                        <input value={c(f.k)} onChange={e => setC(f.k, e.target.value)} placeholder={f.placeholder}
+                          className="w-full px-3 py-2 bg-muted border border-border rounded-lg text-foreground text-sm outline-none focus:border-primary transition-colors" />
+                      </div>
+                    ))}
                   </div>
-                ))}
-                <button onClick={() => saveConfigKeys(['company_name', 'company_email', 'company_phone', 'company_address', 'company_ruc'])}
-                  disabled={savingConfig}
-                  className="flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-lg hover:bg-primary/90 text-sm font-medium transition-colors disabled:opacity-50">
-                  {savingConfig ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} Guardar cambios
+
+                  {/* Logo sizes */}
+                  <div className="pt-4 border-t border-border">
+                    <h3 className="text-sm font-bold text-foreground mb-3">Tamano de logos (px)</h3>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      {[
+                        { k: 'logo_size_navbar', label: 'Navbar', def: '32' },
+                        { k: 'logo_size_sidebar', label: 'Sidebar', def: '36' },
+                        { k: 'logo_size_collapsed', label: 'Colapsado', def: '40' },
+                        { k: 'logo_size_login', label: 'Login', def: '48' },
+                      ].map(f => (
+                        <div key={f.k}>
+                          <label className="block text-[10px] font-medium text-muted-foreground mb-1">{f.label}</label>
+                          <input type="number" min="16" max="128" value={c(f.k) || f.def} onChange={e => setC(f.k, e.target.value)}
+                            className="w-full px-2 py-1.5 bg-muted border border-border rounded text-foreground text-sm text-center" />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right: Logo uploads + preview */}
+                <div className="space-y-5">
+                  <div>
+                    <h3 className="text-sm font-bold text-foreground mb-3">Logo principal</h3>
+                    <label className={cn(
+                      'flex flex-col items-center justify-center gap-2 w-full h-24 border-2 border-dashed rounded-xl cursor-pointer transition-colors',
+                      'hover:border-primary/50 hover:bg-primary/5',
+                      uploading ? 'opacity-50 pointer-events-none' : '',
+                      'border-border'
+                    )}>
+                      <input type="file" accept="image/*,.svg" className="sr-only" onChange={e => handleLogoFile(e, false)} disabled={uploading} />
+                      {uploading
+                        ? <RefreshCw className="w-5 h-5 text-primary animate-spin" />
+                        : <Image className="w-5 h-5 text-muted-foreground" />}
+                      <span className="text-xs text-muted-foreground">
+                        {uploading ? 'Subiendo...' : 'Haz clic o arrastra tu logo'}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground/60">PNG, JPG, SVG, WebP</span>
+                    </label>
+                    <div className="mt-2">
+                      <input
+                        type="text"
+                        value={c('logo_value')}
+                        onChange={e => setC('logo_value', e.target.value)}
+                        placeholder="O pega URL / codigo SVG aqui"
+                        className="w-full px-3 py-2 bg-background border border-border rounded-lg text-xs font-mono text-foreground focus:border-primary"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="text-sm font-bold text-foreground mb-1">Logo colapsado (opcional)</h3>
+                    <p className="text-[10px] text-muted-foreground mb-2">Icono cuadrado para sidebar colapsado</p>
+                    <label className={cn(
+                      'flex flex-col items-center justify-center gap-1.5 w-full h-16 border-2 border-dashed rounded-xl cursor-pointer transition-colors',
+                      'hover:border-primary/50 hover:bg-primary/5',
+                      uploadingCollapsed ? 'opacity-50 pointer-events-none' : '',
+                      'border-border'
+                    )}>
+                      <input type="file" accept="image/*,.svg" className="sr-only" onChange={e => handleLogoFile(e, true)} disabled={uploadingCollapsed} />
+                      {uploadingCollapsed
+                        ? <RefreshCw className="w-4 h-4 text-primary animate-spin" />
+                        : <Image className="w-4 h-4 text-muted-foreground" />}
+                      <span className="text-[11px] text-muted-foreground">
+                        {uploadingCollapsed ? 'Subiendo...' : 'Logo colapsado'}
+                      </span>
+                    </label>
+                    <input
+                      type="text"
+                      value={c('logo_collapsed_value') || ''}
+                      onChange={e => setC('logo_collapsed_value', e.target.value)}
+                      placeholder="URL logo colapsado (opcional)"
+                      className="w-full mt-2 px-3 py-1.5 bg-background border border-border rounded-lg text-xs font-mono text-foreground focus:border-primary"
+                    />
+                  </div>
+
+                  {/* Preview */}
+                  <div className="pt-4 border-t border-border">
+                    <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Vista previa</h3>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="bg-muted/30 rounded-xl p-3 text-center">
+                        <p className="text-[10px] text-muted-foreground mb-2">Expandido</p>
+                        <div className="flex items-center justify-center gap-2 bg-card border border-border rounded-lg px-2 py-1.5">
+                          <LogoWithText value={c('logo_value')} fallbackText={c('company_name') || 'MLM'} size="w-6 h-6" />
+                          <span className="text-xs font-bold text-foreground truncate max-w-[60px]">{c('company_name') || 'MLM 360'}</span>
+                        </div>
+                      </div>
+                      <div className="bg-muted/30 rounded-xl p-3 text-center">
+                        <p className="text-[10px] text-muted-foreground mb-2">Colapsado</p>
+                        <div className="flex items-center justify-center w-10 h-10 mx-auto bg-muted/50 border border-border rounded-lg overflow-hidden">
+                          {c('logo_collapsed_value') ? (
+                            c('logo_collapsed_value').toLowerCase().startsWith('<svg') ? (
+                              <span className="[&_svg]:w-6 [&_svg]:h-6" dangerouslySetInnerHTML={{ __html: c('logo_collapsed_value') }} />
+                            ) : (
+                              <img src={c('logo_collapsed_value')} alt="" className="w-6 h-6 object-contain" />
+                            )
+                          ) : (
+                            <LogoWithText value={c('logo_value')} fallbackText={(c('company_name') || 'MLM').slice(0, 2)} size="w-6 h-6" />
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Single save button */}
+              <div className="mt-6 pt-4 border-t border-border flex justify-end">
+                <button
+                  onClick={() => saveConfigKeys([
+                    'company_name', 'company_email', 'company_phone', 'company_address', 'company_ruc',
+                    'logo_value', 'logo_collapsed_value',
+                    'logo_size_navbar', 'logo_size_sidebar', 'logo_size_collapsed', 'logo_size_login'
+                  ])}
+                  disabled={savingConfig || uploading || uploadingCollapsed}
+                  className="flex items-center gap-2 px-6 py-2.5 bg-primary text-white rounded-lg hover:bg-primary/90 text-sm font-medium transition-colors disabled:opacity-50"
+                >
+                  {savingConfig ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                  Guardar todo
                 </button>
               </div>
             </div>
-
-            {/* Logo del sistema */}
-            <LogoAdminSection
-              value={c('logo_value')}
-              collapsedValue={c('logo_collapsed_value')}
-              onChange={v => setC('logo_value', v)}
-              onCollapsedChange={v => setC('logo_collapsed_value', v)}
-              onSave={() => saveConfigKeys(['logo_value', 'logo_collapsed_value'])}
-              saving={savingConfig}
-              storage={storage}
-            />
-            </>
           )}
 
           {/* Matriz de Permisos */}

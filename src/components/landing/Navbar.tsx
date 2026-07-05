@@ -118,17 +118,21 @@ function DesktopUserMenu() {
             </div>
           </div>
           <div className="p-1.5">
-            {[
-              { icon: LayoutDashboard, label: 'Mi Panel', path: '/dashboard' },
-              { icon: User, label: 'Mi Perfil', path: '/dashboard/perfil' },
-              { icon: Package, label: 'Mis Pedidos', path: '/pedidos' },
-              { icon: Settings, label: 'Configuracion', path: '/dashboard/configuracion' },
-            ].map(item => (
-              <button key={item.path} onClick={() => { navigate(item.path); setOpen(false); }}
-                className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl hover:bg-muted text-sm text-foreground transition-colors text-left">
-                <item.icon className="w-4 h-4 text-muted-foreground flex-shrink-0" />{item.label}
-              </button>
-            ))}
+            {(() => {
+              const role = (user as any)?.role || 'user';
+              const canAccessSettings = role === 'super_admin' || role === 'admin';
+              return [
+                { icon: LayoutDashboard, label: 'Mi Panel', path: '/dashboard', show: true },
+                { icon: User, label: 'Mi Perfil', path: '/dashboard/perfil', show: true },
+                { icon: Package, label: 'Mis Pedidos', path: '/pedidos', show: true },
+                { icon: Settings, label: 'Configuracion', path: '/dashboard/configuracion', show: canAccessSettings },
+              ].filter(item => item.show).map(item => (
+                <button key={item.path} onClick={() => { navigate(item.path); setOpen(false); }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl hover:bg-muted text-sm text-foreground transition-colors text-left">
+                  <item.icon className="w-4 h-4 text-muted-foreground flex-shrink-0" />{item.label}
+                </button>
+              ));
+            })()}
           </div>
           <div className="p-1.5 border-t border-border">
             <button onClick={() => { setShowLogoutConfirm(true); setOpen(false); }}
