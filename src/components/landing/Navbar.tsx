@@ -125,7 +125,7 @@ function DesktopUserMenu() {
                 <LogOut className="w-6 h-6 text-red-500" />
               </div>
               <h3 className="text-lg font-bold text-foreground">¿Cerrar sesion?</h3>
-              <p className="text-sm text-muted-foreground mt-1">Tendras que volver a iniciar sesion para acceder a tu panel.</p>
+              <p className="text-sm text-muted-foreground mt-1">Confirma que deseas salir de tu cuenta.</p>
             </div>
             <div className="flex gap-3">
               <button
@@ -292,10 +292,10 @@ export default function Navbar() {
               <button
                 onClick={() => setMobileNavOpen(!mobileNavOpen)}
                 className={cn(
-                  'lg:hidden w-9 h-9 rounded-full flex items-center justify-center transition-colors ml-1',
+                  'lg:hidden w-9 h-9 flex items-center justify-center transition-colors ml-1',
                   mobileNavOpen
-                    ? 'bg-muted/60 text-foreground/70'
-                    : 'hover:bg-muted/60 text-foreground/70',
+                    ? 'text-foreground'
+                    : 'text-foreground hover:text-foreground',
                 )}
                 aria-label={mobileNavOpen ? 'Cerrar menu' : 'Abrir menu'}>
                 {mobileNavOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -440,7 +440,7 @@ export default function Navbar() {
                 <LogOut className="w-6 h-6 text-red-500" />
               </div>
               <h3 className="text-lg font-bold text-foreground">¿Cerrar sesion?</h3>
-              <p className="text-sm text-muted-foreground mt-1">Tendras que volver a iniciar sesion para acceder a tu panel.</p>
+              <p className="text-sm text-muted-foreground mt-1">Confirma que deseas salir de tu cuenta.</p>
             </div>
             <div className="flex gap-3">
               <button

@@ -4,18 +4,17 @@ import { Link, useNavigate } from '@/lib/router';
 import {
   Bell, Search, Moon, Sun, Menu, LogOut, User, Settings,
   ChevronDown, ExternalLink, CheckCheck, Trash2, X, Users, Package, ShoppingBag,
+  LayoutDashboard, Crown, Star,
 } from 'lucide-react';
 import { useThemeStore } from '@/store/themeStore';
 import { useAuthStore } from '@/store/authStore';
 import { useUIStore } from '@/store/uiStore';
+import { useConfig } from '@/store/configStore';
 import { cn } from '@/lib/utils';
-import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
-  DropdownMenuSeparator, DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
+import { LogoWithText } from '@/components/Logo';
 
 interface SearchResult {
   type: 'user' | 'product' | 'order';
@@ -29,30 +28,55 @@ export default function DashboardHeader() {
   const { theme, setTheme } = useThemeStore();
   const { user, signOut } = useAuthStore();
   const { setSidebarOpen } = useUIStore();
+  const { company, logoValue, logoSizes, plans, ranks } = useConfig();
   const database = useDatabase();
   const navigate = useNavigate();
+  const isDark = theme === 'dark';
+
+  // Search state
+  const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [focused, setFocused] = useState(false);
-  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  const [notifOpen, setNotifOpen] = useState(false);
+  const [loadingSearch, setLoadingSearch] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Notifications
+  const [notifOpen, setNotifOpen] = useState(false);
   const [dbNotifications, setDbNotifications] = useState<any[]>([]);
   const [loadingNotifs, setLoadingNotifs] = useState(false);
   const unread = dbNotifications.filter(n => !n.read).length;
-  const isDark = theme === 'dark';
 
+  // User dropdown
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  // Logout
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
+  const companyName = company.company_name || 'MLM360';
   const initials = (user?.full_name || user?.username || 'U')
     .split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase();
+
+  const userPlan = user ? plans.find(p => p.slug === user.plan || p.id === user.plan) : null;
+  const userRank = user ? ranks.find(r => r.slug === user.rank || r.name?.toLowerCase() === user.rank?.toLowerCase()) : null;
 
   // Close search on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
-        setFocused(false);
+        if (!query) setSearchOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [query]);
+
+  // Close user menu on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false);
       }
     };
     document.addEventListener('mousedown', handler);
@@ -64,25 +88,25 @@ export default function DashboardHeader() {
     const handler = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
         e.preventDefault();
-        inputRef.current?.focus();
-        setFocused(true);
+        setSearchOpen(true);
+        setTimeout(() => inputRef.current?.focus(), 50);
       }
-      if (e.key === 'Escape' && focused) {
-        setFocused(false);
-        inputRef.current?.blur();
+      if (e.key === 'Escape') {
+        setSearchOpen(false);
+        setQuery('');
+        setResults([]);
       }
     };
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
-  }, [focused]);
+  }, []);
 
   const performSearch = useCallback(async (q: string) => {
     if (q.length < 2) { setResults([]); return; }
-    setLoading(true);
+    setLoadingSearch(true);
     const found: SearchResult[] = [];
     const lower = q.toLowerCase();
     const isAdmin = user?.role === 'super_admin' || user?.role === 'admin' || user?.role === 'inspector';
-
     try {
       if (isAdmin) {
         const { data: users } = await database.select<any>('profiles', { select: ['id', 'full_name', 'email', 'username'], limit: 20 });
@@ -98,9 +122,8 @@ export default function DashboardHeader() {
           .slice(0, 3).forEach((p: any) => found.push({ type: 'product', id: p.id, title: p.name, subtitle: p.sku ? `SKU: ${p.sku}` : 'Producto', href: `/tienda/${p.id}` }));
       }
     } catch { /* silent */ }
-
     setResults(found.slice(0, 6));
-    setLoading(false);
+    setLoadingSearch(false);
   }, [database, user?.role]);
 
   useEffect(() => {
@@ -112,7 +135,7 @@ export default function DashboardHeader() {
     navigate(href);
     setQuery('');
     setResults([]);
-    setFocused(false);
+    setSearchOpen(false);
   };
 
   const fetchNotifications = useCallback(async () => {
@@ -150,108 +173,120 @@ export default function DashboardHeader() {
     setDbNotifications(prev => prev.filter(n => n.id !== id));
   };
 
-  const handleSignOut = () => {
-    setShowLogoutConfirm(true);
-  };
-
   const iconFor = (type: string) => type === 'user' ? Users : type === 'product' ? Package : ShoppingBag;
 
   return (
-    <header className="h-16 border-b border-border bg-background/80 backdrop-blur-md flex items-center px-4 lg:px-6 sticky top-0 z-30 gap-2">
+    <>
+      <header className="h-16 border-b border-border bg-background flex items-center px-4 lg:px-6 sticky top-0 z-30 gap-3">
 
-      {/* Search bar — LEFT, flex-1, shows on both mobile and desktop */}
-      <div ref={searchRef} className="relative flex-1 min-w-0 max-w-xs lg:max-w-sm">
-        <div className={cn(
-          'flex items-center gap-2 bg-muted/60 border rounded-xl px-3 h-10 transition-all duration-200',
-          focused
-            ? 'border-primary/50 bg-background ring-2 ring-primary/20'
-            : 'border-transparent hover:border-border/40',
-        )}>
-          <Search className="w-4 h-4 text-foreground/50 flex-shrink-0" />
-          <input
-            ref={inputRef}
-            type="text"
-            value={query}
-            onChange={e => setQuery(e.target.value)}
-            onFocus={() => setFocused(true)}
-            placeholder="Buscar..."
-            className="bg-transparent text-sm outline-none flex-1 text-foreground placeholder:text-muted-foreground min-w-0"
+        {/* Logo — same as landing nav */}
+        <Link to="/" className="flex-shrink-0">
+          <LogoWithText
+            value={logoValue}
+            fallbackText={companyName}
+            pixelSize={logoSizes.navbar || 32}
+            textClass="text-base font-bold text-foreground hidden sm:block"
           />
-          {query ? (
-            <button onClick={() => { setQuery(''); setResults([]); }} className="p-0.5 hover:bg-muted rounded-lg transition-colors flex-shrink-0">
-              <X className="w-3.5 h-3.5 text-muted-foreground" />
-            </button>
-          ) : (
-            <kbd className="hidden lg:flex items-center px-1.5 py-0.5 bg-muted/80 rounded text-[10px] font-medium text-muted-foreground border border-border/30 leading-none flex-shrink-0">
-              ⌘K
-            </kbd>
-          )}
-        </div>
+        </Link>
 
-        {/* Results dropdown */}
-        {focused && query.length >= 2 && (
-          <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden z-50">
-            {loading ? (
-              <div className="py-3">
-                {[1, 2, 3].map(i => (
-                  <div key={i} className="flex items-center gap-3 px-4 py-2.5">
-                    <Skeleton className="w-8 h-8 rounded-xl flex-shrink-0" />
-                    <div className="flex-1 space-y-1.5">
-                      <Skeleton className="h-3.5 w-3/4 rounded" />
-                      <Skeleton className="h-2.5 w-1/2 rounded" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : results.length > 0 ? (
-              <div className="py-1.5">
-                {results.map(r => {
-                  const Icon = iconFor(r.type);
-                  return (
-                    <button key={`${r.type}-${r.id}`} onClick={() => go(r.href)}
-                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/60 transition-colors text-left">
-                      <div className="w-8 h-8 rounded-xl bg-muted flex items-center justify-center flex-shrink-0">
-                        <Icon className="w-4 h-4 text-muted-foreground" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground truncate">{r.title}</p>
-                        <p className="text-xs text-muted-foreground truncate">{r.subtitle}</p>
-                      </div>
+        {/* Right controls */}
+        <div className="ml-auto flex items-center gap-1 flex-shrink-0">
+
+          {/* Search icon — opens floating input */}
+          <div ref={searchRef} className="relative">
+            <button
+              onClick={() => { setSearchOpen(v => !v); setTimeout(() => inputRef.current?.focus(), 50); }}
+              className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted text-foreground/70 hover:text-foreground transition-colors"
+              aria-label="Buscar"
+            >
+              <Search className="w-4 h-4" />
+            </button>
+
+            {/* Floating search panel */}
+            {searchOpen && (
+              <div className="absolute right-0 top-full mt-2 w-80 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden z-50">
+                <div className="flex items-center gap-2 px-3 py-2.5 border-b border-border">
+                  <Search className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    value={query}
+                    onChange={e => setQuery(e.target.value)}
+
+                    placeholder="Buscar usuarios, productos..."
+                    className="bg-transparent text-sm outline-none flex-1 text-foreground placeholder:text-muted-foreground"
+                    autoFocus
+                  />
+                  {query && (
+                    <button onClick={() => { setQuery(''); setResults([]); }} className="text-muted-foreground hover:text-foreground transition-colors">
+                      <X className="w-3.5 h-3.5" />
                     </button>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="px-4 py-6 text-center">
-                <p className="text-sm text-muted-foreground">Sin resultados para "{query}"</p>
+                  )}
+                </div>
+                {query.length >= 2 && (
+                  loadingSearch ? (
+                    <div className="py-3">
+                      {[1, 2, 3].map(i => (
+                        <div key={i} className="flex items-center gap-3 px-4 py-2.5">
+                          <Skeleton className="w-8 h-8 rounded-xl flex-shrink-0" />
+                          <div className="flex-1 space-y-1.5"><Skeleton className="h-3.5 w-3/4 rounded" /><Skeleton className="h-2.5 w-1/2 rounded" /></div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : results.length > 0 ? (
+                    <div className="py-1.5">
+                      {results.map(r => {
+                        const Icon = iconFor(r.type);
+                        return (
+                          <button key={`${r.type}-${r.id}`} onClick={() => go(r.href)}
+                            className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/60 transition-colors text-left">
+                            <div className="w-8 h-8 rounded-xl bg-muted flex items-center justify-center flex-shrink-0">
+                              <Icon className="w-4 h-4 text-muted-foreground" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-foreground truncate">{r.title}</p>
+                              <p className="text-xs text-muted-foreground truncate">{r.subtitle}</p>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="px-4 py-6 text-center">
+                      <p className="text-sm text-muted-foreground">Sin resultados para "{query}"</p>
+                    </div>
+                  )
+                )}
+                {!query && (
+                  <div className="px-4 py-4 text-center">
+                    <p className="text-xs text-muted-foreground">Escribe para buscar...</p>
+                  </div>
+                )}
               </div>
             )}
           </div>
-        )}
-      </div>
 
-      {/* Right controls */}
-      <div className="ml-auto flex items-center gap-1 flex-shrink-0">
+          {/* Link to public site */}
+          <Link to="/"
+            className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted text-foreground/70 hover:text-foreground transition-colors"
+          >
+            <ExternalLink className="w-4 h-4" />
+          </Link>
 
-        {/* Link to public site */}
-        <Link to="/"
-          className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted text-foreground/70 hover:text-foreground transition-colors"
-        >
-          <ExternalLink className="w-4 h-4" />
-        </Link>
+          {/* Theme toggle */}
+          <button
+            onClick={() => setTheme(isDark ? 'light' : 'dark')}
+            className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted text-foreground/70 hover:text-foreground transition-colors"
+          >
+            {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
 
-        {/* Theme toggle */}
-        <button
-          onClick={() => setTheme(isDark ? 'light' : 'dark')}
-          className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted text-foreground/70 hover:text-foreground transition-colors"
-        >
-          {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-        </button>
-
-        {/* Notifications */}
-        <DropdownMenu open={notifOpen} onOpenChange={(open) => { setNotifOpen(open); if (open) fetchNotifications(); }}>
-          <DropdownMenuTrigger asChild>
-            <button className="relative w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted text-foreground/70 hover:text-foreground transition-colors">
+          {/* Notifications */}
+          <div className="relative">
+            <button
+              onClick={() => { setNotifOpen(v => !v); if (!notifOpen) fetchNotifications(); }}
+              className="relative w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted text-foreground/70 hover:text-foreground transition-colors"
+            >
               <Bell className="w-4 h-4" />
               {unread > 0 && (
                 <span className="absolute top-0.5 right-0.5 min-w-[16px] h-4 px-1 bg-primary text-white text-[10px] font-bold rounded-full flex items-center justify-center">
@@ -259,126 +294,154 @@ export default function DashboardHeader() {
                 </span>
               )}
             </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-80 p-0 rounded-2xl">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-              <span className="font-semibold text-sm">Notificaciones</span>
-              <div className="flex items-center gap-2">
-                <Badge variant="secondary" className="text-xs">{unread} nuevas</Badge>
-                {unread > 0 && (
-                  <button onClick={markAllAsRead} title="Marcar todas como leídas"
-                    className="text-muted-foreground hover:text-primary transition-colors">
-                    <CheckCheck className="w-3.5 h-3.5" />
-                  </button>
-                )}
-              </div>
-            </div>
-            <div className="max-h-80 overflow-y-auto">
-              {loadingNotifs ? (
-                <div className="px-4 py-8 text-center">
-                  <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+            {notifOpen && (
+              <div className="absolute right-0 top-full mt-2 w-80 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden z-50">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+                  <span className="font-semibold text-sm">Notificaciones</span>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="text-xs">{unread} nuevas</Badge>
+                    {unread > 0 && (
+                      <button onClick={markAllAsRead} title="Marcar todas como leídas"
+                        className="text-muted-foreground hover:text-primary transition-colors">
+                        <CheckCheck className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
                 </div>
-              ) : dbNotifications.length > 0 ? dbNotifications.map(n => (
-                <div
-                  key={n.id}
-                  className={cn(
-                    'group flex gap-3 px-4 py-3 hover:bg-muted transition-colors border-b border-border/50 cursor-pointer',
-                    !n.read && 'bg-primary/5'
-                  )}
-                  onClick={() => !n.read && markAsRead(n.id)}
-                >
-                  <div className={cn(
-                    'w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0',
-                    n.type === 'success' ? 'bg-green-500/20 text-green-500' :
-                    n.type === 'warning' ? 'bg-yellow-500/20 text-yellow-500' :
-                    n.type === 'error' ? 'bg-red-500/20 text-red-500' :
-                    'bg-blue-500/20 text-blue-500'
-                  )}>
-                    <Bell className="w-3.5 h-3.5" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className={cn('text-sm text-foreground', !n.read && 'font-semibold')}>{n.title}</p>
-                    <p className="text-xs text-muted-foreground line-clamp-2">{n.message}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {new Date(n.created_at).toLocaleDateString('es-PE', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                    </p>
-                  </div>
-                  <div className="flex flex-col items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    {!n.read && <div className="w-2 h-2 rounded-full bg-primary flex-shrink-0" />}
-                    <button
-                      onClick={e => { e.stopPropagation(); deleteNotification(n.id); }}
-                      className="text-muted-foreground hover:text-red-500 transition-colors"
+                <div className="max-h-80 overflow-y-auto">
+                  {loadingNotifs ? (
+                    <div className="px-4 py-8 text-center">
+                      <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+                    </div>
+                  ) : dbNotifications.length > 0 ? dbNotifications.map(n => (
+                    <div key={n.id}
+                      className={cn('group flex gap-3 px-4 py-3 hover:bg-muted transition-colors border-b border-border/50 cursor-pointer', !n.read && 'bg-primary/5')}
+                      onClick={() => !n.read && markAsRead(n.id)}
                     >
-                      <Trash2 className="w-3 h-3" />
+                      <div className={cn('w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0',
+                        n.type === 'success' ? 'bg-green-500/20 text-green-500' :
+                        n.type === 'warning' ? 'bg-yellow-500/20 text-yellow-500' :
+                        n.type === 'error' ? 'bg-red-500/20 text-red-500' : 'bg-blue-500/20 text-blue-500')}>
+                        <Bell className="w-3.5 h-3.5" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className={cn('text-sm text-foreground', !n.read && 'font-semibold')}>{n.title}</p>
+                        <p className="text-xs text-muted-foreground line-clamp-2">{n.message}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {new Date(n.created_at).toLocaleDateString('es-PE', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      </div>
+                      <div className="flex flex-col items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {!n.read && <div className="w-2 h-2 rounded-full bg-primary flex-shrink-0" />}
+                        <button onClick={e => { e.stopPropagation(); deleteNotification(n.id); }}
+                          className="text-muted-foreground hover:text-red-500 transition-colors">
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </div>
+                  )) : (
+                    <div className="px-4 py-12 text-center">
+                      <Bell className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
+                      <p className="text-sm text-muted-foreground">Sin notificaciones</p>
+                    </div>
+                  )}
+                </div>
+                {dbNotifications.length > 0 && (
+                  <div className="px-4 py-2 border-t border-border">
+                    <button onClick={markAllAsRead} className="w-full text-xs text-primary hover:text-primary/80 text-center transition-colors py-1">
+                      Marcar todas como leídas
                     </button>
                   </div>
-                </div>
-              )) : (
-                <div className="px-4 py-12 text-center">
-                  <Bell className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
-                  <p className="text-sm text-muted-foreground">Sin notificaciones</p>
-                </div>
-              )}
-            </div>
-            {dbNotifications.length > 0 && (
-              <div className="px-4 py-2 border-t border-border">
-                <button onClick={markAllAsRead} className="w-full text-xs text-primary hover:text-primary/80 text-center transition-colors py-1">
-                  Marcar todas como leídas
-                </button>
+                )}
               </div>
             )}
-          </DropdownMenuContent>
-        </DropdownMenu>
+          </div>
 
-        {/* User avatar/menu — desktop only */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button className="hidden lg:flex items-center gap-2 pl-1.5 pr-2 py-1 rounded-full hover:bg-muted transition-colors ml-0.5">
-              {user?.avatar_url ? (
-                <img src={user.avatar_url} alt={user.full_name || 'Avatar'}
-                  className="w-8 h-8 rounded-full object-cover border border-border flex-shrink-0" />
-              ) : (
-                <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary flex-shrink-0">
-                  {initials}
-                </div>
-              )}
-              <div className="text-left">
-                <div className="text-sm font-medium text-foreground leading-tight">{user?.full_name?.split(' ')[0] || user?.username || 'Usuario'}</div>
+          {/* User avatar/menu — desktop only, same design as landing Navbar */}
+          <div className="relative hidden lg:block" ref={userMenuRef}>
+            <button
+              onClick={() => setUserMenuOpen(v => !v)}
+              className="flex items-center gap-2 px-2 py-1.5 rounded-full border border-border/60 hover:bg-muted/50 transition-all duration-200 ml-1"
+            >
+              <div className="w-7 h-7 rounded-full overflow-hidden bg-gradient-to-br from-primary/20 to-primary/40 flex items-center justify-center flex-shrink-0">
+                {user?.avatar_url ? (
+                  <img src={user.avatar_url} alt={user?.full_name || ''} className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-xs font-bold text-primary">{initials}</span>
+                )}
               </div>
-              <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
+              <span className="text-sm font-medium text-foreground max-w-[90px] truncate">
+                {user?.full_name?.split(' ')[0] || user?.username || 'Usuario'}
+              </span>
+              <ChevronDown className={cn('w-3.5 h-3.5 text-muted-foreground transition-transform duration-200', userMenuOpen && 'rotate-180')} />
             </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-52 rounded-2xl p-1.5">
-            <div className="px-3 py-2 mb-1 border-b border-border/50">
-              <p className="text-sm font-semibold text-foreground truncate">{user?.full_name || user?.username || 'Usuario'}</p>
-              <p className="text-xs text-muted-foreground capitalize">{user?.role?.replace(/_/g, ' ') || 'Usuario'}</p>
-            </div>
-            <DropdownMenuItem asChild>
-              <Link to="/dashboard/perfil" className="flex items-center gap-2 rounded-xl cursor-pointer">
-                <User className="w-4 h-4" />Mi Perfil
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link to="/dashboard/configuracion" className="flex items-center gap-2 rounded-xl cursor-pointer">
-                <Settings className="w-4 h-4" />Configuración
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleSignOut} className="text-destructive flex items-center gap-2 rounded-xl cursor-pointer">
-              <LogOut className="w-4 h-4" />Cerrar Sesión
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
 
-        {/* Hamburger — mobile only, RIGHT */}
-        <button
-          onClick={() => setSidebarOpen(true)}
-          className="lg:hidden w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted text-foreground/70 hover:text-foreground transition-colors"
-          aria-label="Abrir menú"
-        >
-          <Menu className="w-5 h-5" />
-        </button>
-      </div>
+            {userMenuOpen && (
+              <div className="absolute right-0 top-full mt-2 w-64 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden z-50">
+                {/* User header card — clickable to profile */}
+                <button
+                  onClick={() => { navigate('/dashboard/perfil'); setUserMenuOpen(false); }}
+                  className="w-full p-4 bg-muted/30 border-b border-border flex items-center gap-3 hover:bg-muted/50 transition-colors text-left"
+                >
+                  <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-br from-primary/20 to-primary/40 flex items-center justify-center flex-shrink-0">
+                    {user?.avatar_url ? (
+                      <img src={user.avatar_url} alt={user?.full_name || ''} className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-sm font-bold text-primary">{initials}</span>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-foreground truncate text-sm">{user?.full_name || user?.username}</div>
+                    <div className="text-xs text-muted-foreground truncate">{user?.email}</div>
+                    {(userPlan || userRank) && (
+                      <div className="flex items-center gap-1 mt-1 flex-wrap">
+                        {userPlan && (
+                          <span className="flex items-center gap-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded-full">
+                            <Crown className="w-2.5 h-2.5" />{userPlan.name}
+                          </span>
+                        )}
+                        {userRank && (
+                          <span className="flex items-center gap-0.5 text-[10px] font-semibold text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">
+                            <Star className="w-2.5 h-2.5" />{userRank.name}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </button>
+                <div className="p-1.5">
+                  {[
+                    { icon: LayoutDashboard, label: 'Mi Panel', path: '/dashboard' },
+                    { icon: User, label: 'Mi Perfil', path: '/dashboard/perfil' },
+                    { icon: Package, label: 'Mis Pedidos', path: '/pedidos' },
+                    { icon: Settings, label: 'Configuracion', path: '/dashboard/configuracion' },
+                  ].map(item => (
+                    <button key={item.path} onClick={() => { navigate(item.path); setUserMenuOpen(false); }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl hover:bg-muted text-sm text-foreground transition-colors text-left">
+                      <item.icon className="w-4 h-4 text-muted-foreground flex-shrink-0" />{item.label}
+                    </button>
+                  ))}
+                </div>
+                <div className="p-1.5 border-t border-border">
+                  <button onClick={() => { setShowLogoutConfirm(true); setUserMenuOpen(false); }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl hover:bg-red-500/10 text-sm text-red-500 transition-colors text-left">
+                    <LogOut className="w-4 h-4 flex-shrink-0" />Cerrar sesion
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Hamburger — mobile only */}
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="lg:hidden w-9 h-9 flex items-center justify-center text-foreground/70 hover:text-foreground transition-colors"
+            aria-label="Abrir menú"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+        </div>
+      </header>
 
       {/* Logout confirmation dialog */}
       {showLogoutConfirm && (
@@ -388,8 +451,8 @@ export default function DashboardHeader() {
               <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mb-3">
                 <LogOut className="w-6 h-6 text-red-500" />
               </div>
-              <h3 className="text-lg font-bold text-foreground">¿Cerrar sesión?</h3>
-              <p className="text-sm text-muted-foreground mt-1">Tendrás que volver a iniciar sesión para acceder a tu panel.</p>
+              <h3 className="text-lg font-bold text-foreground">¿Cerrar sesion?</h3>
+              <p className="text-sm text-muted-foreground mt-1">Confirma que deseas salir de tu cuenta.</p>
             </div>
             <div className="flex gap-3">
               <button
@@ -402,12 +465,12 @@ export default function DashboardHeader() {
                 onClick={async () => { await signOut(); setShowLogoutConfirm(false); navigate('/login'); }}
                 className="flex-1 bg-red-600 text-white rounded-xl py-2.5 text-sm font-semibold hover:bg-red-700 transition-colors"
               >
-                Cerrar sesión
+                Cerrar sesion
               </button>
             </div>
           </div>
         </div>
       )}
-    </header>
+    </>
   );
 }

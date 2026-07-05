@@ -364,7 +364,7 @@ export default function Sidebar() {
       {/* Mobile backdrop */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -639,7 +639,7 @@ export default function Sidebar() {
                 <LogOut className="w-6 h-6 text-red-500" />
               </div>
               <h3 className="text-lg font-bold text-foreground">¿Cerrar sesión?</h3>
-              <p className="text-sm text-muted-foreground mt-1">Tendrás que volver a iniciar sesión para acceder a tu panel.</p>
+              <p className="text-sm text-muted-foreground mt-1">Confirma que deseas salir de tu cuenta.</p>
             </div>
             <div className="flex gap-3">
               <button
