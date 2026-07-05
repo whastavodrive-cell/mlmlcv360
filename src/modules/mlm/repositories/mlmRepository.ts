@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useDatabase } from '@/lib/backend';
 import type { DatabaseInterface, Profile as BackendProfile } from '@/lib/backend';
 
@@ -274,5 +275,5 @@ class MLMRepositoryImpl implements MLMRepository {
 // Hook to get repository instance
 export function useMLMRepository(): MLMRepository {
   const db = useDatabase();
-  return new MLMRepositoryImpl(db);
+  return useMemo(() => new MLMRepositoryImpl(db), [db]);
 }

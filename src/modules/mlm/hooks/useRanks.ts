@@ -44,10 +44,7 @@ export function useRanks(options: UseRanksOptions = {}): UseRanksReturn {
       setError(null);
       try {
         const [referrals, commissions] = await Promise.all([
-          repo.getProfilesByIds([]).then(() => {
-            // We need referrals count - re-fetch with proper filter
-            return repo.getDownline(targetUserId, 1);
-          }),
+          repo.getDownline(targetUserId, 1),
           repo.getCommissions(targetUserId),
         ]);
         setAffiliateCount(referrals.filter(p => p.sponsor_id === targetUserId).length);
