@@ -8,12 +8,13 @@ import { useAuthStore } from '@/store/authStore';
 import { useConfig, formatPrice } from '@/store/configStore';
 import { toast } from 'sonner';
 import {
-  Eye, EyeOff, CircleCheck as CheckCircle, Boxes,
+  Eye, EyeOff, CircleCheck as CheckCircle,
   ArrowRight, ArrowLeft, User, Mail, Lock,
   Loader as Loader2, CircleAlert as AlertCircle,
   Camera, CreditCard,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import Logo from '@/components/Logo';
 
 const step1Schema = z.object({
   full_name: z.string().min(3, 'Mínimo 3 caracteres'),
@@ -50,7 +51,7 @@ export default function RegisterPage() {
   const backend = useBackend();
   const database = useDatabase();
   const storage = useStorage();
-  const { plans, currency, currencySymbol, exchangeRate, company, loading: configLoading } = useConfig();
+  const { plans, currency, currencySymbol, exchangeRate, company, logoValue, loading: configLoading } = useConfig();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -232,8 +233,8 @@ export default function RegisterPage() {
       {/* Top bar */}
       <div className="flex items-center justify-between px-6 py-4 border-b border-border">
         <Link to="/" className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center">
-            <Boxes className="w-5 h-5 text-white" />
+          <div className="w-9 h-9 rounded-xl flex-shrink-0">
+            <Logo value={logoValue} fallbackText={companyName} size="w-9 h-9" />
           </div>
           <span className="font-bold text-xl text-foreground">{companyName}</span>
         </Link>

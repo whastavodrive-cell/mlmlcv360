@@ -1,11 +1,13 @@
 import { useState, useEffect, Fragment } from 'react';
-import { useDatabase } from '@/lib/backend';
+import { useDatabase, useStorage } from '@/lib/backend';
+import type { StorageInterface } from '@/lib/backend';
 import { useAuthStore } from '@/store/authStore';
 import { useSearchParams } from '@/lib/router';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { Building2, Shield, Smartphone, Search, Mail, Save, ChevronRight, RefreshCw, MessageCircle, Eye, EyeOff, Lock, CreditCard, Award, Plus, Trash2, CreditCard as Edit2, X, CircleCheck as CheckCircle, DollarSign, Wrench, TriangleAlert as AlertTriangle } from 'lucide-react';
+import { Building2, Shield, Smartphone, Search, Mail, Save, ChevronRight, RefreshCw, MessageCircle, Eye, EyeOff, Lock, CreditCard, Award, Plus, Trash2, CreditCard as Edit2, X, CircleCheck as CheckCircle, DollarSign, Wrench, TriangleAlert as AlertTriangle, Image } from 'lucide-react';
 import { useConfig, type Plan, type Rank } from '@/store/configStore';
+import Logo from '@/components/Logo';
 
 // Smart icon renderer: detects SVG markup, URL images, emoji, or plain text
 function RenderIcon({ value, className }: { value: string; className?: string }) {
@@ -101,9 +103,157 @@ function ToggleSwitch({ checked, onChange }: { checked: boolean; onChange: (v: b
   );
 }
 
+// ── Logo admin panel ────────────────────────────────────────────────────────
+interface LogoAdminSectionProps {
+  value: string;
+  onChange: (v: string) => void;
+  onSave: () => void;
+  saving: boolean;
+  storage: StorageInterface;
+}
+
+function LogoAdminSection({ value, onChange, onSave, saving, storage }: LogoAdminSectionProps) {
+  const [uploading, setUploading] = useState(false);
+
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/') && file.type !== 'image/svg+xml') {
+      toast.error('Solo se permiten archivos de imagen (PNG, JPG, SVG, WebP)');
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('El archivo no debe superar 2 MB');
+      return;
+    }
+    setUploading(true);
+    try {
+      const ext = file.name.split('.').pop() || 'png';
+      const path = `logos/logo-${Date.now()}.${ext}`;
+      const result = await storage.upload('logos', path, file, { contentType: file.type, upsert: true });
+      if (result.success && result.url) {
+        onChange(result.url);
+        toast.success('Logo subido. Presiona Guardar para aplicar.');
+      } else {
+        throw new Error(result.error || 'Upload failed');
+      }
+    } catch {
+      toast.error('Error al subir el logo');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const trimmed = (value || '').trim();
+  const isSvg = trimmed.toLowerCase().startsWith('<svg');
+  const isUrl = trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('/');
+  const isEmpty = !trimmed;
+
+  return (
+    <div className="bg-card border border-border rounded-2xl p-5 sm:p-6">
+      <div className="flex items-center gap-3 mb-5">
+        <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+          <Image className="w-4 h-4 text-primary" />
+        </div>
+        <div>
+          <h3 className="text-sm font-bold text-foreground">Logo del sistema</h3>
+          <p className="text-xs text-muted-foreground">Aparece en navbar, sidebar, login y footer</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Input column */}
+        <div className="space-y-4">
+          <div>
+            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide block mb-2">
+              Subir archivo de imagen
+            </label>
+            <label className={cn(
+              'flex flex-col items-center justify-center gap-2 w-full h-28 border-2 border-dashed rounded-xl cursor-pointer transition-colors',
+              'hover:border-primary/50 hover:bg-primary/5',
+              uploading ? 'opacity-50 pointer-events-none' : '',
+              'border-border'
+            )}>
+              <input type="file" accept="image/*,.svg" className="sr-only" onChange={handleFile} disabled={uploading} />
+              {uploading
+                ? <RefreshCw className="w-5 h-5 text-primary animate-spin" />
+                : <Image className="w-5 h-5 text-muted-foreground" />}
+              <span className="text-xs text-muted-foreground">
+                {uploading ? 'Subiendo...' : 'Haz clic o arrastra tu logo aquí'}
+              </span>
+              <span className="text-[10px] text-muted-foreground/60">PNG, JPG, SVG, WebP · máx 2 MB</span>
+            </label>
+          </div>
+
+          <div>
+            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide block mb-2">
+              O pega una URL o código SVG
+            </label>
+            <textarea
+              value={value}
+              onChange={e => onChange(e.target.value)}
+              placeholder={'https://ejemplo.com/logo.png\no pega código <svg ...>...</svg>'}
+              rows={5}
+              className="w-full bg-background border border-border rounded-xl px-3 py-2.5 text-sm font-mono text-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary placeholder:text-muted-foreground/50"
+            />
+            <p className="text-[11px] text-muted-foreground mt-1.5">
+              {isEmpty && 'Sin logo configurado — se usará el icono por defecto.'}
+              {isSvg && 'SVG detectado — se renderizará como gráfico vectorial inline.'}
+              {isUrl && 'URL detectada — se mostrará como imagen.'}
+            </p>
+          </div>
+        </div>
+
+        {/* Preview column */}
+        <div className="space-y-3">
+          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide block">
+            Vista previa en vivo
+          </label>
+          {/* Dark preview */}
+          <div className="bg-gray-900 rounded-xl p-4 flex items-center gap-3">
+            <Logo value={value} fallbackText="MLM 360" size="w-10 h-10" />
+            <span className="text-base font-bold text-white">MLM 360</span>
+          </div>
+          {/* Light preview */}
+          <div className="bg-gray-50 border border-border rounded-xl p-4 flex items-center gap-3">
+            <Logo value={value} fallbackText="MLM 360" size="w-10 h-10" />
+            <span className="text-base font-bold text-gray-900">MLM 360</span>
+          </div>
+          {/* Navbar bar preview */}
+          <div className="bg-card border border-border rounded-xl p-3 flex items-center gap-2">
+            <Logo value={value} fallbackText="MLM 360" size="w-7 h-7" />
+            <span className="text-sm font-bold text-foreground">MLM 360</span>
+            <span className="ml-auto text-xs text-muted-foreground italic">Navbar</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-5 pt-4 border-t border-border flex items-center justify-between gap-4">
+        {!isEmpty && (
+          <button
+            onClick={() => onChange('')}
+            className="text-xs text-red-500 hover:text-red-600 font-medium transition-colors"
+          >
+            Eliminar logo y usar defecto
+          </button>
+        )}
+        <button
+          onClick={onSave}
+          disabled={saving || uploading}
+          className="ml-auto flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-lg hover:bg-primary/90 text-sm font-medium transition-colors disabled:opacity-50"
+        >
+          {saving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+          Guardar logo
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminPage() {
   const { user } = useAuthStore();
   const database = useDatabase();
+  const storage = useStorage();
   const [searchParamsAdmin] = useSearchParams();
   const [activeModule, setActiveModule] = useState(() => searchParamsAdmin.get('module') || 'empresa');
 
@@ -212,6 +362,7 @@ export default function AdminPage() {
         <div className="flex-1 min-w-0">
           {/* Empresa */}
           {activeModule === 'empresa' && (
+            <>
             <div className="bg-card border border-border rounded-xl p-5 sm:p-6">
               <h2 className="text-lg font-semibold text-foreground mb-5">Información de la Empresa</h2>
               <div className="space-y-4 max-w-lg">
@@ -235,6 +386,16 @@ export default function AdminPage() {
                 </button>
               </div>
             </div>
+
+            {/* Logo del sistema */}
+            <LogoAdminSection
+              value={c('logo_value')}
+              onChange={v => setC('logo_value', v)}
+              onSave={() => saveConfigKeys(['logo_value'])}
+              saving={savingConfig}
+              storage={storage}
+            />
+            </>
           )}
 
           {/* Matriz de Permisos */}

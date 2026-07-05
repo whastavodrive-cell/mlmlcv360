@@ -4,7 +4,8 @@ import { useConfig } from '@/store/configStore';
 import { cn } from '@/lib/utils';
 import { Link, useLocation } from '@/lib/router';
 import { useState } from 'react';
-import { LayoutDashboard, Users, GitBranch, DollarSign, Award, ChartBar as BarChart3, Settings, ChevronDown, X, ChevronLeft, Boxes, UserCog, CreditCard, User, ShoppingBag, Package, Truck, Tag, ChartBar as BarChart2, ShoppingCart, FolderOpen, MessageSquare, Shield } from 'lucide-react';
+import { LayoutDashboard, Users, GitBranch, DollarSign, Award, ChartBar as BarChart3, Settings, ChevronDown, X, ChevronLeft, UserCog, CreditCard, User, ShoppingBag, Package, Truck, Tag, ChartBar as BarChart2, ShoppingCart, FolderOpen, MessageSquare, Shield } from 'lucide-react';
+import Logo from '@/components/Logo';
 
 interface NavItem {
   label: string;
@@ -156,7 +157,7 @@ function NavItemComponent({ item, collapsed, depth = 0 }: { item: NavItem; colla
 export default function Sidebar() {
   const { user } = useAuthStore();
   const { sidebarOpen, setSidebarOpen, sidebarCollapsed, setSidebarCollapsed } = useUIStore();
-  const { company } = useConfig();
+  const { company, logoValue } = useConfig();
 
   const role = (user as any)?.role || 'user';
   const navItems = getNavForRole(role);
@@ -177,8 +178,8 @@ export default function Sidebar() {
       )}>
         {/* Logo */}
         <div className={cn('flex items-center gap-3 p-4 border-b border-border flex-shrink-0', sidebarCollapsed && 'lg:justify-center lg:px-2')}>
-          <div className="w-9 h-9 bg-primary rounded-xl flex items-center justify-center flex-shrink-0">
-            <Boxes className="w-5 h-5 text-primary-foreground" />
+          <div className="flex-shrink-0">
+            <Logo value={logoValue} fallbackText={name} size="w-9 h-9" />
           </div>
           {!sidebarCollapsed && (
             <div className="flex-1 min-w-0">

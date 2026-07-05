@@ -50,6 +50,7 @@ interface ConfigState {
   tax: TaxConfig;
   loading: boolean;
   showUsd: boolean;
+  logoValue: string;
   setShowUsd: (v: boolean) => void;
   refresh: () => Promise<void>;
 }
@@ -64,6 +65,7 @@ const ConfigContext = createContext<ConfigState>({
   tax: { enabled: false, rate: 18, includedInPrice: true, name: 'IGV' },
   loading: true,
   showUsd: false,
+  logoValue: '',
   setShowUsd: () => {},
   refresh: async () => {},
 });
@@ -86,6 +88,7 @@ export function ConfigProvider({ children }: { children: ReactNode }) {
   const [tax, setTax] = useState<TaxConfig>({ enabled: false, rate: 18, includedInPrice: true, name: 'IGV' });
   const [loading, setLoading] = useState(true);
   const [showUsd, setShowUsd] = useState(false);
+  const [logoValue, setLogoValue] = useState('');
 
   const refresh = useCallback(async () => {
     try {
@@ -120,6 +123,7 @@ export function ConfigProvider({ children }: { children: ReactNode }) {
           includedInPrice: map.igv_included_in_price !== 'false',
           name: map.tax_name || 'IGV',
         });
+        setLogoValue(map.logo_value || '');
       }
     } catch {
       // Non-fatal: use defaults already set in state
@@ -143,7 +147,7 @@ export function ConfigProvider({ children }: { children: ReactNode }) {
   }, [refresh, database]);
 
   return (
-    <ConfigContext.Provider value={{ plans, ranks, currency, currencySymbol, exchangeRate, company, tax, loading, showUsd, setShowUsd, refresh }}>
+    <ConfigContext.Provider value={{ plans, ranks, currency, currencySymbol, exchangeRate, company, tax, loading, showUsd, logoValue, setShowUsd, refresh }}>
       {children}
     </ConfigContext.Provider>
   );

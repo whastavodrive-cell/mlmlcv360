@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from '@/lib/router';
 import {
-  Boxes, X, Sun, Moon, ChevronDown, LogOut, LayoutDashboard, User,
+  X, Sun, Moon, ChevronDown, LogOut, LayoutDashboard, User,
   ShoppingBag, ShoppingCart, Package, Heart, ArrowRight, Menu,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -9,6 +9,7 @@ import { useThemeStore } from '@/store/themeStore';
 import { useAuthStore } from '@/store/authStore';
 import { useConfig } from '@/store/configStore';
 import { useCart } from '@/store/cartStore';
+import Logo from '@/components/Logo';
 
 const navLinks = [
   { href: '/nosotros', label: 'Nosotros' },
@@ -88,7 +89,6 @@ function UserMenu() {
               {user.plan && <div className="text-[10px] text-primary font-semibold capitalize mt-0.5 bg-primary/10 px-1.5 py-0.5 rounded-full inline-block">{user.plan}</div>}
             </div>
           </div>
-
           <div className="py-1">
             <p className="px-4 pt-2 pb-1 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Mi cuenta</p>
             {[
@@ -101,14 +101,13 @@ function UserMenu() {
               </button>
             ))}
           </div>
-
           <div className="py-1 border-t border-border">
             <p className="px-4 pt-2 pb-1 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Tienda</p>
             {[
               { icon: ShoppingBag, label: 'Ver Tienda', path: '/tienda' },
               { icon: ShoppingCart, label: 'Mi Carrito', path: '/carrito' },
               { icon: Package, label: 'Mis Pedidos', path: '/dashboard/pedidos' },
-              { icon: Heart, label: 'Mis Favoritos', path: '/tienda?tab=favoritos' },
+              { icon: Heart, label: 'Mis Favoritos', path: '/favoritos' },
             ].map(item => (
               <button key={item.path} onClick={() => { navigate(item.path); setOpen(false); }}
                 className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-muted text-sm text-foreground transition-colors text-left">
@@ -116,7 +115,6 @@ function UserMenu() {
               </button>
             ))}
           </div>
-
           <div className="py-1 border-t border-border">
             <button onClick={async () => { await signOut(); setOpen(false); }}
               className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-red-500/10 text-sm text-red-500 transition-colors text-left">
@@ -134,7 +132,7 @@ export default function Navbar() {
   const navigate = useNavigate();
   const { theme, setTheme } = useThemeStore();
   const { user, signOut } = useAuthStore();
-  const { company } = useConfig();
+  const { company, logoValue } = useConfig();
   const { itemCount } = useCart();
   const companyName = company.company_name || 'MLM 360';
   const [scrolled, setScrolled] = useState(false);
@@ -169,11 +167,13 @@ export default function Navbar() {
         scrolled ? 'bg-background/95 backdrop-blur-md border-b border-border shadow-sm' : 'bg-transparent'
       )}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center gap-2">
-          {/* Logo */}
+          {/* Logo — single instance in the top bar */}
           <Link to="/" className="flex items-center gap-2.5 flex-shrink-0 mr-4">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <Boxes className="w-4 h-4 text-white" />
-            </div>
+            <Logo
+              value={logoValue}
+              fallbackText={companyName}
+              size="w-8 h-8"
+            />
             <span className="text-lg font-bold text-foreground">{companyName}</span>
           </Link>
 
@@ -221,64 +221,66 @@ export default function Navbar() {
               </div>
             )}
 
-            {/* Mobile hamburger */}
+            {/* Mobile hamburger — only shows on < lg */}
             <button
               onClick={() => setMobileOpen(v => !v)}
               className="lg:hidden w-10 h-10 rounded-lg flex items-center justify-center hover:bg-muted text-foreground transition-colors focus-visible:outline-2 focus-visible:outline-primary"
               aria-label={mobileOpen ? 'Cerrar menú' : 'Abrir menú'}
               aria-expanded={mobileOpen}
             >
-              {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              <span className={cn('absolute transition-all duration-200', mobileOpen ? 'opacity-100 rotate-0' : 'opacity-0 rotate-90')}>
+                <X className="w-5 h-5" />
+              </span>
+              <span className={cn('absolute transition-all duration-200', mobileOpen ? 'opacity-0 -rotate-90' : 'opacity-100 rotate-0')}>
+                <Menu className="w-5 h-5" />
+              </span>
             </button>
           </div>
         </div>
       </nav>
 
-      {/* ── Full-screen mobile menu ── */}
-      {/* Only mounted when opened to avoid any DOM flash */}
+      {/* ── Full-screen mobile overlay ── */}
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Menú de navegación"
         aria-hidden={!mobileOpen}
         className={cn(
           'fixed inset-0 z-40 lg:hidden flex flex-col',
           'transition-all duration-300 ease-in-out',
-          mobileOpen
-            ? 'opacity-100 pointer-events-auto'
-            : 'opacity-0 pointer-events-none'
+          mobileOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         )}
         style={{ background: 'hsl(var(--background))' }}
       >
-        {/* Subtle gradient accent */}
+        {/* Ambient background accents */}
         <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
-          <div className="absolute top-0 right-0 w-72 h-72 bg-primary/8 rounded-full blur-[80px] translate-x-1/4 -translate-y-1/4" />
-          <div className="absolute bottom-0 left-0 w-64 h-64 bg-primary/5 rounded-full blur-[80px] -translate-x-1/4 translate-y-1/4" />
+          <div className="absolute top-0 right-0 w-64 h-64 bg-primary/6 rounded-full blur-[80px] translate-x-1/4 -translate-y-1/4" />
+          <div className="absolute bottom-0 left-0 w-56 h-56 bg-primary/4 rounded-full blur-[80px] -translate-x-1/4 translate-y-1/4" />
         </div>
 
-        {/* Top bar row — mirrors the nav bar height */}
-        <div className="h-16 flex items-center justify-between px-6 border-b border-border/60 flex-shrink-0">
-          <Link to="/" className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <Boxes className="w-4 h-4 text-white" />
-            </div>
-            <span className="text-lg font-bold text-foreground">{companyName}</span>
+        {/* ── Zone 1: Header row (no logo duplication — just close button) ── */}
+        <div className="h-16 flex items-center justify-between px-5 border-b border-border/50 flex-shrink-0">
+          {/* Logo inside mobile menu — this is the ONLY logo in this overlay */}
+          <Link to="/" onClick={() => setMobileOpen(false)} className="flex items-center gap-2.5">
+            <Logo value={logoValue} fallbackText={companyName} size="w-8 h-8" />
+            <span className="text-base font-bold text-foreground">{companyName}</span>
           </Link>
           <button
             onClick={() => setMobileOpen(false)}
-            className="w-10 h-10 rounded-lg flex items-center justify-center hover:bg-muted text-foreground transition-colors"
+            className="min-w-[44px] min-h-[44px] rounded-xl flex items-center justify-center hover:bg-muted text-foreground transition-all duration-200 focus-visible:outline-2 focus-visible:outline-primary"
             aria-label="Cerrar menú"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* User card (logged in) */}
+        {/* User identity card (logged in) */}
         {isLoggedIn && user && (
-          <div
-            className={cn(
-              'mx-5 mt-5 p-4 bg-muted/50 border border-border rounded-2xl flex items-center gap-3',
-              'transition-all duration-500 delay-75',
-              mobileOpen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'
-            )}
-          >
+          <div className={cn(
+            'mx-4 mt-4 p-4 bg-muted/50 border border-border rounded-2xl flex items-center gap-3',
+            'transition-all duration-300 delay-75',
+            mobileOpen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
+          )}>
             <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-primary/30 flex-shrink-0">
               {user.avatar_url
                 ? <img src={user.avatar_url} alt={user.full_name} className="w-full h-full object-cover" />
@@ -291,8 +293,8 @@ export default function Navbar() {
           </div>
         )}
 
-        {/* Nav links — staggered */}
-        <nav className="flex-1 flex flex-col justify-center px-6 overflow-y-auto py-6">
+        {/* ── Zone 2: Navigation links ── */}
+        <nav className="flex-1 flex flex-col overflow-y-auto px-4 py-4" aria-label="Links de navegación">
           <div className="space-y-1">
             {navLinks.map((link, i) => (
               <Link
@@ -300,55 +302,60 @@ export default function Navbar() {
                 to={link.href}
                 onClick={() => setMobileOpen(false)}
                 className={cn(
-                  'flex items-center justify-between min-h-[52px] px-4 rounded-2xl text-xl font-semibold transition-all duration-300',
+                  'flex items-center justify-between min-h-[56px] px-5 rounded-2xl text-lg font-semibold transition-all duration-300',
                   'focus-visible:outline-2 focus-visible:outline-primary',
                   location.pathname === link.href
                     ? 'text-primary bg-primary/10'
                     : 'text-foreground hover:bg-muted hover:text-primary',
-                  mobileOpen ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'
+                  mobileOpen ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-3'
                 )}
-                style={{ transitionDelay: mobileOpen ? `${i * 40 + 80}ms` : '0ms' }}
+                style={{ transitionDelay: mobileOpen ? `${i * 35 + 60}ms` : '0ms' }}
               >
                 {link.label}
-                {location.pathname === link.href && <div className="w-1.5 h-1.5 rounded-full bg-primary" />}
+                {location.pathname === link.href && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+                )}
               </Link>
             ))}
 
-            {/* Cart in nav */}
+            {/* Cart link */}
             <button
               onClick={() => { navigate('/carrito'); setMobileOpen(false); }}
               className={cn(
-                'w-full flex items-center justify-between min-h-[52px] px-4 rounded-2xl text-xl font-semibold transition-all duration-300',
-                'text-foreground hover:bg-muted hover:text-primary',
-                mobileOpen ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'
+                'w-full flex items-center justify-between min-h-[56px] px-5 rounded-2xl text-lg font-semibold',
+                'text-foreground hover:bg-muted hover:text-primary transition-all duration-300',
+                'focus-visible:outline-2 focus-visible:outline-primary',
+                mobileOpen ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-3'
               )}
-              style={{ transitionDelay: mobileOpen ? `${navLinks.length * 40 + 80}ms` : '0ms' }}
+              style={{ transitionDelay: mobileOpen ? `${navLinks.length * 35 + 60}ms` : '0ms' }}
             >
               Carrito
               {itemCount > 0 && (
-                <span className="bg-primary text-primary-foreground text-xs font-black px-2 py-0.5 rounded-full">{itemCount}</span>
+                <span className="bg-primary text-primary-foreground text-xs font-black px-2 py-0.5 rounded-full">
+                  {itemCount}
+                </span>
               )}
             </button>
           </div>
         </nav>
 
-        {/* CTAs at bottom */}
+        {/* ── Zone 3: Account CTAs — distinct visual zone ── */}
         <div
           className={cn(
-            'px-5 pb-8 pt-4 border-t border-border/60 space-y-3 flex-shrink-0',
-            'transition-all duration-500',
-            mobileOpen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+            'flex-shrink-0 bg-muted/30 border-t border-border/60 px-4 pb-8 pt-5 space-y-3',
+            'transition-all duration-300',
+            mobileOpen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'
           )}
-          style={{ transitionDelay: mobileOpen ? '320ms' : '0ms' }}
+          style={{ transitionDelay: mobileOpen ? '300ms' : '0ms' }}
         >
           {/* Theme toggle row */}
-          <div className="flex items-center justify-between px-1 mb-1">
-            <span className="text-xs text-muted-foreground font-medium">Tema</span>
+          <div className="flex items-center justify-between px-1 pb-3 border-b border-border/50">
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Apariencia</span>
             <button
               onClick={() => setTheme(isDark ? 'light' : 'dark')}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border hover:bg-muted text-muted-foreground hover:text-foreground text-xs font-medium transition-colors"
+              className="min-h-[44px] min-w-[44px] flex items-center gap-2 px-3 py-2 rounded-xl border border-border hover:bg-muted text-muted-foreground hover:text-foreground text-sm font-medium transition-colors"
             >
-              {isDark ? <><Sun className="w-3.5 h-3.5" /> Claro</> : <><Moon className="w-3.5 h-3.5" /> Oscuro</>}
+              {isDark ? <><Sun className="w-4 h-4" /> Claro</> : <><Moon className="w-4 h-4" /> Oscuro</>}
             </button>
           </div>
 
@@ -356,14 +363,14 @@ export default function Navbar() {
             <>
               <button
                 onClick={() => { navigate('/dashboard'); setMobileOpen(false); }}
-                className="flex items-center justify-center gap-2 w-full min-h-[52px] px-4 rounded-2xl bg-primary text-white text-base font-bold hover:bg-primary/90 transition-colors shadow-md shadow-primary/20"
+                className="flex items-center justify-center gap-2 w-full min-h-[52px] px-4 rounded-2xl bg-primary text-white text-sm font-bold hover:bg-primary/90 transition-colors shadow-md shadow-primary/20"
               >
-                <LayoutDashboard className="w-4 h-4" /> Ir al Panel
-                <ArrowRight className="w-4 h-4 ml-1" />
+                <LayoutDashboard className="w-4 h-4" /> Ir a mi panel
+                <ArrowRight className="w-4 h-4 ml-0.5" />
               </button>
               <button
                 onClick={async () => { await signOut(); setMobileOpen(false); }}
-                className="flex items-center justify-center gap-2 w-full min-h-[52px] px-4 rounded-2xl border border-red-500/30 text-red-500 text-sm font-semibold hover:bg-red-500/10 transition-colors"
+                className="flex items-center justify-center gap-2 w-full min-h-[48px] px-4 rounded-2xl border border-red-400/30 text-red-500 text-sm font-semibold hover:bg-red-500/8 transition-colors"
               >
                 <LogOut className="w-4 h-4" /> Cerrar sesión
               </button>
@@ -373,14 +380,14 @@ export default function Navbar() {
               <Link
                 to="/registro"
                 onClick={() => setMobileOpen(false)}
-                className="flex items-center justify-center gap-2 w-full min-h-[52px] px-4 rounded-2xl bg-primary text-white text-base font-bold hover:bg-primary/90 transition-colors shadow-md shadow-primary/20"
+                className="flex items-center justify-center gap-2 w-full min-h-[52px] px-4 rounded-2xl bg-primary text-white text-sm font-bold hover:bg-primary/90 transition-colors shadow-md shadow-primary/20"
               >
                 Registrarse gratis <ArrowRight className="w-4 h-4" />
               </Link>
               <Link
                 to="/login"
                 onClick={() => setMobileOpen(false)}
-                className="flex items-center justify-center w-full min-h-[52px] px-4 rounded-2xl border border-border text-foreground text-sm font-semibold hover:bg-muted transition-colors"
+                className="flex items-center justify-center w-full min-h-[48px] px-4 rounded-2xl border border-border text-foreground text-sm font-semibold hover:bg-muted transition-colors"
               >
                 Ingresar al sistema
               </Link>
