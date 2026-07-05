@@ -240,7 +240,7 @@ export default function Navbar() {
             <div className="ml-auto flex items-center gap-1">
               {/* Cart button - icon only with badge */}
               <button onClick={() => navigate('/carrito')}
-                className="relative w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors"
+                className="relative w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted/60 text-foreground transition-colors"
                 aria-label="Carrito">
                 <ShoppingBag className="w-5 h-5" />
                 {itemCount > 0 && (
@@ -252,7 +252,7 @@ export default function Navbar() {
 
               {/* Theme toggle */}
               <button onClick={() => setTheme(isDark ? 'light' : 'dark')}
-                className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors"
+                className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted/60 text-foreground transition-colors"
                 aria-label="Cambiar tema">
                 {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
               </button>
@@ -287,31 +287,37 @@ export default function Navbar() {
         </div>
       </nav>
 
-      {/* Mobile overlay - full screen drawer */}
+      {/* Mobile overlay — bottom sheet */}
       <div
         role="dialog"
         aria-modal="true"
         className={cn(
           'fixed inset-0 z-[55] lg:hidden',
-          'transition-opacity duration-250',
-          mobileNavOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none',
+          mobileNavOpen ? 'pointer-events-auto' : 'pointer-events-none',
         )}
       >
-        {/* Backdrop with blur - starts below navbar */}
+        {/* Backdrop with blur */}
         <div
-          className="absolute top-16 left-0 right-0 bottom-0 bg-black/50 backdrop-blur-sm"
+          className={cn(
+            'absolute top-16 left-0 right-0 bottom-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300',
+            mobileNavOpen ? 'opacity-100' : 'opacity-0',
+          )}
           onClick={() => setMobileNavOpen(false)}
         />
 
-        {/* Bottom-sheet panel - starts BELOW navbar */}
+        {/* Bottom-sheet panel — rises from bottom, not full height */}
         <div
           className={cn(
-            'absolute top-16 left-0 right-0 bottom-0 bg-background shadow-2xl',
+            'absolute bottom-0 left-0 right-0 bg-background rounded-t-3xl border-t border-border shadow-2xl',
             'transition-transform duration-300 ease-out',
             mobileNavOpen ? 'translate-y-0' : 'translate-y-full',
           )}
         >
-          <div className="px-4 pt-4 pb-8 overflow-y-auto h-full">
+          {/* Handle bar */}
+          <div className="flex justify-center pt-3 pb-1">
+            <div className="w-10 h-1 rounded-full bg-muted-foreground/20" />
+          </div>
+          <div className="px-4 pt-3 pb-8 overflow-y-auto max-h-[80vh]">
 
             {/* User card — only when logged in */}
             {isLoggedIn && user && (

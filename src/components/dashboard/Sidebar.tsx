@@ -3,9 +3,9 @@ import { useUIStore } from '@/store/uiStore';
 import { useConfig } from '@/store/configStore';
 import { useDatabase } from '@/lib/backend';
 import { cn } from '@/lib/utils';
-import { Link, useLocation } from '@/lib/router';
+import { Link, useLocation, useNavigate } from '@/lib/router';
 import { useState, useEffect, useRef } from 'react';
-import { LayoutDashboard, Users, GitBranch, DollarSign, Award, ChartBar as BarChart3, Settings, ChevronDown, ChevronRight, X, UserCog, CreditCard, User, ShoppingBag, Package, Truck, Tag, ChartBar as BarChart2, ShoppingCart, FolderOpen, MessageSquare, Shield, Chrome as Home, Crown, Star } from 'lucide-react';
+import { LayoutDashboard, Users, GitBranch, DollarSign, Award, ChartBar as BarChart3, Settings, ChevronDown, ChevronRight, X, UserCog, CreditCard, User, ShoppingBag, Package, Truck, Tag, ChartBar as BarChart2, ShoppingCart, FolderOpen, MessageSquare, Shield, Chrome as Home, Crown, Star, LogOut } from 'lucide-react';
 import { LogoWithText } from '@/components/Logo';
 
 interface NavItem {
@@ -296,7 +296,8 @@ function MobileExpandableSection({
 }
 
 export default function Sidebar() {
-  const { user } = useAuthStore();
+  const { user, signOut } = useAuthStore();
+  const navigate = useNavigate();
   const { sidebarOpen, setSidebarOpen, sidebarCollapsed, setSidebarCollapsed } = useUIStore();
   const { company, logoValue, logoSizes, plans, ranks } = useConfig();
   const database = useDatabase();
@@ -608,11 +609,18 @@ export default function Sidebar() {
               <Link
                 to="/tienda"
                 onClick={() => setSidebarOpen(false)}
-                className="flex-1 py-2.5 flex items-center justify-center gap-2 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors"
+                className="flex-1 py-2.5 flex items-center justify-center gap-2 bg-primary text-primary-foreground rounded-xl text-sm font-semibold hover:bg-primary/90 transition-colors"
               >
                 <ShoppingBag className="w-4 h-4" />
                 Tienda
               </Link>
+              <button
+                onClick={async () => { await signOut(); setSidebarOpen(false); navigate('/login'); }}
+                className="w-12 flex items-center justify-center border border-red-400/40 text-red-500 rounded-xl hover:bg-red-500/10 transition-colors flex-shrink-0"
+                aria-label="Cerrar sesión"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
             </div>
           </div>
 

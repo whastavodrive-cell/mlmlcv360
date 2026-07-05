@@ -1,7 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useDatabase } from '@/lib/backend';
 import { Link, useNavigate } from '@/lib/router';
-import { Bell, Search, Moon, Sun, Menu, LogOut, User, Settings, ChevronDown, ExternalLink, CheckCheck, Trash2, X, Users, Package, ShoppingBag } from 'lucide-react';
+import {
+  Bell, Search, Moon, Sun, Menu, LogOut, User, Settings,
+  ChevronDown, ExternalLink, CheckCheck, Trash2, X, Users, Package, ShoppingBag,
+} from 'lucide-react';
 import { useThemeStore } from '@/store/themeStore';
 import { useAuthStore } from '@/store/authStore';
 import { useUIStore } from '@/store/uiStore';
@@ -32,10 +35,9 @@ export default function DashboardHeader() {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [focused, setFocused] = useState(false);
-  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
-  const mobileInputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const [dbNotifications, setDbNotifications] = useState<any[]>([]);
   const [loadingNotifs, setLoadingNotifs] = useState(false);
@@ -56,29 +58,22 @@ export default function DashboardHeader() {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  // Ctrl+K to focus search
+  // Ctrl+K shortcut
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
         e.preventDefault();
-        setMobileSearchOpen(true);
-        setTimeout(() => mobileInputRef.current?.focus(), 50);
+        inputRef.current?.focus();
+        setFocused(true);
       }
-      if (e.key === 'Escape') {
+      if (e.key === 'Escape' && focused) {
         setFocused(false);
-        setMobileSearchOpen(false);
+        inputRef.current?.blur();
       }
     };
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
-  }, []);
-
-  // Focus mobile input when overlay opens
-  useEffect(() => {
-    if (mobileSearchOpen) {
-      setTimeout(() => mobileInputRef.current?.focus(), 100);
-    }
-  }, [mobileSearchOpen]);
+  }, [focused]);
 
   const performSearch = useCallback(async (q: string) => {
     if (q.length < 2) { setResults([]); return; }
@@ -117,7 +112,6 @@ export default function DashboardHeader() {
     setQuery('');
     setResults([]);
     setFocused(false);
-    setMobileSearchOpen(false);
   };
 
   const fetchNotifications = useCallback(async () => {
@@ -163,43 +157,45 @@ export default function DashboardHeader() {
   const iconFor = (type: string) => type === 'user' ? Users : type === 'product' ? Package : ShoppingBag;
 
   return (
-    <>
-      {/* Mobile search overlay */}
-      {mobileSearchOpen && (
-        <div className="fixed inset-0 z-[60] flex flex-col bg-background lg:hidden">
-          <div className="flex items-center gap-3 px-4 h-16 border-b border-border flex-shrink-0">
-            <Search className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-            <input
-              ref={mobileInputRef}
-              type="text"
-              value={query}
-              onChange={e => setQuery(e.target.value)}
-              placeholder="Buscar usuarios, productos..."
-              className="flex-1 bg-transparent text-base outline-none text-foreground placeholder:text-muted-foreground"
-            />
-            {query && (
-              <button onClick={() => setQuery('')} className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-muted text-muted-foreground">
-                <X className="w-4 h-4" />
-              </button>
-            )}
-            <button
-              onClick={() => { setMobileSearchOpen(false); setQuery(''); setResults([]); }}
-              className="px-3 py-1.5 rounded-full text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-            >
-              Cancelar
+    <header className="h-16 border-b border-border bg-background/80 backdrop-blur-md flex items-center px-4 lg:px-6 sticky top-0 z-30 gap-2">
+
+      {/* Search bar — LEFT, flex-1, shows on both mobile and desktop */}
+      <div ref={searchRef} className="relative flex-1 min-w-0 max-w-xs lg:max-w-sm">
+        <div className={cn(
+          'flex items-center gap-2 bg-muted/60 border rounded-xl px-3 h-10 transition-all duration-200',
+          focused
+            ? 'border-primary/50 bg-background ring-2 ring-primary/20'
+            : 'border-transparent hover:border-border/40',
+        )}>
+          <Search className="w-4 h-4 text-foreground/50 flex-shrink-0" />
+          <input
+            ref={inputRef}
+            type="text"
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            onFocus={() => setFocused(true)}
+            placeholder="Buscar..."
+            className="bg-transparent text-sm outline-none flex-1 text-foreground placeholder:text-muted-foreground min-w-0"
+          />
+          {query ? (
+            <button onClick={() => { setQuery(''); setResults([]); }} className="p-0.5 hover:bg-muted rounded-lg transition-colors flex-shrink-0">
+              <X className="w-3.5 h-3.5 text-muted-foreground" />
             </button>
-          </div>
-          <div className="flex-1 overflow-y-auto">
-            {query.length < 2 ? (
-              <div className="px-4 pt-6 text-center">
-                <Search className="w-10 h-10 text-muted-foreground/20 mx-auto mb-3" />
-                <p className="text-sm text-muted-foreground">Escribe para buscar</p>
-              </div>
-            ) : loading ? (
+          ) : (
+            <kbd className="hidden lg:flex items-center px-1.5 py-0.5 bg-muted/80 rounded text-[10px] font-medium text-muted-foreground border border-border/30 leading-none flex-shrink-0">
+              ⌘K
+            </kbd>
+          )}
+        </div>
+
+        {/* Results dropdown */}
+        {focused && query.length >= 2 && (
+          <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden z-50">
+            {loading ? (
               <div className="py-3">
                 {[1, 2, 3].map(i => (
-                  <div key={i} className="flex items-center gap-3 px-4 py-3">
-                    <Skeleton className="w-10 h-10 rounded-xl flex-shrink-0" />
+                  <div key={i} className="flex items-center gap-3 px-4 py-2.5">
+                    <Skeleton className="w-8 h-8 rounded-xl flex-shrink-0" />
                     <div className="flex-1 space-y-1.5">
                       <Skeleton className="h-3.5 w-3/4 rounded" />
                       <Skeleton className="h-2.5 w-1/2 rounded" />
@@ -208,16 +204,16 @@ export default function DashboardHeader() {
                 ))}
               </div>
             ) : results.length > 0 ? (
-              <div className="py-2">
+              <div className="py-1.5">
                 {results.map(r => {
                   const Icon = iconFor(r.type);
                   return (
                     <button key={`${r.type}-${r.id}`} onClick={() => go(r.href)}
-                      className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-muted transition-colors active:scale-[0.99]">
-                      <div className="w-10 h-10 rounded-xl bg-muted/70 flex items-center justify-center flex-shrink-0">
+                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/60 transition-colors text-left">
+                      <div className="w-8 h-8 rounded-xl bg-muted flex items-center justify-center flex-shrink-0">
                         <Icon className="w-4 h-4 text-muted-foreground" />
                       </div>
-                      <div className="flex-1 min-w-0 text-left">
+                      <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-foreground truncate">{r.title}</p>
                         <p className="text-xs text-muted-foreground truncate">{r.subtitle}</p>
                       </div>
@@ -226,244 +222,163 @@ export default function DashboardHeader() {
                 })}
               </div>
             ) : (
-              <div className="px-6 py-16 text-center">
-                <div className="w-14 h-14 rounded-2xl bg-muted/50 flex items-center justify-center mx-auto mb-3">
-                  <Search className="w-6 h-6 text-muted-foreground/40" />
-                </div>
-                <p className="text-sm font-medium text-foreground mb-1">Sin resultados</p>
-                <p className="text-xs text-muted-foreground">Nada para "{query}"</p>
+              <div className="px-4 py-6 text-center">
+                <p className="text-sm text-muted-foreground">Sin resultados para "{query}"</p>
               </div>
             )}
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
-      <header className="h-16 border-b border-border bg-background/80 backdrop-blur-md flex items-center px-4 lg:px-6 sticky top-0 z-30 gap-2">
+      {/* Right controls */}
+      <div className="flex items-center gap-1 flex-shrink-0 ml-1">
 
-        {/* Desktop: search bar */}
-        <div ref={searchRef} className="relative hidden lg:block flex-1 max-w-sm">
-          <div className={cn(
-            'flex items-center gap-2 bg-muted/60 border rounded-xl px-3 h-10 transition-all duration-200',
-            focused ? 'border-primary/50 bg-background ring-2 ring-primary/20' : 'border-transparent hover:border-border/40',
-          )}>
-            <Search className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-            <input
-              type="text"
-              value={query}
-              onChange={e => setQuery(e.target.value)}
-              onFocus={() => setFocused(true)}
-              placeholder="Buscar..."
-              className="bg-transparent text-sm outline-none flex-1 text-foreground placeholder:text-muted-foreground min-w-0"
-            />
-            {query ? (
-              <button onClick={() => { setQuery(''); setResults([]); }} className="p-0.5 hover:bg-muted rounded-lg transition-colors">
-                <X className="w-3.5 h-3.5 text-muted-foreground" />
-              </button>
-            ) : (
-              <kbd className="hidden sm:flex items-center gap-0.5 px-1.5 py-0.5 bg-muted/80 rounded text-[10px] font-medium text-muted-foreground border border-border/30 leading-none">
-                ⌘K
-              </kbd>
-            )}
-          </div>
+        {/* Link to public site */}
+        <Link to="/"
+          className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted text-foreground transition-colors"
+        >
+          <ExternalLink className="w-4 h-4" />
+        </Link>
 
-          {/* Desktop results dropdown */}
-          {focused && query.length >= 2 && (
-            <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden z-50">
-              {loading ? (
-                <div className="py-3">
-                  {[1, 2, 3].map(i => (
-                    <div key={i} className="flex items-center gap-3 px-4 py-2.5">
-                      <Skeleton className="w-8 h-8 rounded-xl flex-shrink-0" />
-                      <div className="flex-1 space-y-1.5">
-                        <Skeleton className="h-3.5 w-3/4 rounded" />
-                        <Skeleton className="h-2.5 w-1/2 rounded" />
-                      </div>
-                    </div>
-                  ))}
+        {/* Theme toggle */}
+        <button
+          onClick={() => setTheme(isDark ? 'light' : 'dark')}
+          className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted text-foreground transition-colors"
+        >
+          {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+        </button>
+
+        {/* Notifications */}
+        <DropdownMenu open={notifOpen} onOpenChange={(open) => { setNotifOpen(open); if (open) fetchNotifications(); }}>
+          <DropdownMenuTrigger asChild>
+            <button className="relative w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted text-foreground transition-colors">
+              <Bell className="w-4 h-4" />
+              {unread > 0 && (
+                <span className="absolute top-0.5 right-0.5 min-w-[16px] h-4 px-1 bg-primary text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                  {unread > 9 ? '9+' : unread}
+                </span>
+              )}
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-80 p-0 rounded-2xl">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+              <span className="font-semibold text-sm">Notificaciones</span>
+              <div className="flex items-center gap-2">
+                <Badge variant="secondary" className="text-xs">{unread} nuevas</Badge>
+                {unread > 0 && (
+                  <button onClick={markAllAsRead} title="Marcar todas como leídas"
+                    className="text-muted-foreground hover:text-primary transition-colors">
+                    <CheckCheck className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            </div>
+            <div className="max-h-80 overflow-y-auto">
+              {loadingNotifs ? (
+                <div className="px-4 py-8 text-center">
+                  <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
                 </div>
-              ) : results.length > 0 ? (
-                <div className="py-1.5">
-                  {results.map(r => {
-                    const Icon = iconFor(r.type);
-                    return (
-                      <button key={`${r.type}-${r.id}`} onClick={() => go(r.href)}
-                        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/60 transition-colors text-left">
-                        <div className="w-8 h-8 rounded-xl bg-muted flex items-center justify-center flex-shrink-0">
-                          <Icon className="w-4 h-4 text-muted-foreground" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-foreground truncate">{r.title}</p>
-                          <p className="text-xs text-muted-foreground truncate">{r.subtitle}</p>
-                        </div>
-                      </button>
-                    );
-                  })}
+              ) : dbNotifications.length > 0 ? dbNotifications.map(n => (
+                <div
+                  key={n.id}
+                  className={cn(
+                    'group flex gap-3 px-4 py-3 hover:bg-muted transition-colors border-b border-border/50 cursor-pointer',
+                    !n.read && 'bg-primary/5'
+                  )}
+                  onClick={() => !n.read && markAsRead(n.id)}
+                >
+                  <div className={cn(
+                    'w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0',
+                    n.type === 'success' ? 'bg-green-500/20 text-green-500' :
+                    n.type === 'warning' ? 'bg-yellow-500/20 text-yellow-500' :
+                    n.type === 'error' ? 'bg-red-500/20 text-red-500' :
+                    'bg-blue-500/20 text-blue-500'
+                  )}>
+                    <Bell className="w-3.5 h-3.5" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className={cn('text-sm text-foreground', !n.read && 'font-semibold')}>{n.title}</p>
+                    <p className="text-xs text-muted-foreground line-clamp-2">{n.message}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {new Date(n.created_at).toLocaleDateString('es-PE', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  </div>
+                  <div className="flex flex-col items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    {!n.read && <div className="w-2 h-2 rounded-full bg-primary flex-shrink-0" />}
+                    <button
+                      onClick={e => { e.stopPropagation(); deleteNotification(n.id); }}
+                      className="text-muted-foreground hover:text-red-500 transition-colors"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </div>
                 </div>
-              ) : (
-                <div className="px-4 py-6 text-center">
-                  <p className="text-sm text-muted-foreground">Sin resultados para "{query}"</p>
+              )) : (
+                <div className="px-4 py-12 text-center">
+                  <Bell className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground">Sin notificaciones</p>
                 </div>
               )}
             </div>
-          )}
-        </div>
-
-        {/* Right controls — ml-auto on mobile pushes everything to the right */}
-        <div className="ml-auto flex items-center gap-1">
-          {/* Mobile: search icon */}
-          <button
-            onClick={() => setMobileSearchOpen(true)}
-            className="lg:hidden w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted text-muted-foreground transition-colors"
-            aria-label="Buscar"
-          >
-            <Search className="w-5 h-5" />
-          </button>
-
-          {/* Link to public site — desktop only */}
-          <Link to="/" className="hidden lg:flex w-9 h-9 rounded-full items-center justify-center hover:bg-muted text-muted-foreground transition-colors">
-            <ExternalLink className="w-4 h-4" />
-          </Link>
-
-          {/* Theme toggle */}
-          <button
-            onClick={() => setTheme(isDark ? 'light' : 'dark')}
-            className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted text-muted-foreground transition-colors"
-          >
-            {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-          </button>
-
-          {/* Notifications */}
-          <DropdownMenu open={notifOpen} onOpenChange={(open) => { setNotifOpen(open); if (open) fetchNotifications(); }}>
-            <DropdownMenuTrigger asChild>
-              <button className="relative w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted text-muted-foreground transition-colors">
-                <Bell className="w-4 h-4" />
-                {unread > 0 && (
-                  <span className="absolute top-0.5 right-0.5 min-w-[16px] h-4 px-1 bg-primary text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                    {unread > 9 ? '9+' : unread}
-                  </span>
-                )}
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-80 p-0 rounded-2xl">
-              <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-                <span className="font-semibold text-sm">Notificaciones</span>
-                <div className="flex items-center gap-2">
-                  <Badge variant="secondary" className="text-xs">{unread} nuevas</Badge>
-                  {unread > 0 && (
-                    <button onClick={markAllAsRead} title="Marcar todas como leídas"
-                      className="text-muted-foreground hover:text-primary transition-colors">
-                      <CheckCheck className="w-3.5 h-3.5" />
-                    </button>
-                  )}
-                </div>
+            {dbNotifications.length > 0 && (
+              <div className="px-4 py-2 border-t border-border">
+                <button onClick={markAllAsRead} className="w-full text-xs text-primary hover:text-primary/80 text-center transition-colors py-1">
+                  Marcar todas como leídas
+                </button>
               </div>
-              <div className="max-h-80 overflow-y-auto">
-                {loadingNotifs ? (
-                  <div className="px-4 py-8 text-center">
-                    <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
-                  </div>
-                ) : dbNotifications.length > 0 ? dbNotifications.map(n => (
-                  <div
-                    key={n.id}
-                    className={cn(
-                      'group flex gap-3 px-4 py-3 hover:bg-muted transition-colors border-b border-border/50 cursor-pointer',
-                      !n.read && 'bg-primary/5'
-                    )}
-                    onClick={() => !n.read && markAsRead(n.id)}
-                  >
-                    <div className={cn(
-                      'w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0',
-                      n.type === 'success' ? 'bg-green-500/20 text-green-500' :
-                      n.type === 'warning' ? 'bg-yellow-500/20 text-yellow-500' :
-                      n.type === 'error' ? 'bg-red-500/20 text-red-500' :
-                      'bg-blue-500/20 text-blue-500'
-                    )}>
-                      <Bell className="w-3.5 h-3.5" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className={cn('text-sm text-foreground', !n.read && 'font-semibold')}>{n.title}</p>
-                      <p className="text-xs text-muted-foreground line-clamp-2">{n.message}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {new Date(n.created_at).toLocaleDateString('es-PE', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                      </p>
-                    </div>
-                    <div className="flex flex-col items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      {!n.read && <div className="w-2 h-2 rounded-full bg-primary flex-shrink-0" />}
-                      <button
-                        onClick={e => { e.stopPropagation(); deleteNotification(n.id); }}
-                        className="text-muted-foreground hover:text-red-500 transition-colors"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </button>
-                    </div>
-                  </div>
-                )) : (
-                  <div className="px-4 py-12 text-center">
-                    <Bell className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
-                    <p className="text-sm text-muted-foreground">Sin notificaciones</p>
-                  </div>
-                )}
-              </div>
-              {dbNotifications.length > 0 && (
-                <div className="px-4 py-2 border-t border-border">
-                  <button onClick={markAllAsRead} className="w-full text-xs text-primary hover:text-primary/80 text-center transition-colors py-1">
-                    Marcar todas como leídas
-                  </button>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        {/* User avatar/menu — desktop only */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="hidden lg:flex items-center gap-2 pl-1.5 pr-2 py-1 rounded-full hover:bg-muted transition-colors ml-0.5">
+              {user?.avatar_url ? (
+                <img src={user.avatar_url} alt={user.full_name || 'Avatar'}
+                  className="w-8 h-8 rounded-full object-cover border border-border flex-shrink-0" />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary flex-shrink-0">
+                  {initials}
                 </div>
               )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          {/* User avatar / menu */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="flex items-center gap-2 pl-1.5 pr-2 py-1.5 rounded-full hover:bg-muted transition-colors ml-0.5">
-                {user?.avatar_url ? (
-                  <img src={user.avatar_url} alt={user.full_name || 'Avatar'}
-                    className="w-8 h-8 rounded-full object-cover border border-border flex-shrink-0" />
-                ) : (
-                  <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary flex-shrink-0">
-                    {initials}
-                  </div>
-                )}
-                <ChevronDown className="w-3.5 h-3.5 text-muted-foreground hidden lg:block" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-52 rounded-2xl p-1.5">
-              <div className="px-3 py-2 mb-1 border-b border-border/50">
-                <p className="text-sm font-semibold text-foreground truncate">{user?.full_name || user?.username || 'Usuario'}</p>
-                <p className="text-xs text-muted-foreground capitalize">{user?.role?.replace(/_/g, ' ') || 'Usuario'}</p>
+              <div className="text-left">
+                <div className="text-sm font-medium text-foreground leading-tight">{user?.full_name?.split(' ')[0] || user?.username || 'Usuario'}</div>
               </div>
-              <DropdownMenuItem asChild>
-                <Link to="/dashboard/perfil" className="flex items-center gap-2 rounded-xl cursor-pointer">
-                  <User className="w-4 h-4" />
-                  Mi Perfil
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link to="/dashboard/configuracion" className="flex items-center gap-2 rounded-xl cursor-pointer">
-                  <Settings className="w-4 h-4" />
-                  Configuración
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleSignOut} className="text-destructive flex items-center gap-2 rounded-xl cursor-pointer">
-                <LogOut className="w-4 h-4" />
-                Cerrar Sesión
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+              <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-52 rounded-2xl p-1.5">
+            <div className="px-3 py-2 mb-1 border-b border-border/50">
+              <p className="text-sm font-semibold text-foreground truncate">{user?.full_name || user?.username || 'Usuario'}</p>
+              <p className="text-xs text-muted-foreground capitalize">{user?.role?.replace(/_/g, ' ') || 'Usuario'}</p>
+            </div>
+            <DropdownMenuItem asChild>
+              <Link to="/dashboard/perfil" className="flex items-center gap-2 rounded-xl cursor-pointer">
+                <User className="w-4 h-4" />Mi Perfil
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link to="/dashboard/configuracion" className="flex items-center gap-2 rounded-xl cursor-pointer">
+                <Settings className="w-4 h-4" />Configuración
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleSignOut} className="text-destructive flex items-center gap-2 rounded-xl cursor-pointer">
+              <LogOut className="w-4 h-4" />Cerrar Sesión
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
-          {/* Hamburger — mobile RIGHT (matches landing nav) */}
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="lg:hidden w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted text-foreground transition-colors ml-0.5"
-            aria-label="Abrir menú"
-          >
-            <Menu className="w-5 h-5" />
-          </button>
-        </div>
-      </header>
-    </>
+        {/* Hamburger — mobile only, RIGHT */}
+        <button
+          onClick={() => setSidebarOpen(true)}
+          className="lg:hidden w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted text-foreground transition-colors"
+          aria-label="Abrir menú"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
+      </div>
+    </header>
   );
 }
