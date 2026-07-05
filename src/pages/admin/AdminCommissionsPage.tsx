@@ -1,26 +1,12 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useDatabase } from '@/lib/backend';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { Search, Plus, Trash2, RefreshCw, Download, ChevronLeft, ChevronRight, CircleCheck as CheckCircle, X, DollarSign, Clock, TrendingUp, Filter, Eye, Save, Loader as Loader2, CreditCard as Edit2, Info } from 'lucide-react';
+import { useCommissions, useCommissionsAdminPagination, TYPE_LABELS, TYPE_COLORS, STATUS_COLORS } from '@/modules/mlm';
+import type { Commission } from '@/modules/mlm';
 
-interface Commission {
-  id: string;
-  user_id: string;
-  from_user_id: string | null;
-  type: CommType;
-  amount: number;
-  currency: string;
-  status: CommStatus;
-  description: string | null;
-  created_at: string;
-  _user_name?: string;
-  _user_email?: string;
-  _from_name?: string;
-}
-
-type CommType = 'direct' | 'binary' | 'rank_bonus' | 'unilevel' | 'residual';
-type CommStatus = 'pending' | 'approved' | 'paid' | 'rejected';
+type CommType = Commission['type'];
+type CommStatus = Commission['status'];
 interface UserOption { id: string; full_name: string; email: string; }
 
 const TYPES: { value: CommType; label: string; hint: string }[] = [
@@ -38,24 +24,9 @@ const STATUSES: { value: CommStatus; label: string }[] = [
   { value: 'rejected', label: 'Rechazada' },
 ];
 
-const TYPE_COLORS: Record<CommType, string> = {
-  direct:     'bg-blue-500/10 text-blue-600',
-  binary:     'bg-purple-500/10 text-purple-600',
-  rank_bonus: 'bg-yellow-500/10 text-yellow-600',
-  unilevel:   'bg-cyan-500/10 text-cyan-600',
-  residual:   'bg-green-500/10 text-green-600',
-};
-const STATUS_COLORS: Record<CommStatus, string> = {
-  pending:  'bg-amber-500/10 text-amber-600',
-  approved: 'bg-blue-500/10 text-blue-600',
-  paid:     'bg-green-500/10 text-green-600',
-  rejected: 'bg-red-500/10 text-red-500',
-};
-
 const PAGE_SIZE = 15;
 const EMPTY_FORM = { user_id: '', from_user_id: '', type: 'direct' as CommType, amount: '', currency: 'PEN', status: 'pending' as CommStatus, description: '' };
 
-// ── helpers ──
 function Badge({ className, children }: { className: string; children: React.ReactNode }) {
   return <span className={cn('inline-flex items-center text-xs font-semibold px-2.5 py-0.5 rounded-full whitespace-nowrap', className)}>{children}</span>;
 }
@@ -74,22 +45,23 @@ function Field({ label, required, hint, children }: { label: string; required?: 
 
 // ── Commission Modal (create/edit) ──
 function CommissionModal({
-  mode, initial, users, onClose, onSaved,
+  mode, initial, users, onClose, onSaved, onCreate, onCreateMany, onUpdate,
 }: {
   mode: 'create' | 'edit';
   initial: typeof EMPTY_FORM & { id?: string };
   users: UserOption[];
   onClose: () => void;
   onSaved: () => void;
+  onCreate: (commission: Omit<Commission, 'id' | 'created_at'>) => Promise<{ success: boolean; error?: string }>;
+  onCreateMany: (commissions: Omit<Commission, 'id' | 'created_at'>[]) => Promise<{ success: boolean; error?: string }>;
+  onUpdate: (id: string, updates: Partial<Commission>) => Promise<{ success: boolean; error?: string }>;
 }) {
   const [form, setForm] = useState(initial);
   const [saving, setSaving] = useState(false);
   const [userQ, setUserQ] = useState('');
   const [fromQ, setFromQ] = useState('');
-  // Multi-select beneficiaries (only in create mode)
   const [multiUserIds, setMultiUserIds] = useState<Set<string>>(new Set());
   const isCreate = mode === 'create';
-  const database = useDatabase();
 
   const toggleMultiUser = (id: string) => setMultiUserIds(prev => {
     const next = new Set(prev);
@@ -110,7 +82,6 @@ function CommissionModal({
 
   const set = (k: keyof typeof EMPTY_FORM) => (v: string) => setForm(p => ({ ...p, [k]: v }));
 
-  const selectedType = TYPES.find(t => t.value === form.type);
   const selectedUser = users.find(u => u.id === form.user_id);
   const selectedFrom = users.find(u => u.id === form.from_user_id);
 
@@ -129,15 +100,19 @@ function CommissionModal({
         status: form.status,
         description: form.description || null,
       }));
-      const { error } = await database.insert('commissions', rows);
-      if (error) toast.error(error);
-      else { toast.success(`${rows.length} comisión(es) creada(s)`); onSaved(); onClose(); }
+      const result = targets.length > 1 ? await onCreateMany(rows) : await onCreate(rows[0]);
+      if (result.success) {
+        toast.success(`${rows.length} comisión(es) creada(s)`);
+        onSaved(); onClose();
+      } else {
+        toast.error(result.error || 'Error');
+      }
       setSaving(false);
     } else {
       if (!form.user_id) { toast.error('Selecciona el usuario beneficiario'); return; }
       if (!form.amount || Number(form.amount) <= 0) { toast.error('Ingresa un monto mayor a 0'); return; }
       setSaving(true);
-      const payload = {
+      const result = await onUpdate(initial.id!, {
         user_id: form.user_id,
         from_user_id: form.from_user_id || null,
         type: form.type,
@@ -145,10 +120,13 @@ function CommissionModal({
         currency: form.currency,
         status: form.status,
         description: form.description || null,
-      };
-      const { error } = await database.update('commissions', initial.id!, payload);
-      if (error) toast.error(error);
-      else { toast.success('Comisión actualizada'); onSaved(); onClose(); }
+      });
+      if (result.success) {
+        toast.success('Comisión actualizada');
+        onSaved(); onClose();
+      } else {
+        toast.error(result.error || 'Error');
+      }
       setSaving(false);
     }
   };
@@ -156,8 +134,6 @@ function CommissionModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
       <div className="bg-card border border-border rounded-2xl w-full max-w-lg shadow-2xl flex flex-col max-h-[90vh]">
-
-        {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-border flex-shrink-0">
           <div className="flex items-center gap-2">
             {mode === 'create' ? <Plus className="w-4 h-4 text-primary" /> : <Edit2 className="w-4 h-4 text-primary" />}
@@ -170,17 +146,13 @@ function CommissionModal({
           </button>
         </div>
 
-        {/* Body */}
         <div className="overflow-y-auto flex-1 p-6 space-y-5">
-
-          {/* Section: Who receives */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">1. Usuario(s) beneficiario(s)</h4>
               {isCreate && <span className="text-xs text-primary font-medium">{multiUserIds.size > 0 ? `${multiUserIds.size} seleccionado(s)` : 'Selecciona uno o varios'}</span>}
             </div>
 
-            {/* Multi-select in create mode */}
             {isCreate ? (
               <div>
                 <input
@@ -261,7 +233,6 @@ function CommissionModal({
             )}
           </div>
 
-          {/* Section: Type */}
           <div className="space-y-3">
             <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">2. Tipo de comisión</h4>
             <div className="grid grid-cols-1 gap-2">
@@ -290,7 +261,6 @@ function CommissionModal({
             </div>
           </div>
 
-          {/* Section: Amount + Currency + Status */}
           <div className="space-y-3">
             <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">3. Monto y estado</h4>
             <div className="grid grid-cols-3 gap-3">
@@ -340,11 +310,9 @@ function CommissionModal({
             </Field>
           </div>
 
-          {/* Section: Optional */}
           <div className="space-y-3">
             <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">4. Opcionales</h4>
 
-            {/* From user */}
             {selectedFrom ? (
               <div>
                 <label className="block text-xs font-semibold text-foreground mb-1.5">Generada por</label>
@@ -391,7 +359,6 @@ function CommissionModal({
             </Field>
           </div>
 
-          {/* Summary */}
           {form.user_id && Number(form.amount) > 0 && (
             <div className="bg-muted/50 rounded-xl p-4 border border-border">
               <div className="flex items-start gap-2 mb-2">
@@ -405,7 +372,7 @@ function CommissionModal({
                 </div>
                 <div className="flex justify-between">
                   <span>Tipo</span>
-                  <span className="font-medium text-foreground">{selectedType?.label}</span>
+                  <span className="font-medium text-foreground">{TYPES.find(t => t.value === form.type)?.label}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Monto</span>
@@ -413,14 +380,13 @@ function CommissionModal({
                 </div>
                 <div className="flex justify-between">
                   <span>Estado</span>
-                  <Badge className={STATUS_COLORS[form.status]}>{STATUSES.find(s => s.value === form.status)?.label}</Badge>
+                  <Badge className={STATUS_COLORS[form.status] || ''}>{STATUSES.find(s => s.value === form.status)?.label}</Badge>
                 </div>
               </div>
             </div>
           )}
         </div>
 
-        {/* Footer */}
         <div className="flex gap-3 px-6 py-4 border-t border-border flex-shrink-0">
           <button onClick={onClose} className="flex-1 border border-border rounded-xl py-2.5 text-sm font-medium text-foreground hover:bg-muted transition-colors">
             Cancelar
@@ -441,66 +407,49 @@ function CommissionModal({
 
 // ── Main Page ──
 export default function AdminCommissionsPage() {
-  const database = useDatabase();
-  const [commissions, setCommissions] = useState<Commission[]>([]);
-  const [users, setUsers] = useState<UserOption[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [filterType, setFilterType] = useState('');
-  const [filterStatus, setFilterStatus] = useState('');
-  const [page, setPage] = useState(1);
+  const {
+    commissions,
+    users,
+    loading,
+    refresh,
+    create,
+    createMany,
+    update,
+    updateStatus,
+    updateStatusMany,
+    delete: deleteCommission,
+    exportCSV,
+  } = useCommissions({ isAdmin: true, autoLoad: true });
+
+  const {
+    page,
+    setPage,
+    search,
+    setSearch,
+    filterType,
+    setFilterType,
+    filterStatus,
+    setFilterStatus,
+    filtered,
+    paginatedData,
+    totalPages,
+    stats,
+  } = useCommissionsAdminPagination(commissions, users, PAGE_SIZE);
+
   const [modal, setModal] = useState<{ mode: 'create' | 'edit'; data: typeof EMPTY_FORM & { id?: string } } | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [updating, setUpdating] = useState<string | null>(null);
-  const [viewRow, setViewRow] = useState<Commission | null>(null);
+  const [viewRow, setViewRow] = useState<any | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkStatus, setBulkStatus] = useState<CommStatus>('approved');
   const [bulkWorking, setBulkWorking] = useState(false);
 
-  const fetchAll = async () => {
-    setLoading(true);
-    const [{ data: comms }, { data: profiles }] = await Promise.all([
-      database.select<Commission>('commissions', { order: { column: 'created_at', ascending: false }, limit: 500 }),
-      database.select<UserOption>('profiles', { select: 'id, full_name, email', order: { column: 'full_name' } }),
-    ]);
-    const pmap = new Map(((profiles as UserOption[]) || []).map((p: any) => [p.id, p]));
-    const enriched: Commission[] = ((comms as Commission[]) || []).map((c: any) => ({
-      ...c,
-      _user_name: pmap.get(c.user_id)?.full_name || '—',
-      _user_email: pmap.get(c.user_id)?.email || '',
-      _from_name: c.from_user_id ? (pmap.get(c.from_user_id)?.full_name || '—') : '—',
-    }));
-    setCommissions(enriched);
-    setUsers((profiles as UserOption[]) || []);
-    setLoading(false);
-  };
+  const userOptions: UserOption[] = useMemo(() => users.map(u => ({ id: u.id, full_name: u.full_name || '', email: u.email || '' })), [users]);
 
-  useEffect(() => { fetchAll(); }, []);
-
-  const filtered = useMemo(() => {
-    let list = commissions;
-    if (search) list = list.filter(c => `${c._user_name} ${c._user_email} ${c.description ?? ''}`.toLowerCase().includes(search.toLowerCase()));
-    if (filterType) list = list.filter(c => c.type === filterType);
-    if (filterStatus) list = list.filter(c => c.status === filterStatus);
-    return list;
-  }, [commissions, search, filterType, filterStatus]);
-
-  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
-
-  const stats = useMemo(() => ({
-    total: commissions.length,
-    paid: commissions.filter(c => c.status === 'paid').reduce((s, c) => s + Number(c.amount), 0),
-    pending: commissions.filter(c => c.status === 'pending').length,
-    pendingAmt: commissions.filter(c => c.status === 'pending').reduce((s, c) => s + Number(c.amount), 0),
-    approved: commissions.filter(c => c.status === 'approved').length,
-  }), [commissions]);
-
-  const updateStatus = async (id: string, status: CommStatus) => {
+  const updateStatusHandler = async (id: string, status: CommStatus) => {
     setUpdating(id);
-    const { error } = await database.update('commissions', id, { status });
-    if (error) toast.error(error);
-    else { toast.success(`Marcada como ${STATUSES.find(s => s.value === status)?.label}`); fetchAll(); }
+    const result = await updateStatus(id, status);
+    if (result.success) toast.success(`Marcada como ${STATUSES.find(s => s.value === status)?.label}`);
     setUpdating(null);
   };
 
@@ -511,19 +460,23 @@ export default function AdminCommissionsPage() {
       return next;
     });
   };
+
   const toggleAll = () => {
-    setSelectedIds(prev => prev.size === paginated.length ? new Set() : new Set(paginated.map(c => c.id)));
+    setSelectedIds(prev => prev.size === paginatedData.length ? new Set() : new Set(paginatedData.map(c => c.id)));
   };
+
   const bulkApply = async () => {
     if (selectedIds.size === 0) { toast.error('Selecciona al menos una comisión'); return; }
     setBulkWorking(true);
-    const { error } = await database.update('commissions', { id: Array.from(selectedIds) }, { status: bulkStatus });
-    if (error) toast.error(error);
-    else { toast.success(`${selectedIds.size} comisión(es) marcadas como ${STATUSES.find(s => s.value === bulkStatus)?.label}`); setSelectedIds(new Set()); fetchAll(); }
+    const result = await updateStatusMany(Array.from(selectedIds), bulkStatus);
+    if (result.success) {
+      toast.success(`${selectedIds.size} comisión(es) marcadas como ${STATUSES.find(s => s.value === bulkStatus)?.label}`);
+      setSelectedIds(new Set());
+    }
     setBulkWorking(false);
   };
 
-  const openEdit = (c: Commission) => {
+  const openEdit = (c: any) => {
     setModal({
       mode: 'edit',
       data: {
@@ -537,18 +490,6 @@ export default function AdminCommissionsPage() {
         description: c.description || '',
       },
     });
-  };
-
-  const exportCSV = () => {
-    const header = 'Fecha,Beneficiario,Email,Generada por,Tipo,Estado,Monto,Moneda,Descripción';
-    const rows = filtered.map(c =>
-      [new Date(c.created_at).toLocaleDateString('es-PE'), c._user_name, c._user_email, c._from_name,
-       TYPES.find(t => t.value === c.type)?.label, STATUSES.find(s => s.value === c.status)?.label,
-       c.amount, c.currency, c.description ?? ''].join(',')
-    );
-    const blob = new Blob([[header, ...rows].join('\n')], { type: 'text/csv' });
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-    a.download = `comisiones_${new Date().toISOString().slice(0, 10)}.csv`; a.click();
   };
 
   return (
@@ -575,9 +516,9 @@ export default function AdminCommissionsPage() {
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: 'Total comisiones', value: String(stats.total), icon: TrendingUp, color: 'text-blue-500 bg-blue-500/10' },
+          { label: 'Total comisiones', value: String(stats.count), icon: TrendingUp, color: 'text-blue-500 bg-blue-500/10' },
           { label: 'Monto pagado', value: `S/ ${stats.paid.toFixed(2)}`, icon: DollarSign, color: 'text-green-500 bg-green-500/10' },
-          { label: 'Pendientes', value: `${stats.pending} · S/ ${stats.pendingAmt.toFixed(2)}`, icon: Clock, color: 'text-amber-500 bg-amber-500/10' },
+          { label: 'Pendientes', value: `${stats.pending} · S/ ${(stats as any).pendingAmt?.toFixed(2) || '0.00'}`, icon: Clock, color: 'text-amber-500 bg-amber-500/10' },
           { label: 'Aprobadas', value: String(stats.approved), icon: CheckCircle, color: 'text-purple-500 bg-purple-500/10' },
         ].map(s => (
           <div key={s.label} className="bg-card border border-border rounded-xl p-4 flex items-start gap-3">
@@ -619,22 +560,22 @@ export default function AdminCommissionsPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
           <input
             value={search}
-            onChange={e => { setSearch(e.target.value); setPage(1); }}
+            onChange={e => setSearch(e.target.value)}
             placeholder="Buscar por usuario, email o descripción..."
             className="w-full pl-9 pr-4 py-2.5 bg-muted border border-border rounded-xl text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary transition-colors"
           />
         </div>
-        <select value={filterType} onChange={e => { setFilterType(e.target.value); setPage(1); }}
-          className="px-3 py-2.5 bg-muted border border-border rounded-xl text-sm text-foreground outline-none focus:border-primary min-w-[130px]">
+        <select value={filterType} onChange={e => setFilterType(e.target.value)}
+          className="px-3 py-2.5 bg-muted border border-border rounded-xl text-sm text-foreign outline-none focus:border-primary min-w-[130px]">
           <option value="">Todos los tipos</option>
           {TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
         </select>
-        <select value={filterStatus} onChange={e => { setFilterStatus(e.target.value); setPage(1); }}
+        <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
           className="px-3 py-2.5 bg-muted border border-border rounded-xl text-sm text-foreground outline-none focus:border-primary min-w-[130px]">
           <option value="">Todos los estados</option>
           {STATUSES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
         </select>
-        <button onClick={fetchAll} className="p-2.5 border border-border rounded-xl hover:bg-muted text-muted-foreground transition-colors" title="Actualizar">
+        <button onClick={refresh} className="p-2.5 border border-border rounded-xl hover:bg-muted text-muted-foreground transition-colors" title="Actualizar">
           <RefreshCw className="w-4 h-4" />
         </button>
       </div>
@@ -646,12 +587,12 @@ export default function AdminCommissionsPage() {
             <thead>
               <tr className="border-b border-border bg-muted/40">
                 <th className="py-3 px-4 w-10">
-                <input type="checkbox"
-                  checked={paginated.length > 0 && selectedIds.size === paginated.length}
-                  onChange={toggleAll}
-                  className="rounded border-border accent-primary cursor-pointer" />
-              </th>
-              {['Fecha', 'Beneficiario', 'Origen', 'Tipo', 'Estado', 'Monto', 'Acciones'].map(h => (
+                  <input type="checkbox"
+                    checked={paginatedData.length > 0 && selectedIds.size === paginatedData.length}
+                    onChange={toggleAll}
+                    className="rounded border-border accent-primary cursor-pointer" />
+                </th>
+                {['Fecha', 'Beneficiario', 'Origen', 'Tipo', 'Estado', 'Monto', 'Acciones'].map(h => (
                   <th key={h} className="text-left py-3 px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wide whitespace-nowrap">
                     {h}
                   </th>
@@ -665,7 +606,7 @@ export default function AdminCommissionsPage() {
                     <td colSpan={8} className="py-3 px-4"><div className="h-8 bg-muted animate-pulse rounded-lg" /></td>
                   </tr>
                 ))
-              ) : paginated.length === 0 ? (
+              ) : paginatedData.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="py-16 text-center">
                     <div className="flex flex-col items-center gap-3 text-muted-foreground">
@@ -674,7 +615,7 @@ export default function AdminCommissionsPage() {
                     </div>
                   </td>
                 </tr>
-              ) : paginated.map(c => (
+              ) : (filtered as Array<Commission & { _user_name: string; _user_email: string; _from_name: string }>).slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE).map(c => (
                 <tr key={c.id} className="border-b border-border hover:bg-muted/25 transition-colors">
                   <td className="py-3 px-4 w-10">
                     <input type="checkbox"
@@ -691,10 +632,10 @@ export default function AdminCommissionsPage() {
                   </td>
                   <td className="py-3 px-4 text-sm text-muted-foreground max-w-[120px] truncate">{c._from_name}</td>
                   <td className="py-3 px-4">
-                    <Badge className={TYPE_COLORS[c.type]}>{TYPES.find(t => t.value === c.type)?.label}</Badge>
+                    <Badge className={TYPE_COLORS[c.type as CommType] || ''}>{TYPE_LABELS[c.type as CommType] || c.type}</Badge>
                   </td>
                   <td className="py-3 px-4">
-                    <Badge className={STATUS_COLORS[c.status]}>{STATUSES.find(s => s.value === c.status)?.label}</Badge>
+                    <Badge className={STATUS_COLORS[c.status as CommStatus] || ''}>{STATUSES.find(s => s.value === c.status)?.label}</Badge>
                   </td>
                   <td className="py-3 px-4">
                     <span className="text-sm font-bold text-foreground">
@@ -703,18 +644,15 @@ export default function AdminCommissionsPage() {
                   </td>
                   <td className="py-3 px-4">
                     <div className="flex items-center gap-0.5">
-                      {/* View */}
                       <button onClick={() => setViewRow(c)} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors" title="Ver">
                         <Eye className="w-3.5 h-3.5" />
                       </button>
-                      {/* Edit */}
                       <button onClick={() => openEdit(c)} className="p-1.5 rounded-lg hover:bg-blue-500/10 text-muted-foreground hover:text-blue-500 transition-colors" title="Editar">
                         <Edit2 className="w-3.5 h-3.5" />
                       </button>
-                      {/* Approve */}
                       {c.status === 'pending' && (
                         <button
-                          onClick={() => updateStatus(c.id, 'approved')}
+                          onClick={() => updateStatusHandler(c.id, 'approved')}
                           disabled={updating === c.id}
                           className="p-1.5 rounded-lg hover:bg-blue-500/10 text-muted-foreground hover:text-blue-600 transition-colors disabled:opacity-40"
                           title="Aprobar"
@@ -722,10 +660,9 @@ export default function AdminCommissionsPage() {
                           {updating === c.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle className="w-3.5 h-3.5" />}
                         </button>
                       )}
-                      {/* Mark paid */}
                       {c.status === 'approved' && (
                         <button
-                          onClick={() => updateStatus(c.id, 'paid')}
+                          onClick={() => updateStatusHandler(c.id, 'paid')}
                           disabled={updating === c.id}
                           className="p-1.5 rounded-lg hover:bg-green-500/10 text-muted-foreground hover:text-green-600 transition-colors disabled:opacity-40"
                           title="Marcar pagada"
@@ -733,10 +670,9 @@ export default function AdminCommissionsPage() {
                           {updating === c.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <DollarSign className="w-3.5 h-3.5" />}
                         </button>
                       )}
-                      {/* Reject */}
                       {c.status === 'pending' && (
                         <button
-                          onClick={() => updateStatus(c.id, 'rejected')}
+                          onClick={() => updateStatusHandler(c.id, 'rejected')}
                           disabled={updating === c.id}
                           className="p-1.5 rounded-lg hover:bg-red-500/10 text-muted-foreground hover:text-red-500 transition-colors disabled:opacity-40"
                           title="Rechazar"
@@ -744,7 +680,6 @@ export default function AdminCommissionsPage() {
                           <X className="w-3.5 h-3.5" />
                         </button>
                       )}
-                      {/* Delete */}
                       <button onClick={() => setDeleteId(c.id)} className="p-1.5 rounded-lg hover:bg-red-500/10 text-muted-foreground hover:text-red-500 transition-colors" title="Eliminar">
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -800,15 +735,15 @@ export default function AdminCommissionsPage() {
                 ['Beneficiario', viewRow._user_name],
                 ['Email', viewRow._user_email],
                 ['Generada por', viewRow._from_name],
-                ['Tipo', TYPES.find(t => t.value === viewRow.type)?.label],
+                ['Tipo', (TYPE_LABELS as Record<string, string>)[viewRow.type] || viewRow.type],
                 ['Estado', STATUSES.find(s => s.value === viewRow.status)?.label],
                 ['Monto', `${viewRow.currency === 'PEN' ? 'S/' : '$'} ${Number(viewRow.amount).toFixed(2)}`],
                 ['Fecha', new Date(viewRow.created_at).toLocaleString('es-PE')],
                 ['Descripción', viewRow.description || '—'],
               ].map(([k, v]) => (
                 <div key={String(k)} className="flex justify-between items-start gap-4">
-                  <span className="text-xs text-muted-foreground flex-shrink-0">{k}</span>
-                  <span className="text-xs font-medium text-foreground text-right">{v}</span>
+                  <span className="text-xs text-muted-foreground flex-shrink-0">{k as string}</span>
+                  <span className="text-xs font-medium text-foreground text-right">{v as string}</span>
                 </div>
               ))}
             </div>
@@ -829,9 +764,12 @@ export default function AdminCommissionsPage() {
         <CommissionModal
           mode={modal.mode}
           initial={modal.data}
-          users={users}
+          users={userOptions}
           onClose={() => setModal(null)}
-          onSaved={fetchAll}
+          onSaved={refresh}
+          onCreate={create}
+          onCreateMany={createMany}
+          onUpdate={update}
         />
       )}
 
@@ -848,9 +786,8 @@ export default function AdminCommissionsPage() {
               <button onClick={() => setDeleteId(null)} className="flex-1 border border-border rounded-xl py-2.5 text-sm font-medium hover:bg-muted transition-colors">Cancelar</button>
               <button
                 onClick={async () => {
-                  const { error } = await database.delete('commissions', deleteId!);
-                  if (error) toast.error(error);
-                  else { toast.success('Comisión eliminada'); fetchAll(); }
+                  const result = await deleteCommission(deleteId!);
+                  if (result.success) toast.success('Comisión eliminada');
                   setDeleteId(null);
                 }}
                 className="flex-1 bg-red-600 text-white rounded-xl py-2.5 text-sm font-semibold hover:bg-red-700 transition-colors"

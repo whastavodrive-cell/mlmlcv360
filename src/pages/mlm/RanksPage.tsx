@@ -1,7 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useDatabase } from '@/lib/backend';
-import { useAuthStore } from '@/store/authStore';
 import { useConfig, formatPrice } from '@/store/configStore';
+import { useRanks } from '@/modules/mlm';
 import { cn } from '@/lib/utils';
 import { TrendingUp, Star, Crown, Target, CircleCheck as CheckCircle, Medal, Gem, Disc, Award as AwardIcon } from 'lucide-react';
 
@@ -12,47 +10,16 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
 
 function RankIcon({ icon, className }: { icon?: string; className?: string }) {
   if (!icon) return <Medal className={className} />;
-  // If it's a single emoji character, render it as text
   if (icon.length <= 4 && !icon.includes('.')) return <span className={className}>{icon}</span>;
-  // If it matches a Lucide icon name
   const Comp = iconMap[icon.toLowerCase()];
   if (Comp) return <Comp className={className} />;
-  // If it's an SVG path or URL, render as image
   if (icon.startsWith('http') || icon.startsWith('/')) return <img src={icon} alt="" className={className} />;
-  // Default: render as text (emoji)
   return <span className={className}>{icon}</span>;
 }
 
 export default function RanksPage() {
-  const { user } = useAuthStore();
-  const database = useDatabase();
   const { ranks, currency, currencySymbol, exchangeRate } = useConfig();
-  const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({ affiliates: 0, volume: 0, totalCommissions: 0 });
-
-  useEffect(() => {
-    async function fetchStats() {
-      if (!user) return;
-      setLoading(true);
-      const { data: referrals } = await database.select('profiles', { select: 'id', filter: { sponsor_id: user.id } });
-      const { data: commissions } = await database.select('commissions', { select: 'amount', filter: { user_id: user.id } });
-      const totalCommissions = (commissions as any[])?.reduce((s, c) => s + Number(c.amount), 0) || 0;
-      setStats({
-        affiliates: (referrals as any[])?.length || 0,
-        volume: totalCommissions * 10,
-        totalCommissions,
-      });
-      setLoading(false);
-    }
-    fetchStats();
-  }, [user]);
-
-  const currentRankIndex = ranks.findIndex(r => r.slug === user?.rank);
-  const currentRank = ranks[currentRankIndex] || ranks[0];
-  const nextRank = ranks[currentRankIndex + 1];
-
-  const affProgress = nextRank ? Math.min(100, (stats.affiliates / nextRank.min_affiliates) * 100) : 100;
-  const volProgress = nextRank ? Math.min(100, (stats.volume / nextRank.min_volume) * 100) : 100;
+  const { loading, stats, currentRank, nextRank, progress } = useRanks();
 
   if (loading || ranks.length === 0) {
     return <div className="flex items-center justify-center h-64"><div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" /></div>;
@@ -68,13 +35,13 @@ export default function RanksPage() {
       {/* Current rank + progress */}
       <div className="bg-card border border-border rounded-xl p-5 sm:p-6">
         <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-5">
-          <div className={cn('w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0 border-2', currentRank.bg_color, currentRank.border_color)}>
-            <RankIcon icon={currentRank.icon} className={cn('w-8 h-8', currentRank.color)} />
+          <div className={cn('w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0 border-2', currentRank?.bg_color, currentRank?.border_color)}>
+            <RankIcon icon={currentRank?.icon} className={cn('w-8 h-8', currentRank?.color)} />
           </div>
           <div className="flex-1">
             <div className="text-xs text-muted-foreground uppercase tracking-wide">Tu rango actual</div>
-            <div className={cn('text-xl font-bold', currentRank.color)}>{currentRank.name}</div>
-            <div className="text-sm text-muted-foreground">Bono mensual: <span className="font-bold text-foreground">{formatPrice(currentRank.bonus, currency, currencySymbol, exchangeRate)}</span></div>
+            <div className={cn('text-xl font-bold', currentRank?.color)}>{currentRank?.name}</div>
+            <div className="text-sm text-muted-foreground">Bono mensual: <span className="font-bold text-foreground">{formatPrice(currentRank?.bonus || 0, currency, currencySymbol, exchangeRate)}</span></div>
           </div>
           {nextRank && (
             <div className="text-right">
@@ -94,7 +61,7 @@ export default function RanksPage() {
                 <span className="text-xs text-muted-foreground">{stats.affiliates} / {nextRank.min_affiliates}</span>
               </div>
               <div className="h-2 bg-muted rounded-full overflow-hidden">
-                <div className="h-full bg-primary rounded-full transition-all duration-500" style={{ width: `${affProgress}%` }} />
+                <div className="h-full bg-primary rounded-full transition-all duration-500" style={{ width: `${progress.affiliateProgress}%` }} />
               </div>
             </div>
             <div>
@@ -103,7 +70,7 @@ export default function RanksPage() {
                 <span className="text-xs text-muted-foreground">{formatPrice(stats.volume, currency, currencySymbol, exchangeRate)} / {formatPrice(nextRank.min_volume, currency, currencySymbol, exchangeRate)}</span>
               </div>
               <div className="h-2 bg-muted rounded-full overflow-hidden">
-                <div className="h-full bg-green-500 rounded-full transition-all duration-500" style={{ width: `${volProgress}%` }} />
+                <div className="h-full bg-green-500 rounded-full transition-all duration-500" style={{ width: `${progress.volumeProgress}%` }} />
               </div>
             </div>
           </div>
@@ -118,8 +85,8 @@ export default function RanksPage() {
       {/* All ranks */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {ranks.map((rank, i) => {
-          const isCurrent = rank.slug === user?.rank;
-          const isAchieved = i <= currentRankIndex;
+          const isCurrent = rank.id === currentRank?.id;
+          const isAchieved = currentRank && i <= ranks.findIndex(r => r.id === currentRank.id);
           return (
             <div key={rank.id} className={cn(
               'bg-card border-2 rounded-xl p-5 transition-all',

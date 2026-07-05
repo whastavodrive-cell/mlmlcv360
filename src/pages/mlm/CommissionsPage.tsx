@@ -1,22 +1,10 @@
-import { useState, useEffect } from 'react';
-import { useDatabase } from '@/lib/backend';
 import { useAuthStore } from '@/store/authStore';
 import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
-import { DollarSign, Clock, CircleCheck as CheckCircle, Circle as XCircle, Download } from 'lucide-react';
+import { DollarSign, Clock, CircleCheck as CheckCircle, Download, Circle as XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-
-const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
-  pending:  { label: 'Pendiente',  color: 'text-yellow-600 bg-yellow-500/10', icon: Clock },
-  approved: { label: 'Aprobado',   color: 'text-blue-600 bg-blue-500/10',     icon: CheckCircle },
-  paid:     { label: 'Pagado',     color: 'text-green-600 bg-green-500/10',   icon: CheckCircle },
-  rejected: { label: 'Rechazado',  color: 'text-red-500 bg-red-500/10',       icon: XCircle },
-};
-
-const typeLabels: Record<string, string> = {
-  direct: 'Directa', binary: 'Binaria', rank_bonus: 'Bono de rango',
-  unilevel: 'Unilevel', residual: 'Residual',
-};
+import { useCommissions, useCommissionsPagination, TYPE_LABELS } from '@/modules/mlm';
+import { STATUS_CONFIG } from '@/modules/mlm/services/mlmService';
 
 function CustomTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
@@ -34,64 +22,11 @@ function CustomTooltip({ active, payload, label }: any) {
 
 export default function CommissionsPage() {
   const { user } = useAuthStore();
-  const database = useDatabase();
-  const [loading, setLoading] = useState(true);
-  const [commissions, setCommissions] = useState<any[]>([]);
-  const [chartData, setChartData] = useState<any[]>([]);
-  const [filter, setFilter] = useState('all');
-  const [page, setPage] = useState(1);
-  const PAGE_SIZE = 10;
-
-  useEffect(() => {
-    async function fetchCommissions() {
-      if (!user) return;
-      setLoading(true);
-      const { data } = await database.select<any>('commissions', {
-        select: 'id, amount, type, status, description, created_at, from_user_id',
-        filter: { user_id: user.id },
-        order: { column: 'created_at', ascending: false },
-      });
-      if (data) {
-        const rows = data as any[];
-        setCommissions(rows);
-        // Build chart from last 6 months
-        const now = new Date();
-        const months: any[] = [];
-        for (let i = 5; i >= 0; i--) {
-          const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-          const monthName = d.toLocaleDateString('es-PE', { month: 'short' });
-          const total = rows.filter((c: any) => {
-            const cd = new Date(c.created_at);
-            return cd.getMonth() === d.getMonth() && cd.getFullYear() === d.getFullYear();
-          }).reduce((s: any, c: any) => s + Number(c.amount), 0);
-          months.push({ name: monthName.charAt(0).toUpperCase() + monthName.slice(1), comisiones: total });
-        }
-        setChartData(months);
-      }
-      setLoading(false);
-    }
-    fetchCommissions();
-  }, [user]);
-
-  const filtered = filter === 'all' ? commissions : commissions.filter(c => c.status === filter);
-  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
-
-  const total = commissions.reduce((s, c) => s + Number(c.amount), 0);
-  const pending = commissions.filter(c => c.status === 'pending').reduce((s, c) => s + Number(c.amount), 0);
-  const paid = commissions.filter(c => c.status === 'paid').reduce((s, c) => s + Number(c.amount), 0);
-  const count = commissions.length;
+  const { commissions, loading, stats, chartData, exportCSV } = useCommissions({ userId: user?.id, autoLoad: true });
+  const { page, setPage, filter, setFilter, paginatedData, totalPages, total } = useCommissionsPagination(commissions, 10);
 
   const handleExport = () => {
-    const csv = ['Fecha,Tipo,Estado,Monto,Descripcion'];
-    filtered.forEach(c => {
-      csv.push([c.created_at, typeLabels[c.type] || c.type, c.status, c.amount, c.description || ''].join(','));
-    });
-    const blob = new Blob([csv.join('\n')], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = 'comisiones.csv'; a.click();
-    URL.revokeObjectURL(url);
+    exportCSV();
     toast.success('Exportado a CSV');
   };
 
@@ -114,10 +49,10 @@ export default function CommissionsPage() {
       {/* Summary */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {[
-          { label: 'Total', value: `S/ ${total.toLocaleString('es-PE', { minimumFractionDigits: 2 })}`, icon: DollarSign, color: 'text-blue-500 bg-blue-500/10' },
-          { label: 'Pagado', value: `S/ ${paid.toLocaleString('es-PE', { minimumFractionDigits: 2 })}`, icon: CheckCircle, color: 'text-green-500 bg-green-500/10' },
-          { label: 'Pendiente', value: `S/ ${pending.toLocaleString('es-PE', { minimumFractionDigits: 2 })}`, icon: Clock, color: 'text-yellow-500 bg-yellow-500/10' },
-          { label: 'Registros', value: String(count), icon: DollarSign, color: 'text-purple-500 bg-purple-500/10' },
+          { label: 'Total', value: `S/ ${stats.total.toLocaleString('es-PE', { minimumFractionDigits: 2 })}`, icon: DollarSign, color: 'text-blue-500 bg-blue-500/10' },
+          { label: 'Pagado', value: `S/ ${stats.paid.toLocaleString('es-PE', { minimumFractionDigits: 2 })}`, icon: CheckCircle, color: 'text-green-500 bg-green-500/10' },
+          { label: 'Pendiente', value: `S/ ${stats.pending.toLocaleString('es-PE', { minimumFractionDigits: 2 })}`, icon: Clock, color: 'text-yellow-500 bg-yellow-500/10' },
+          { label: 'Registros', value: String(stats.count), icon: DollarSign, color: 'text-purple-500 bg-purple-500/10' },
         ].map(s => (
           <div key={s.label} className="bg-card border border-border rounded-xl p-4 flex items-center gap-3">
             <div className={cn('w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0', s.color)}>
@@ -154,10 +89,10 @@ export default function CommissionsPage() {
       {/* Filters */}
       <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
         {['all', 'pending', 'approved', 'paid', 'rejected'].map(f => (
-          <button key={f} onClick={() => { setFilter(f); setPage(1); }}
+          <button key={f} onClick={() => setFilter(f)}
             className={cn('px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors',
               filter === f ? 'bg-primary text-white' : 'bg-muted text-muted-foreground hover:text-foreground')}>
-            {f === 'all' ? 'Todos' : statusConfig[f]?.label || f}
+            {f === 'all' ? 'Todos' : STATUS_CONFIG[f as keyof typeof STATUS_CONFIG]?.label || f}
           </button>
         ))}
       </div>
@@ -176,18 +111,19 @@ export default function CommissionsPage() {
               </tr>
             </thead>
             <tbody>
-              {paginated.length === 0 ? (
+              {paginatedData.length === 0 ? (
                 <tr><td colSpan={5} className="py-12 text-center text-muted-foreground text-sm">No hay comisiones registradas</td></tr>
-              ) : paginated.map(c => {
-                const sc = statusConfig[c.status] || statusConfig.pending;
+              ) : paginatedData.map(c => {
+                const sc = STATUS_CONFIG[c.status] || STATUS_CONFIG.pending;
+                const Icon = c.status === 'pending' ? Clock : c.status === 'paid' || c.status === 'approved' ? CheckCircle : XCircle;
                 return (
                   <tr key={c.id} className="border-b border-border hover:bg-muted/30 transition-colors">
                     <td className="py-3 px-4 text-sm text-muted-foreground">{new Date(c.created_at).toLocaleDateString('es-PE')}</td>
-                    <td className="py-3 px-4 text-sm font-medium text-foreground">{typeLabels[c.type] || c.type}</td>
+                    <td className="py-3 px-4 text-sm font-medium text-foreground">{TYPE_LABELS[c.type] || c.type}</td>
                     <td className="py-3 px-4 text-sm text-muted-foreground hidden sm:table-cell max-w-[200px] truncate">{c.description || '—'}</td>
                     <td className="py-3 px-4">
                       <span className={cn('text-xs font-medium px-2 py-1 rounded-full inline-flex items-center gap-1', sc.color)}>
-                        <sc.icon className="w-3 h-3" /> {sc.label}
+                        <Icon className="w-3 h-3" /> {sc.label}
                       </span>
                     </td>
                     <td className="py-3 px-4 text-right text-sm font-bold text-foreground">S/ {Number(c.amount).toLocaleString('es-PE', { minimumFractionDigits: 2 })}</td>
@@ -199,7 +135,7 @@ export default function CommissionsPage() {
         </div>
         {totalPages > 1 && (
           <div className="flex items-center justify-between px-4 py-3 border-t border-border">
-            <div className="text-xs text-muted-foreground">Mostrando {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} de {filtered.length}</div>
+            <div className="text-xs text-muted-foreground">Mostrando {(page - 1) * 10 + 1}–{Math.min(page * 10, total)} de {total}</div>
             <div className="flex gap-1">
               <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="px-3 py-1.5 rounded-lg text-xs border border-border hover:bg-muted disabled:opacity-40">Anterior</button>
               <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="px-3 py-1.5 rounded-lg text-xs border border-border hover:bg-muted disabled:opacity-40">Siguiente</button>
