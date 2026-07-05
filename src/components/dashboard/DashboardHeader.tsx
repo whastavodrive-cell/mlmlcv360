@@ -112,16 +112,24 @@ export default function DashboardHeader() {
     return () => window.removeEventListener('scroll', handler);
   }, [query]);
 
-  // Close user menu on outside click
+  // Close user menu and notifications on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
         setUserMenuOpen(false);
       }
+      // Close notifications if clicking outside the bell button and panel
+      const target = e.target as Node;
+      const notifPanel = document.getElementById('notif-panel');
+      const bellBtn = document.getElementById('bell-btn');
+      if (notifOpen && notifPanel && bellBtn &&
+        !notifPanel.contains(target) && !bellBtn.contains(target)) {
+        setNotifOpen(false);
+      }
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
-  }, []);
+  }, [notifOpen]);
 
   // Cmd+K (Mac) / Ctrl+K (Windows/Linux) shortcut
   useEffect(() => {
@@ -300,14 +308,18 @@ export default function DashboardHeader() {
               value={query}
               onChange={e => setQuery(e.target.value)}
               onFocus={() => setSearchOpen(true)}
-              placeholder={`Buscar usuarios, productos ... (${isMac ? '⌘' : 'Ctrl'}K)`}
-              className="w-full pl-10 pr-4 py-2 bg-muted/50 border border-border rounded-xl text-sm text-foreground outline-none focus:border-border focus:bg-card transition-colors"
+              placeholder="Buscar usuarios, productos..."
+              className="w-full pl-10 pr-20 py-2 bg-muted/50 border border-border rounded-xl text-sm text-foreground outline-none focus:border-border focus:bg-card transition-colors"
             />
-            {query && (
+            {query ? (
               <button onClick={() => { setQuery(''); setResults([]); inputRef.current?.focus(); }}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
                 <X className="w-3.5 h-3.5" />
               </button>
+            ) : (
+              <kbd className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground bg-muted border border-border/60 rounded">
+                {isMac ? '⌘' : 'Ctrl'}K
+              </kbd>
             )}
           </div>
 
@@ -349,6 +361,7 @@ export default function DashboardHeader() {
           {/* Notifications */}
           <div className="relative">
             <button
+              id="bell-btn"
               onClick={() => { setNotifOpen(v => !v); if (!notifOpen) fetchNotifications(); }}
               className="relative w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors"
             >
@@ -360,7 +373,7 @@ export default function DashboardHeader() {
               )}
             </button>
             {notifOpen && (
-              <div className="absolute right-0 top-full mt-2 w-80 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden z-50">
+              <div id="notif-panel" className="absolute right-0 top-full mt-2 w-80 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden z-50">
                 <div className="flex items-center justify-between px-4 py-3 border-b border-border">
                   <span className="font-semibold text-sm">Notificaciones</span>
                   <div className="flex items-center gap-2">
@@ -519,7 +532,7 @@ export default function DashboardHeader() {
                 type="text"
                 value={query}
                 onChange={e => setQuery(e.target.value)}
-                placeholder={`Buscar usuarios, productos ... (${isMac ? '⌘' : 'Ctrl'}K)`}
+                placeholder="Buscar usuarios, productos..."
                 className="w-full pl-10 pr-10 py-2.5 bg-muted/50 border border-border rounded-xl text-sm text-foreground outline-none focus:border-border focus:bg-card transition-colors"
                 autoFocus
               />

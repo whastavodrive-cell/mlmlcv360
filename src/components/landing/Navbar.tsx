@@ -3,15 +3,38 @@ import { Link, useLocation, useNavigate } from '@/lib/router';
 import {
   X, Sun, Moon, ChevronDown, LogOut, LayoutDashboard, User,
   ShoppingBag, Package, Heart, Menu, Settings,
-  Crown, Zap, Scale, Star,
+  Crown, Zap, Scale, Star, Medal,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useThemeStore } from '@/store/themeStore';
 import { useAuthStore } from '@/store/authStore';
-import { useConfig } from '@/store/configStore';
+import { useConfig, type Rank } from '@/store/configStore';
 import { useCart } from '@/store/cartStore';
 import { useUIStore } from '@/store/uiStore';
 import { LogoWithText } from '@/components/Logo';
+
+const rankIconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+  medal: Medal, crown: Crown, star: Star,
+  bronze: Medal, silver: Medal, gold: Medal, platinum: Medal, diamond: Medal,
+};
+
+function RankBadgeIcon({ rank, className }: { rank: Rank; className?: string }) {
+  const icon = rank.icon || '';
+  const trimmed = icon.trim();
+  if (trimmed.toLowerCase().startsWith('<svg')) {
+    return (
+      <span
+        className={cn('inline-flex items-center justify-center [&>svg]:w-full [&>svg]:h-full', className)}
+        dangerouslySetInnerHTML={{ __html: trimmed }}
+      />
+    );
+  }
+  if (trimmed.startsWith('http') || trimmed.startsWith('/')) return <img src={trimmed} alt="" className={className} />;
+  const Comp = rankIconMap[trimmed.toLowerCase()];
+  if (Comp) return <Comp className={className} />;
+  if (trimmed.length <= 4 && !trimmed.includes('.')) return <span className={className}>{trimmed}</span>;
+  return <Star className={className} />;
+}
 
 const navLinks = [
   { href: '/nosotros', label: 'Nosotros' },
@@ -81,13 +104,13 @@ function DesktopUserMenu() {
               {(userPlan || userRank) && (
                 <div className="flex items-center gap-1 mt-1 flex-wrap">
                   {userPlan && (
-                    <span className="flex items-center gap-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded-full">
+                    <span className={cn('inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full', userPlan.color || 'text-amber-600 dark:text-amber-400', userPlan.bg_color || 'bg-amber-500/10')}>
                       <Crown className="w-2.5 h-2.5" />{userPlan.name}
                     </span>
                   )}
                   {userRank && (
-                    <span className="flex items-center gap-0.5 text-[10px] font-semibold text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">
-                      <Star className="w-2.5 h-2.5" />{userRank.name}
+                    <span className={cn('inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full', userRank.color || 'text-primary', userRank.bg_color || 'bg-primary/10')}>
+                      <RankBadgeIcon rank={userRank} className="w-2.5 h-2.5" />{userRank.name}
                     </span>
                   )}
                 </div>
@@ -258,7 +281,7 @@ export default function Navbar() {
             <div className="ml-auto flex items-center gap-1">
               {/* Cart button - icon only with badge */}
               <button onClick={() => navigate('/carrito')}
-                className="relative w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted/60 text-foreground hover:text-foreground transition-colors"
+                className="relative w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors"
                 aria-label="Carrito">
                 <ShoppingBag className="w-5 h-5" />
                 {itemCount > 0 && (
@@ -270,7 +293,7 @@ export default function Navbar() {
 
               {/* Theme toggle */}
               <button onClick={() => setTheme(isDark ? 'light' : 'dark')}
-                className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted/60 text-foreground hover:text-foreground transition-colors"
+                className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors"
                 aria-label="Cambiar tema">
                 {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
               </button>
@@ -355,13 +378,13 @@ export default function Navbar() {
                   {(userPlan || userRank) && (
                     <div className="flex items-center gap-1 mt-0.5 flex-wrap">
                       {userPlan && (
-                        <span className="flex items-center gap-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded-full">
+                        <span className={cn('inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full', userPlan.color || 'text-amber-600 dark:text-amber-400', userPlan.bg_color || 'bg-amber-500/10')}>
                           <Crown className="w-2.5 h-2.5" />{userPlan.name}
                         </span>
                       )}
                       {userRank && (
-                        <span className="flex items-center gap-0.5 text-[10px] font-semibold text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">
-                          <Star className="w-2.5 h-2.5" />{userRank.name}
+                        <span className={cn('inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full', userRank.color || 'text-primary', userRank.bg_color || 'bg-primary/10')}>
+                          <RankBadgeIcon rank={userRank} className="w-2.5 h-2.5" />{userRank.name}
                         </span>
                       )}
                     </div>
