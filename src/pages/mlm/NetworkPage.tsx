@@ -2,7 +2,7 @@ import {
   useState, useRef, useEffect, useCallback, useMemo, WheelEvent,
   PointerEvent as RPointerEvent, TouchEvent as RTouchEvent,
 } from 'react';
-import { supabase } from '@/lib/backend';
+import { useDatabase } from '@/lib/backend';
 import type { Profile } from '@/lib/backend';
 import { useAuthStore } from '@/store/authStore';
 import { cn } from '@/lib/utils';
@@ -406,6 +406,7 @@ function AddMemberModal({
   onAdded: () => void;
 }) {
   const { user } = useAuthStore();
+  const database = useDatabase();
   const [mode, setMode] = useState<AddMode>('new');
   const [loading, setLoading] = useState(false);
   const [copied, setCopied]   = useState(false);
@@ -446,7 +447,7 @@ function AddMemberModal({
   const handleAddNew = async () => {
     if (!form.full_name.trim() || !form.email.trim()) { toast.error('Completa nombre y correo'); return; }
     setLoading(true);
-    const { data, error } = await supabase.rpc('add_referral_direct', {
+    const { data, error } = await database.rpc('add_referral_direct', {
       p_sponsor_id: sponsorId,
       p_full_name:  form.full_name.trim(),
       p_email:      form.email.trim().toLowerCase(),
@@ -454,7 +455,7 @@ function AddMemberModal({
       p_position:   form.position,
     });
     if (error || !(data as any)?.success) {
-      toast.error((data as any)?.error || error?.message || 'Error al crear el afiliado');
+      toast.error((data as any)?.error || error || 'Error al crear el afiliado');
     } else {
       toast.success(`${form.full_name} agregado a la red. Contraseña: Temp123456!`);
       onAdded(); onClose();
@@ -465,13 +466,13 @@ function AddMemberModal({
   const handleAssignExisting = async () => {
     if (!existingId) { toast.error('Selecciona un usuario'); return; }
     setLoading(true);
-    const { data, error } = await supabase.rpc('assign_existing_user_to_network', {
+    const { data, error } = await database.rpc('assign_existing_user_to_network', {
       p_user_id:    existingId,
       p_sponsor_id: sponsorId,
       p_position:   form.position,
     });
     if (error || !(data as any)?.success) {
-      toast.error((data as any)?.error || error?.message || 'Error al asignar el usuario');
+      toast.error((data as any)?.error || error || 'Error al asignar el usuario');
     } else {
       toast.success('Usuario asignado a la red');
       onAdded(); onClose();
@@ -483,7 +484,7 @@ function AddMemberModal({
     if (!inviteEmail.trim()) { toast.error('Ingresa un correo'); return; }
     setLoading(true);
     // Log invitation attempt — in production this would trigger an email edge function
-    await supabase.from('system_config').select('key').limit(1); // keep connection alive
+    await database.select('system_config', { select: 'key', limit: 1 }); // keep connection alive
     toast.success(`Invitación registrada para ${inviteEmail}. Comparte el enlace manualmente.`);
     setLoading(false);
     onClose();
@@ -787,6 +788,7 @@ function NodeDrawer({
   onAddChild: (sponsorId: string, name: string) => void;
 }) {
   const { user } = useAuthStore();
+  const database = useDatabase();
   const [tab, setTab] = useState<'info' | 'edit' | 'move' | 'delete'>('info');
   const [saving, setSaving] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -830,8 +832,8 @@ function NodeDrawer({
       if (form.referral_code.trim()) updates.referral_code = form.referral_code.trim().toUpperCase();
       updates.invite_link = form.invite_link.trim() || null;
     }
-    const { error } = await supabase.from('profiles').update(updates).eq('id', node.id);
-    if (error) toast.error(error.message);
+    const { error } = await database.update('profiles', node.id, updates);
+    if (error) toast.error(error);
     else { toast.success('Perfil actualizado'); onRefresh(); onClose(); }
     setSaving(false);
   };
@@ -839,19 +841,19 @@ function NodeDrawer({
   const move = async () => {
     if (!newSponsorId) { toast.error('Selecciona un patrocinador'); return; }
     setSaving(true);
-    const { data, error } = await supabase.rpc('move_user_in_network', {
+    const { data, error } = await database.rpc('move_user_in_network', {
       p_user_id: node.id, p_new_sponsor_id: newSponsorId, p_position: movePos,
     });
     if (error || !(data as any)?.success) {
-      toast.error((data as any)?.error || error?.message || 'Error');
+      toast.error((data as any)?.error || error || 'Error');
     } else { toast.success('Usuario movido'); onRefresh(); onClose(); }
     setSaving(false);
   };
 
   const remove = async () => {
     setSaving(true);
-    const { error } = await supabase.from('profiles').update({ sponsor_id: null, updated_at: new Date().toISOString() }).eq('id', node.id);
-    if (error) toast.error(error.message);
+    const { error } = await database.update('profiles', node.id, { sponsor_id: null, updated_at: new Date().toISOString() });
+    if (error) toast.error(error);
     else { toast.success('Usuario desvinculado de la red'); onRefresh(); onClose(); }
     setSaving(false);
   };
@@ -1228,6 +1230,7 @@ function ListView({
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function NetworkPage() {
   const { user } = useAuthStore();
+  const database = useDatabase();
   const [profiles, setProfiles]   = useState<Profile[]>([]);
   const [loading, setLoading]     = useState(true);
   const [viewMode, setViewMode]   = useState<ViewMode>('tree');
@@ -1254,41 +1257,41 @@ export default function NetworkPage() {
     setLoading(true);
     try {
       // Fetch config
-      const { data: cfgData } = await supabase
-        .from('system_config')
-        .select('key, value')
-        .in('key', ['allow_assign_existing_user']);
+      const { data: cfgData } = await database.select<any>('system_config', {
+        select: 'key, value',
+        filter: [{ column: 'key', operator: 'in', value: ['allow_assign_existing_user'] }],
+      });
       if (cfgData) {
         const cfg: Record<string, string> = {};
-        cfgData.forEach((r: any) => { cfg[r.key] = r.value; });
+        (cfgData as any[]).forEach((r: any) => { cfg[r.key] = r.value; });
         setAllowAssignExisting(cfg.allow_assign_existing_user !== 'false');
       }
 
       let data: Profile[] = [];
       if (isAdmin && viewAllNet) {
-        const { data: all } = await supabase
-          .from('profiles')
-          .select('id,username,full_name,email,rank,plan,status,sponsor_id,binary_position,avatar_url,referral_code,invite_link,role,created_at,updated_at')
-          .order('created_at');
-        data = all || [];
+        const { data: all } = await database.select<Profile>('profiles', {
+          select: 'id,username,full_name,email,rank,plan,status,sponsor_id,binary_position,avatar_url,referral_code,invite_link,role,created_at,updated_at',
+          order: { column: 'created_at' },
+        });
+        data = (all as Profile[]) || [];
         // Root: first user with no sponsor, or admin user
         const root = data.find(p => !p.sponsor_id) || data.find(p => p.id === user.id) || data[0];
         setRootId(root?.id || user.id);
       } else {
         // Fetch self + downline BFS (5 levels)
-        const { data: self } = await supabase
-          .from('profiles')
-          .select('id,username,full_name,email,rank,plan,status,sponsor_id,binary_position,avatar_url,referral_code,invite_link,role,created_at,updated_at')
-          .eq('id', user.id)
-          .maybeSingle();
-        if (self) data.push(self);
+        const { data: self } = await database.select<Profile>('profiles', {
+          select: 'id,username,full_name,email,rank,plan,status,sponsor_id,binary_position,avatar_url,referral_code,invite_link,role,created_at,updated_at',
+          filter: { id: user.id },
+          maybeSingle: true,
+        });
+        if (self) data.push(self as Profile);
         let frontier = [user.id];
         for (let depth = 0; depth < 6 && frontier.length > 0; depth++) {
-          const { data: kids } = await supabase
-            .from('profiles')
-            .select('id,username,full_name,email,rank,plan,status,sponsor_id,binary_position,avatar_url,referral_code,invite_link,role,created_at,updated_at')
-            .in('sponsor_id', frontier);
-          const newKids = (kids || []).filter(k => !data.find(p => p.id === k.id));
+          const { data: kids } = await database.select<Profile>('profiles', {
+            select: 'id,username,full_name,email,rank,plan,status,sponsor_id,binary_position,avatar_url,referral_code,invite_link,role,created_at,updated_at',
+            filter: [{ column: 'sponsor_id', operator: 'in', value: frontier }],
+          });
+          const newKids = ((kids as Profile[]) || []).filter(k => !data.find(p => p.id === k.id));
           data.push(...newKids);
           frontier = newKids.map(k => k.id);
         }

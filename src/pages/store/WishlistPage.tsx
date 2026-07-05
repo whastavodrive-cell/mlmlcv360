@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/lib/backend';
+import { useDatabase } from '@/lib/backend';
 import { useAuthStore } from '@/store/authStore';
 import { useCart } from '@/store/cartStore';
 import { useNavigate } from '@/lib/router';
@@ -13,6 +13,7 @@ import Footer from '@/components/landing/Footer';
 function fmt(n: number, c = 'PEN') { return c === 'USD' ? `$${n.toFixed(2)}` : `S/ ${n.toFixed(2)}`; }
 
 export default function WishlistPage() {
+  const database = useDatabase();
   const { user } = useAuthStore();
   const { addItem } = useCart();
   const navigate = useNavigate();
@@ -23,8 +24,11 @@ export default function WishlistPage() {
   const load = useCallback(async () => {
     if (!user) { navigate('/login'); return; }
     setLoading(true);
-    const { data } = await supabase.from('wishlists').select('product_id, product:products(*, category:product_categories(id,name), variants:product_variants(*))').eq('user_id', user.id);
-    if (data) { setProducts(data.map((w: any) => w.product).filter(Boolean)); }
+    const { data } = await database.select('wishlists', {
+      select: 'product_id, product:products(*, category:product_categories(id,name), variants:product_variants(*))',
+      filter: { user_id: user.id },
+    });
+    if (data) { setProducts(((data as any[]) || []).map((w: any) => w.product).filter(Boolean)); }
     setLoading(false);
   }, [user, navigate]);
 
@@ -32,7 +36,7 @@ export default function WishlistPage() {
 
   const removeFromWishlist = async (productId: string) => {
     if (!user) return;
-    await supabase.from('wishlists').delete().eq('user_id', user.id).eq('product_id', productId);
+    await database.deleteWhere('wishlists', { user_id: user.id, product_id: productId });
     setProducts(prev => prev.filter(p => p.id !== productId));
     toast.success('Eliminado de favoritos');
   };

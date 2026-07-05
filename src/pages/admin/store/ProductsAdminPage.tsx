@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/lib/backend';
+import { useDatabase } from '@/lib/backend';
 import { useNavigate } from '@/lib/router';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -20,16 +20,18 @@ export default function ProductsAdminPage() {
   const [catFilter, setCatFilter] = useState('');
   const [delId, setDelId] = useState<string | null>(null);
 
+  const database = useDatabase();
+
   const load = useCallback(async () => {
     setLoading(true);
     const [{ data: prods }, { data: cats }] = await Promise.all([
-      supabase.from('products').select('*, category:product_categories(id,name), variants:product_variants(id,stock,price)').order('created_at', { ascending: false }),
-      supabase.from('product_categories').select('*').order('sort_order'),
+      database.select<Product>('products', { select: '*, category:product_categories(id,name), variants:product_variants(id,stock,price)', order: { column: 'created_at', ascending: false } }),
+      database.select<ProductCategory>('product_categories', { order: { column: 'sort_order' } }),
     ]);
     setProducts((prods as Product[]) || []);
-    setCategories(cats || []);
+    setCategories((cats as ProductCategory[]) || []);
     setLoading(false);
-  }, []);
+  }, [database]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -43,7 +45,7 @@ export default function ProductsAdminPage() {
   const duplicate = async (p: Product) => {
     const newSlug = `${p.slug}-copia-${Date.now()}`;
     const newSku = p.sku ? `${p.sku}-copia` : `SKU-${Date.now().toString(36).toUpperCase()}`;
-    const { data, error } = await supabase.from('products').insert({
+    const { data, error } = await database.insert<any>('products', {
       name: `${p.name} (copia)`,
       slug: newSlug,
       description: p.description,
@@ -65,11 +67,11 @@ export default function ProductsAdminPage() {
       meta_description: p.meta_description,
       featured: false,
       created_by: p.created_by,
-    }).select().single();
-    if (error) { toast.error(error.message); return; }
+    });
+    if (error) { toast.error(error); return; }
     // Duplicate variants
     if (p.variants?.length) {
-      await supabase.from('product_variants').insert(
+      await database.insert('product_variants',
         p.variants.map((v: any) => ({
           name: v.name,
           sku: v.sku ? `${v.sku}-copia` : undefined,
@@ -90,14 +92,14 @@ export default function ProductsAdminPage() {
 
   const toggleStatus = async (p: Product) => {
     const next = p.status === 'active' ? 'draft' : 'active';
-    const { error } = await supabase.from('products').update({ status: next, updated_at: new Date().toISOString() }).eq('id', p.id);
-    if (error) toast.error(error.message);
+    const { error } = await database.update('products', p.id, { status: next, updated_at: new Date().toISOString() });
+    if (error) toast.error(error);
     else { toast.success(`Producto ${next === 'active' ? 'activado' : 'desactivado'}`); load(); }
   };
 
   const remove = async (id: string) => {
-    const { error } = await supabase.from('products').delete().eq('id', id);
-    if (error) toast.error(error.message);
+    const { error } = await database.delete('products', id);
+    if (error) toast.error(error);
     else { toast.success('Producto eliminado'); setDelId(null); load(); }
   };
 

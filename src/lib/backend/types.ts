@@ -66,13 +66,42 @@ export interface FileMetadata {
   createdAt?: string;
 }
 
+// Filter operators supported by PostgREST
+export type FilterOperator =
+  | 'eq' | 'neq' | 'gt' | 'gte' | 'lt' | 'lte'
+  | 'like' | 'ilike' | 'is' | 'in' | 'not'
+  | 'cs' | 'cd' | 'ov' | 'sl' | 'sr' | 'nxr' | 'nxl' | 'adj';
+
+// A structured filter condition
+export interface FilterCondition {
+  column: string;
+  operator: FilterOperator;
+  value: unknown;
+}
+
+// A filter can be:
+// - A simple object of {column: value} (implicit eq, null → is, array → in)
+// - An array of FilterCondition objects for complex queries
+// - A raw string for advanced PostgREST OR/AND expressions (e.g. "col1.eq.val,col2.eq.val2")
+export type Filter = Record<string, unknown> | FilterCondition[] | string;
+
+export interface OrderClause {
+  column: string;
+  ascending?: boolean;
+  nullsFirst?: boolean;
+}
+
 export interface QueryOptions {
-  select?: string[];
-  filter?: Record<string, unknown>;
-  order?: { column: string; ascending?: boolean };
+  select?: string | string[];
+  filter?: Filter;
+  order?: OrderClause | OrderClause[];
   limit?: number;
   offset?: number;
   single?: boolean;
+  maybeSingle?: boolean;
+  count?: 'exact' | 'planned' | 'estimated';
+  head?: boolean;
+  range?: { from: number; to: number };
 }
 
 export interface QueryResult<T> {
@@ -109,8 +138,15 @@ export interface AuthInterface {
   onAuthStateChange(callback: (event: string, session: Session | null) => void): () => void;
 }
 
+export interface UploadOptions {
+  upsert?: boolean;
+  contentType?: string;
+  cacheControl?: string;
+  metadata?: Record<string, string>;
+}
+
 export interface StorageInterface {
-  upload(bucket: string, path: string, file: File | Blob): Promise<FileUploadResult>;
+  upload(bucket: string, path: string, file: File | Blob, options?: UploadOptions): Promise<FileUploadResult>;
   download(bucket: string, path: string): Promise<Blob | null>;
   getPublicUrl(bucket: string, path: string): string;
   list(bucket: string, path?: string): Promise<FileMetadata[]>;
@@ -118,14 +154,31 @@ export interface StorageInterface {
   exists(bucket: string, path: string): Promise<boolean>;
 }
 
+export interface DeleteOptions {
+  filter?: Filter;
+}
+
+export interface UpdateOptions {
+  filter?: Filter;
+  select?: string;
+}
+
 export interface DatabaseInterface {
   select<T>(table: string, options?: QueryOptions): Promise<QueryResult<T>>;
-  insert<T>(table: string, data: Partial<T>): Promise<InsertResult<T>>;
-  update<T>(table: string, id: string, data: Partial<T>): Promise<UpdateResult<T>>;
-  delete(table: string, id: string): Promise<DeleteResult>;
-  upsert<T>(table: string, data: Partial<T>, conflictKey?: string): Promise<InsertResult<T>>;
+  insert<T>(table: string, data: Partial<T> | Partial<T>[]): Promise<InsertResult<T>>;
+  update<T>(table: string, id: string | Filter, data: Partial<T>, options?: UpdateOptions): Promise<UpdateResult<T>>;
+  delete(table: string, id: string, options?: DeleteOptions): Promise<DeleteResult>;
+  deleteWhere(table: string, filter: Filter): Promise<DeleteResult>;
+  upsert<T>(table: string, data: Partial<T> | Partial<T>[], conflictKey?: string): Promise<InsertResult<T>>;
   rpc<T>(fn: string, args?: Record<string, unknown>): Promise<QueryResult<T>>;
-  subscribe(table: string, callback: (payload: unknown) => void): () => void;
+  subscribe(table: string, callback: (payload: unknown) => void, options?: SubscribeOptions): () => void;
+  invoke<T>(name: string, options?: { body?: unknown; headers?: Record<string, string> }): Promise<{ data: T | null; error?: string }>;
+}
+
+export interface SubscribeOptions {
+  event?: '*' | 'INSERT' | 'UPDATE' | 'DELETE';
+  schema?: string;
+  filter?: string;
 }
 
 export interface BackendServices {

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/backend';
+import { useDatabase } from '@/lib/backend';
 import { useCart } from '@/store/cartStore';
 import { useConfig } from '@/store/configStore';
 import { useAuthStore } from '@/store/authStore';
@@ -85,6 +85,7 @@ function StepSkeleton() {
 }
 
 export default function CheckoutPage() {
+  const database = useDatabase();
   const { items, subtotal, clearCart } = useCart();
   const { company, currency: storeCurrency, exchangeRate, tax } = useConfig();
   const { user } = useAuthStore();
@@ -119,8 +120,8 @@ export default function CheckoutPage() {
       setLoadingAddresses(true);
       setLoadingGateways(true);
       const [addrRes, gwRes] = await Promise.all([
-        user ? supabase.from('saved_addresses').select('*').eq('user_id', user.id).order('is_default', { ascending: false }) : Promise.resolve({ data: [] }),
-        supabase.from('payment_gateways').select('*').eq('is_active', true).order('name'),
+        user ? database.select<AddressForm>('saved_addresses', { filter: { user_id: user.id }, order: { column: 'is_default', ascending: false } }) : Promise.resolve({ data: [] }),
+        database.select('payment_gateways', { filter: { is_active: true }, order: { column: 'name' } }),
       ]);
       const addrs = (addrRes.data || []) as AddressForm[];
       setSavedAddresses(addrs);
@@ -130,7 +131,7 @@ export default function CheckoutPage() {
       }
       setLoadingAddresses(false);
 
-      const gws = gwRes.data || [];
+      const gws = (gwRes.data || []) as any[];
       setGateways(gws);
       if (gws.length > 0) {
         setSelectedGateway(gws[0]);
@@ -145,9 +146,10 @@ export default function CheckoutPage() {
   useEffect(() => {
     if (step !== 2) return;
     setLoadingShipping(true);
-    supabase.from('shipping_methods').select('*').eq('status', 'active').then(({ data }) => {
-      setShippingMethods(data || []);
-      if (data && data.length > 0 && !selectedShipping) setSelectedShipping(data[0]);
+    database.select<ShippingMethod>('shipping_methods', { filter: { status: 'active' } }).then(({ data }) => {
+      const ms = (data || []) as ShippingMethod[];
+      setShippingMethods(ms);
+      if (ms.length > 0 && !selectedShipping) setSelectedShipping(ms[0]);
       setLoadingShipping(false);
     });
   }, [step]);
@@ -185,10 +187,17 @@ export default function CheckoutPage() {
 
   const applyCoupon = async () => {
     if (!couponCode.trim()) return;
-    const { data } = await supabase.from('coupons').select('*').eq('code', couponCode.trim().toUpperCase()).eq('status', 'active').single();
+    const { data } = await database.select<Coupon>('coupons', {
+      filter: [
+        { column: 'code', operator: 'eq', value: couponCode.trim().toUpperCase() },
+        { column: 'status', operator: 'eq', value: 'active' },
+      ],
+      single: true,
+    });
     if (!data) { setCouponError('Cupón inválido'); setCoupon(null); return; }
-    if (subtotal < (data.min_order_amount ?? 0)) { setCouponError(`Mínimo: ${fmt(data.min_order_amount)}`); setCoupon(null); return; }
-    setCoupon(data as Coupon); setCouponError(''); toast.success('Cupón aplicado');
+    const c = data as Coupon;
+    if (subtotal < (c.min_order_amount ?? 0)) { setCouponError(`Mínimo: ${fmt(c.min_order_amount)}`); setCoupon(null); return; }
+    setCoupon(c); setCouponError(''); toast.success('Cupón aplicado');
   };
 
   const validateAddr = () => {
@@ -215,16 +224,16 @@ export default function CheckoutPage() {
       updated_at: new Date().toISOString(),
     };
     if (addr.id) {
-      await supabase.from('saved_addresses').update(payload).eq('id', addr.id);
+      await database.update('saved_addresses', addr.id, payload);
     } else {
-      const { data } = await supabase.from('saved_addresses').insert(payload).select().single();
-      if (data) setAddr(prev => ({ ...prev, id: data.id }));
+      const { data } = await database.insert<AddressForm>('saved_addresses', payload);
+      if (data && !Array.isArray(data)) setAddr(prev => ({ ...prev, id: data.id }));
     }
 
   };
 
   const deleteAddress = async (id: string) => {
-    await supabase.from('saved_addresses').delete().eq('id', id);
+    await database.delete('saved_addresses', id);
     setSavedAddresses(prev => prev.filter(a => a.id !== id));
     if (addr.id === id) setAddr({ ...EMPTY_ADDR, full_name: user?.full_name || '' });
   };
@@ -254,9 +263,9 @@ export default function CheckoutPage() {
       p_payment_method: paymentMethod,
     };
 
-    const { data, error } = await supabase.rpc('place_order', payload);
+    const { data, error } = await database.rpc<any>('place_order', payload);
     if (error || !data?.success) {
-      toast.error(data?.error || error?.message || 'Error al procesar el pedido');
+      toast.error(data?.error || error || 'Error al procesar el pedido');
       setPlacing(false); return;
     }
     clearCart();

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/lib/backend';
+import { useDatabase, useStorage } from '@/lib/backend';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store/authStore';
@@ -145,6 +145,8 @@ function UserModal({
   const [saving, setSaving] = useState(false);
   const [newPassword, setNewPassword] = useState('');
   const [avatarUploading, setAvatarUploading] = useState(false);
+  const database = useDatabase();
+  const storage = useStorage();
 
   const readOnly = mode === 'view';
 
@@ -170,11 +172,10 @@ function UserModal({
     setAvatarUploading(true);
     const ext = file.name.split('.').pop() || 'jpg';
     const path = `${form.id}/avatar.${ext}`;
-    const { error: upErr } = await supabase.storage.from('avatars').upload(path, file, { upsert: true });
-    if (upErr) { toast.error('Error al subir imagen'); setAvatarUploading(false); return; }
-    const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path);
-    await supabase.from('profiles').update({ avatar_url: publicUrl, updated_at: new Date().toISOString() }).eq('id', form.id as string);
-    setForm(p => ({ ...p, avatar_url: publicUrl }));
+    const { success, url, error: upErr } = await storage.upload('avatars', path, file, { upsert: true });
+    if (!success || upErr) { toast.error('Error al subir imagen'); setAvatarUploading(false); return; }
+    await database.update('profiles', form.id as string, { avatar_url: url, updated_at: new Date().toISOString() });
+    setForm(p => ({ ...p, avatar_url: url }));
     toast.success('Foto de perfil actualizada');
     setAvatarUploading(false);
   };
@@ -274,7 +275,7 @@ function UserModal({
                   <p className="text-xs text-muted-foreground">Haz clic en el botón + para cambiar la foto</p>
                   {(form as any).avatar_url && (
                     <button type="button" onClick={async () => {
-                      await supabase.from('profiles').update({ avatar_url: null, updated_at: new Date().toISOString() }).eq('id', form.id as string);
+                      await database.update('profiles', form.id as string, { avatar_url: null, updated_at: new Date().toISOString() });
                       setForm(p => ({ ...p, avatar_url: undefined }));
                       toast.success('Foto eliminada');
                     }} className="text-xs text-red-500 hover:underline mt-1">
@@ -433,6 +434,8 @@ function UserModal({
 export default function UsersPage() {
   const { user: currentUser } = useAuthStore();
   const isSuperAdmin = currentUser?.role === 'super_admin';
+  const database = useDatabase();
+  const storage = useStorage();
 
   const copyInviteLink = (u: UserRow) => {
     const link = `${window.location.origin}/registro?ref=${u.referral_code || ''}`;
@@ -456,29 +459,34 @@ export default function UsersPage() {
   // Load plans + ranks once
   useEffect(() => {
     Promise.all([
-      supabase.from('plans').select('slug, name').eq('is_active', true).order('sort_order'),
-      supabase.from('ranks').select('slug, name').eq('is_active', true).order('sort_order'),
-      supabase.from('custom_roles').select('name, label, color').order('sort_order'),
+      database.select<PlanOption>('plans', { select: 'slug, name', filter: { is_active: true }, order: { column: 'sort_order' } }),
+      database.select<RankOption>('ranks', { select: 'slug, name', filter: { is_active: true }, order: { column: 'sort_order' } }),
+      database.select<CustomRoleOption>('custom_roles', { select: 'name, label, color', order: { column: 'sort_order' } }),
     ]).then(([p, r, cr]) => {
       if (p.data) setPlans(p.data as PlanOption[]);
       if (r.data) setRanks(r.data as RankOption[]);
-      if (cr.data && cr.data.length > 0) setCustomRoles(cr.data as CustomRoleOption[]);
+      if (cr.data && (cr.data as CustomRoleOption[]).length > 0) setCustomRoles(cr.data as CustomRoleOption[]);
     });
   }, []);
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
-    let q = supabase.from('profiles').select('*', { count: 'exact' });
-    if (search) q = q.or(`full_name.ilike.%${search}%,email.ilike.%${search}%,username.ilike.%${search}%`);
-    if (filterRole) q = q.eq('role', filterRole);
-    if (filterStatus) q = q.eq('status', filterStatus);
-    if (filterPlan) q = q.eq('plan', filterPlan);
-    q = q.order('created_at', { ascending: false }).range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
-    const { data, count } = await q;
+    const conditions: string[] = [];
+    if (search) conditions.push(`or(full_name.ilike.%${search}%,email.ilike.%${search}%,username.ilike.%${search}%)`);
+    if (filterRole) conditions.push(`role.eq.${filterRole}`);
+    if (filterStatus) conditions.push(`status.eq.${filterStatus}`);
+    if (filterPlan) conditions.push(`plan.eq.${filterPlan}`);
+    const filter = conditions.length === 0 ? undefined : conditions.length === 1 ? conditions[0] : `and=(${conditions.join(',')})`;
+    const { data, count } = await database.select<UserRow>('profiles', {
+      count: 'exact',
+      filter,
+      order: { column: 'created_at', ascending: false },
+      range: { from: (page - 1) * PAGE_SIZE, to: page * PAGE_SIZE - 1 },
+    });
     if (data) setUsers(data as UserRow[]);
-    if (count !== null) setTotal(count);
+    if (count !== null && count !== undefined) setTotal(count);
     setLoading(false);
-  }, [search, filterRole, filterStatus, filterPlan, page]);
+  }, [search, filterRole, filterStatus, filterPlan, page, database]);
 
   useEffect(() => { fetchUsers(); }, [fetchUsers]);
 
@@ -491,7 +499,7 @@ export default function UsersPage() {
         .toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
         .replace(/[^a-z0-9_\s]/g, '').trim().replace(/\s+/g, '_');
 
-      const { data: result, error } = await supabase.rpc('add_referral_direct', {
+      const { data: result, error } = await database.rpc('add_referral_direct', {
         p_sponsor_id: null,
         p_full_name: fields.full_name,
         p_email: fields.email,
@@ -500,7 +508,7 @@ export default function UsersPage() {
       });
 
       if (error || (result && !(result as any).success)) {
-        toast.error((result as any)?.error || error?.message || 'Error al crear usuario');
+        toast.error((result as any)?.error || error || 'Error al crear usuario');
         return;
       }
 
@@ -508,14 +516,14 @@ export default function UsersPage() {
       if (uid) {
         // Wait for trigger to create profile row
         await new Promise(r => setTimeout(r, 700));
-        await supabase.from('profiles').update({
+        await database.update('profiles', uid, {
           role: fields.role || 'user',
           plan: fields.plan || plans[0]?.slug || 'free',
           status: fields.status || 'active',
           rank: fields.rank || ranks[0]?.slug || 'bronze',
           phone: fields.phone || null,
           updated_at: new Date().toISOString(),
-        }).eq('id', uid);
+        });
       }
       // Upload avatar if provided
       const avatarFile = (data as any)._createAvatarFile as File | undefined;
@@ -523,20 +531,17 @@ export default function UsersPage() {
         try {
           const ext = avatarFile.name.split('.').pop() || 'jpg';
           const path = `${uid}/avatar.${ext}`;
-          const { error: upErr } = await supabase.storage.from('avatars').upload(path, avatarFile, { upsert: true, contentType: avatarFile.type });
-          if (!upErr) {
-            const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path);
-            await supabase.from('profiles').update({ avatar_url: publicUrl }).eq('id', uid);
+          const { success, url } = await storage.upload('avatars', path, avatarFile, { upsert: true, contentType: avatarFile.type });
+          if (success && url) {
+            await database.update('profiles', uid, { avatar_url: url });
           }
         } catch { /* best-effort */ }
       }
       toast.success('Usuario creado. Contraseña temporal: Temp123456!');
 
     } else {
-      const { error } = await supabase.from('profiles')
-        .update({ ...fields, updated_at: new Date().toISOString() })
-        .eq('id', id);
-      if (error) { toast.error(error.message); return; }
+      const { error } = await database.update('profiles', id, { ...fields, updated_at: new Date().toISOString() });
+      if (error) { toast.error(error); return; }
       toast.success('Usuario actualizado correctamente');
     }
 
@@ -546,9 +551,7 @@ export default function UsersPage() {
 
   const toggleStatus = async (user: UserRow) => {
     const newStatus = user.status === 'active' ? 'suspended' : 'active';
-    const { error } = await supabase.from('profiles')
-      .update({ status: newStatus, updated_at: new Date().toISOString() })
-      .eq('id', user.id);
+    const { error } = await database.update('profiles', user.id, { status: newStatus, updated_at: new Date().toISOString() });
     if (!error) {
       toast.success(newStatus === 'active' ? `${user.full_name} activado` : `${user.full_name} suspendido`);
       fetchUsers();
@@ -556,13 +559,13 @@ export default function UsersPage() {
   };
 
   const deleteUser = async (user: UserRow) => {
-    const { error } = await supabase.from('profiles').delete().eq('id', user.id);
+    const { error } = await database.delete('profiles', user.id);
     if (!error) {
       toast.success(`Usuario ${user.full_name} eliminado`);
       setDeleteConfirm(null);
       fetchUsers();
     } else {
-      toast.error('Error al eliminar: ' + error.message);
+      toast.error('Error al eliminar: ' + error);
     }
   };
 

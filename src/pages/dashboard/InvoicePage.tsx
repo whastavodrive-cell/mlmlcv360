@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/backend';
+import { useDatabase } from '@/lib/backend';
 import { useConfig } from '@/store/configStore';
 import { useNavigate } from '@/lib/router';
 import { Package, Printer, Download, QrCode, Check, Building2, Mail, Phone, MapPin, Hash, Truck, CreditCard, FileText } from 'lucide-react';
@@ -44,6 +44,7 @@ interface Order {
 function fmt(n: number, c = 'PEN') { return c === 'USD' ? `$${n.toFixed(2)}` : `S/ ${n.toFixed(2)}`; }
 
 export default function InvoicePage() {
+  const database = useDatabase();
   const { company, tax } = useConfig();
   const navigate = useNavigate();
   const [order, setOrder] = useState<Order | null>(null);
@@ -54,7 +55,11 @@ export default function InvoicePage() {
   useEffect(() => {
     if (!orderId) return;
     const load = async () => {
-      const { data } = await supabase.from('orders').select('*, items:order_items(*)').eq('id', orderId).maybeSingle();
+      const { data } = await database.select('orders', {
+        select: '*, items:order_items(*)',
+        filter: { id: orderId },
+        maybeSingle: true,
+      });
       if (data) setOrder(data as Order);
       setLoading(false);
     };

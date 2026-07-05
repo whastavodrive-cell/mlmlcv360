@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/lib/backend';
+import { useDatabase } from '@/lib/backend';
 
 import { toast } from 'sonner';
 import type { MlmCommissionConfig } from '@/lib/storeTypes';
@@ -19,27 +19,29 @@ export default function MlmCommissionsAdminPage() {
   const [freeShipThreshold, setFreeShipThreshold] = useState('150');
   const [igvRate, setIgvRate] = useState('0.18');
 
+  const database = useDatabase();
+
   const load = useCallback(async () => {
     setLoading(true);
     const [{ data }, { data: cfg }] = await Promise.all([
-      supabase.from('mlm_commissions_config').select('*').eq('status', 'active').order('rank').order('level'),
-      supabase.from('system_config').select('key,value').in('key', ['free_shipping_threshold','igv_rate']),
+      database.select<MlmCommissionConfig>('mlm_commissions_config', { filter: { status: 'active' }, order: [{ column: 'rank' }, { column: 'level' }] }),
+      database.select<{ key: string; value: string }>('system_config', { select: 'key,value', filter: [{ column: 'key', operator: 'in', value: ['free_shipping_threshold','igv_rate'] }] }),
     ]);
     const m: Matrix = {};
     RANKS.forEach(r => { m[r] = {}; for (let l = 1; l <= MAX_LEVELS[r]; l++) m[r][l] = { type: 'percentage', value: '' }; });
-    (data || []).forEach((row: MlmCommissionConfig) => {
+    ((data as MlmCommissionConfig[]) || []).forEach((row: MlmCommissionConfig) => {
       if (!m[row.rank]) m[row.rank] = {};
       m[row.rank][row.level] = { type: row.type, value: String(row.value) };
     });
     setMatrix(m);
     if (cfg) {
-      cfg.forEach((r: any) => {
+      (cfg as any[]).forEach((r: any) => {
         if (r.key === 'free_shipping_threshold') setFreeShipThreshold(r.value);
         if (r.key === 'igv_rate') setIgvRate(r.value);
       });
     }
     setLoading(false);
-  }, []);
+  }, [database]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -58,14 +60,14 @@ export default function MlmCommissionsAdminPage() {
 
     // Upsert all
     for (const row of rows) {
-      await supabase.from('mlm_commissions_config').upsert({ ...row }, { onConflict: 'rank,level' });
+      await database.upsert('mlm_commissions_config', { ...row }, 'rank,level');
     }
 
     // Save config
-    await supabase.from('system_config').upsert([
+    await database.upsert('system_config', [
       { key: 'free_shipping_threshold', value: freeShipThreshold, category: 'store', description: 'Monto para envío gratis' },
       { key: 'igv_rate', value: igvRate, category: 'store', description: 'Tasa IGV' },
-    ], { onConflict: 'key' });
+    ], 'key');
 
     toast.success('Comisiones y configuración guardadas');
     setSaving(false);

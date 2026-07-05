@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/backend';
+import { supabaseBackend } from '@/lib/backend';
 
 export type ConfigCategory = 'general' | 'email' | 'auth' | 'currency' | 'tax' | 'store' | 'network' | 'registration' | 'permissions' | 'whatsapp' | 'ai';
 
@@ -40,17 +40,17 @@ async function getConfigMap(): Promise<Map<string, ConfigItem>> {
     return result;
   }
 
-  const { data, error } = await supabase
-    .from('system_config')
-    .select('key, value, description, category, is_sensitive');
+  const result = await supabaseBackend.database.select<ConfigItem>('system_config', {
+    select: ['key', 'value', 'description', 'category', 'is_sensitive'],
+  });
 
-  if (error) {
-    console.error('configService: Error fetching config', error);
+  if (result.error) {
+    console.error('configService: Error fetching config', result.error);
     return new Map();
   }
 
   const map = new Map<string, ConfigItem>();
-  (data || []).forEach((row) => {
+  (result.data as ConfigItem[] || []).forEach((row: ConfigItem) => {
     if (row.key) {
       map.set(row.key, row as ConfigItem);
       if (row.value !== null) {
@@ -92,15 +92,13 @@ export const configService = {
       return false;
     }
 
-    const { error } = await supabase
-      .from('system_config')
-      .upsert(
-        { key, value, category: 'general', updated_at: new Date().toISOString() },
-        { onConflict: 'key' }
-      );
+    const result = await supabaseBackend.database.upsert('system_config',
+      { key, value, category: 'general', updated_at: new Date().toISOString() },
+      'key'
+    );
 
-    if (error) {
-      console.error('configService: Error setting config', error);
+    if (result.error) {
+      console.error('configService: Error setting config', result.error);
       return false;
     }
 

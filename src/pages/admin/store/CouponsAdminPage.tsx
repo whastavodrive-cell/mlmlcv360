@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/lib/backend';
+import { useDatabase } from '@/lib/backend';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import type { Coupon, Product, ProductCategory } from '@/lib/storeTypes';
@@ -70,16 +70,18 @@ export default function CouponsAdminPage() {
   const [searching, setSearching] = useState(false);
   const [categories, setCategories] = useState<ProductCategory[]>([]);
 
+  const database = useDatabase();
+
   const load = useCallback(async () => {
     setLoading(true);
     const [{ data: cpns }, { data: cats }] = await Promise.all([
-      supabase.from('coupons').select('*').order('created_at', { ascending: false }),
-      supabase.from('product_categories').select('*').order('name'),
+      database.select<Coupon>('coupons', { order: { column: 'created_at', ascending: false } }),
+      database.select<ProductCategory>('product_categories', { order: { column: 'name' } }),
     ]);
     setCoupons((cpns as Coupon[]) || []);
-    setCategories(cats || []);
+    setCategories((cats as ProductCategory[]) || []);
     setLoading(false);
-  }, []);
+  }, [database]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -91,7 +93,7 @@ export default function CouponsAdminPage() {
     }
     const t = setTimeout(async () => {
       setSearching(true);
-      const { data } = await supabase.from('products').select('id, name, slug, images').eq('status', 'active').ilike('name', `%${productSearch}%`).limit(20);
+      const { data } = await database.select<Product>('products', { select: 'id, name, slug, images', filter: [{ column: 'status', operator: 'eq', value: 'active' }, { column: 'name', operator: 'ilike', value: `%${productSearch}%` }], limit: 20 });
       setSearchResults((data as Product[]) || []);
       setSearching(false);
     }, 300);
@@ -129,16 +131,16 @@ export default function CouponsAdminPage() {
       product_ids: form.applies_to === 'products' ? selectedProductIds : [],
     };
     if (form.id) {
-      await supabase.from('coupons').update(payload).eq('id', form.id);
+      await database.update('coupons', form.id, payload);
     } else {
-      await supabase.from('coupons').insert({ ...payload, used_count: 0 });
+      await database.insert('coupons', { ...payload, used_count: 0 });
     }
     toast.success(form.id ? 'Cupon actualizado' : 'Cupon creado');
     setForm(EMPTY); setShowForm(false); setSaving(false); load();
   };
 
   const remove = async (id: string) => {
-    await supabase.from('coupons').delete().eq('id', id);
+    await database.delete('coupons', id);
     toast.success('Cupon eliminado'); setDelId(null); load();
   };
 
@@ -165,13 +167,13 @@ export default function CouponsAdminPage() {
   const [selectedProducts, setSelectedProducts] = useState<Product[]>([]);
   useEffect(() => {
     if (selectedProductIds.length > 0) {
-      supabase.from('products').select('id, name, slug, images').in('id', selectedProductIds).then(({ data }) => {
+      database.select<Product>('products', { select: 'id, name, slug, images', filter: { id: selectedProductIds } }).then(({ data }) => {
         setSelectedProducts((data as Product[]) || []);
       });
     } else {
       setSelectedProducts([]);
     }
-  }, [selectedProductIds]);
+  }, [selectedProductIds, database]);
 
   return (
     <div className="space-y-5 pb-10">

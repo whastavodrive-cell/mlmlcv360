@@ -5,13 +5,14 @@ import { CircleCheck as CheckCircle, X, ArrowRight, Sparkles } from 'lucide-reac
 import { cn } from '@/lib/utils';
 import { useConfig, formatPrice } from '@/store/configStore';
 import { useAuthStore } from '@/store/authStore';
-import { supabase } from '@/lib/backend';
+import { useDatabase } from '@/lib/backend';
 import { toast } from 'sonner';
 import { useState } from 'react';
 
 export default function PlanesPage() {
   const { plans, currency, currencySymbol, exchangeRate } = useConfig();
   const { user, fetchProfile } = useAuthStore();
+  const database = useDatabase();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const isSelectMode = searchParams.get('select') === '1';
@@ -27,12 +28,12 @@ export default function PlanesPage() {
       const now = new Date().toISOString();
       const endDate = new Date(Date.now() + 100 * 365 * 86400000).toISOString();
       await Promise.all([
-        supabase.from('profiles').update({ plan: plan.slug, updated_at: now }).eq('id', user.id),
-        supabase.from('subscriptions').upsert({
+        database.update('profiles', user.id, { plan: plan.slug, updated_at: now }),
+        database.upsert('subscriptions', {
           user_id: user.id, plan_slug: plan.slug, status: 'active',
           current_period_start: now, current_period_end: endDate,
           gateway: 'free', amount: 0, currency: 'PEN', updated_at: now,
-        }, { onConflict: 'user_id' }),
+        }, 'user_id'),
       ]);
       await fetchProfile(user.id);
       toast.success(`Plan ${plan.name} activado`);

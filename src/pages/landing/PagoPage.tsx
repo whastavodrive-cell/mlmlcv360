@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import Navbar from '@/components/landing/Navbar';
 import Footer from '@/components/landing/Footer';
 import { useConfig, formatPrice } from '@/store/configStore';
-import { supabase } from '@/lib/backend';
+import { useDatabase } from '@/lib/backend';
 import { useAuthStore } from '@/store/authStore';
 
 type Currency = 'PEN' | 'USD';
@@ -50,6 +50,7 @@ export default function PagoPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user, fetchProfile } = useAuthStore();
+  const database = useDatabase();
   const { plans: configPlans, currency: sysCurrency, currencySymbol, exchangeRate } = useConfig();
 
   const [currency, setCurrency] = useState<Currency>(sysCurrency as Currency || 'PEN');
@@ -75,15 +76,15 @@ export default function PagoPage() {
 
   // Load plans
   useEffect(() => {
-    supabase.from('plans').select('*').eq('is_active', true).order('sort_order').then(({ data }) => {
-      if (data) setAllPlans(data);
+    database.select('plans', { filter: { is_active: true }, order: { column: 'sort_order' } }).then(({ data }) => {
+      if (data) setAllPlans(data as any[]);
       setPlansLoading(false);
     });
   }, []);
 
   // Load gateways
   useEffect(() => {
-    supabase.from('payment_gateways').select('*').eq('is_active', true).then(({ data }) => {
+    database.select('payment_gateways', { filter: { is_active: true } }).then(({ data }) => {
       if (data) setGateways(data as DBGateway[]);
       setGatewaysLoading(false);
     });
@@ -138,11 +139,11 @@ export default function PagoPage() {
     const end = new Date(now);
     end.setMonth(end.getMonth() + 1);
     await Promise.all([
-      supabase.from('profiles').update({
+      database.update('profiles', user.id, {
         plan: plan.slug,
         updated_at: now.toISOString(),
-      }).eq('id', user.id),
-      supabase.from('subscriptions').upsert({
+      }),
+      database.upsert('subscriptions', {
         user_id: user.id,
         plan_slug: plan.slug,
         status: 'active',
@@ -153,7 +154,7 @@ export default function PagoPage() {
         currency,
         payment_reference: ref,
         updated_at: now.toISOString(),
-      }, { onConflict: 'user_id' }),
+      }, 'user_id'),
     ]);
     await fetchProfile(user.id);
   };
@@ -178,7 +179,7 @@ export default function PagoPage() {
         const ref = `YAPE-${Date.now()}`;
         const now = new Date();
         const end = new Date(now); end.setMonth(end.getMonth() + 1);
-        await supabase.from('subscriptions').upsert({
+        await database.upsert('subscriptions', {
           user_id: user.id,
           plan_slug: plan.slug,
           status: 'pending',
@@ -189,7 +190,7 @@ export default function PagoPage() {
           currency,
           payment_reference: ref,
           updated_at: now.toISOString(),
-        }, { onConflict: 'user_id' });
+        }, 'user_id');
         setPaymentRef(ref);
         setPaymentStep('confirm');
       } catch {
@@ -202,7 +203,7 @@ export default function PagoPage() {
     // PayPal / Mercado Pago: call edge function for checkout URL
     if (isPayPal || isMercadoPago) {
       try {
-        const { data, error } = await supabase.functions.invoke('process-payment', {
+        const { data, error } = await database.invoke<{ success?: boolean; error?: string; redirect_url?: string; reference?: string }>('process-payment', {
           body: {
             gateway: selectedGateway.slug,
             plan_slug: plan.slug,
@@ -247,7 +248,7 @@ export default function PagoPage() {
 
     // Generic gateway (Izipay etc): call edge function
     try {
-      const { data, error } = await supabase.functions.invoke('process-payment', {
+      const { data, error } = await database.invoke<{ success?: boolean; error?: string; reference?: string }>('process-payment', {
         body: {
           gateway: selectedGateway.slug,
           plan_slug: plan.slug,

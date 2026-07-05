@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/lib/backend';
+import { useDatabase, useStorage } from '@/lib/backend';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import type { ProductCategory } from '@/lib/storeTypes';
@@ -16,12 +16,15 @@ export default function CategoriesAdminPage() {
   const [delId, setDelId] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
 
+  const database = useDatabase();
+  const storage = useStorage();
+
   const load = useCallback(async () => {
     setLoading(true);
-    const { data } = await supabase.from('product_categories').select('*').order('sort_order');
-    setCategories(data || []);
+    const { data } = await database.select<ProductCategory>('product_categories', { order: { column: 'sort_order' } });
+    setCategories((data as ProductCategory[]) || []);
     setLoading(false);
-  }, []);
+  }, [database]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -38,10 +41,9 @@ export default function CategoriesAdminPage() {
     setUploading(true);
     const ext = file.name.split('.').pop();
     const path = `categories/${Date.now()}.${ext}`;
-    const { data, error } = await supabase.storage.from('products').upload(path, file, { upsert: true });
-    if (error) { toast.error(error.message); setUploading(false); return; }
-    const { data: { publicUrl } } = supabase.storage.from('products').getPublicUrl(data.path);
-    setForm(p => ({ ...p, image_url: publicUrl }));
+    const { success, url, error } = await storage.upload('products', path, file, { upsert: true });
+    if (!success || !url) { toast.error(error || 'Error subiendo imagen'); setUploading(false); return; }
+    setForm(p => ({ ...p, image_url: url }));
     setUploading(false);
   };
 
@@ -63,24 +65,24 @@ export default function CategoriesAdminPage() {
       parent_id: form.parent_id || null,
     };
     if (form.id) {
-      const { error } = await supabase.from('product_categories').update(payload).eq('id', form.id);
-      if (error) { toast.error(error.message); setSaving(false); return; }
+      const { error } = await database.update('product_categories', form.id, payload);
+      if (error) { toast.error(error); setSaving(false); return; }
     } else {
-      const { error } = await supabase.from('product_categories').insert(payload);
-      if (error) { toast.error(error.message); setSaving(false); return; }
+      const { error } = await database.insert('product_categories', payload);
+      if (error) { toast.error(error); setSaving(false); return; }
     }
     toast.success(form.id ? 'Categoría actualizada' : 'Categoría creada');
     setForm(EMPTY); setShowForm(false); setSaving(false); load();
   };
 
   const remove = async (id: string) => {
-    const { error } = await supabase.from('product_categories').delete().eq('id', id);
+    const { error } = await database.delete('product_categories', id);
     if (error) { toast.error('No se puede eliminar — tiene productos asociados'); setDelId(null); return; }
     toast.success('Categoría eliminada'); setDelId(null); load();
   };
 
   const updateSortOrder = async (id: string, newOrder: number) => {
-    await supabase.from('product_categories').update({ sort_order: newOrder }).eq('id', id);
+    await database.update('product_categories', id, { sort_order: newOrder });
     load();
   };
 

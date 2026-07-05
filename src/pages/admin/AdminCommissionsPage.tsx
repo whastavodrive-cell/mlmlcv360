@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { supabase } from '@/lib/backend';
+import { useDatabase } from '@/lib/backend';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { Search, Plus, Trash2, RefreshCw, Download, ChevronLeft, ChevronRight, CircleCheck as CheckCircle, X, DollarSign, Clock, TrendingUp, Filter, Eye, Save, Loader as Loader2, CreditCard as Edit2, Info } from 'lucide-react';
@@ -89,6 +89,7 @@ function CommissionModal({
   // Multi-select beneficiaries (only in create mode)
   const [multiUserIds, setMultiUserIds] = useState<Set<string>>(new Set());
   const isCreate = mode === 'create';
+  const database = useDatabase();
 
   const toggleMultiUser = (id: string) => setMultiUserIds(prev => {
     const next = new Set(prev);
@@ -128,8 +129,8 @@ function CommissionModal({
         status: form.status,
         description: form.description || null,
       }));
-      const { error } = await supabase.from('commissions').insert(rows);
-      if (error) toast.error(error.message);
+      const { error } = await database.insert('commissions', rows);
+      if (error) toast.error(error);
       else { toast.success(`${rows.length} comisión(es) creada(s)`); onSaved(); onClose(); }
       setSaving(false);
     } else {
@@ -145,8 +146,8 @@ function CommissionModal({
         status: form.status,
         description: form.description || null,
       };
-      const { error } = await supabase.from('commissions').update(payload).eq('id', initial.id!);
-      if (error) toast.error(error.message);
+      const { error } = await database.update('commissions', initial.id!, payload);
+      if (error) toast.error(error);
       else { toast.success('Comisión actualizada'); onSaved(); onClose(); }
       setSaving(false);
     }
@@ -440,6 +441,7 @@ function CommissionModal({
 
 // ── Main Page ──
 export default function AdminCommissionsPage() {
+  const database = useDatabase();
   const [commissions, setCommissions] = useState<Commission[]>([]);
   const [users, setUsers] = useState<UserOption[]>([]);
   const [loading, setLoading] = useState(true);
@@ -458,18 +460,18 @@ export default function AdminCommissionsPage() {
   const fetchAll = async () => {
     setLoading(true);
     const [{ data: comms }, { data: profiles }] = await Promise.all([
-      supabase.from('commissions').select('*').order('created_at', { ascending: false }).limit(500),
-      supabase.from('profiles').select('id, full_name, email').order('full_name'),
+      database.select<Commission>('commissions', { order: { column: 'created_at', ascending: false }, limit: 500 }),
+      database.select<UserOption>('profiles', { select: 'id, full_name, email', order: { column: 'full_name' } }),
     ]);
-    const pmap = new Map((profiles || []).map((p: any) => [p.id, p]));
-    const enriched: Commission[] = (comms || []).map((c: any) => ({
+    const pmap = new Map(((profiles as UserOption[]) || []).map((p: any) => [p.id, p]));
+    const enriched: Commission[] = ((comms as Commission[]) || []).map((c: any) => ({
       ...c,
       _user_name: pmap.get(c.user_id)?.full_name || '—',
       _user_email: pmap.get(c.user_id)?.email || '',
       _from_name: c.from_user_id ? (pmap.get(c.from_user_id)?.full_name || '—') : '—',
     }));
     setCommissions(enriched);
-    setUsers((profiles || []) as UserOption[]);
+    setUsers((profiles as UserOption[]) || []);
     setLoading(false);
   };
 
@@ -496,8 +498,8 @@ export default function AdminCommissionsPage() {
 
   const updateStatus = async (id: string, status: CommStatus) => {
     setUpdating(id);
-    const { error } = await supabase.from('commissions').update({ status }).eq('id', id);
-    if (error) toast.error(error.message);
+    const { error } = await database.update('commissions', id, { status });
+    if (error) toast.error(error);
     else { toast.success(`Marcada como ${STATUSES.find(s => s.value === status)?.label}`); fetchAll(); }
     setUpdating(null);
   };
@@ -515,8 +517,8 @@ export default function AdminCommissionsPage() {
   const bulkApply = async () => {
     if (selectedIds.size === 0) { toast.error('Selecciona al menos una comisión'); return; }
     setBulkWorking(true);
-    const { error } = await supabase.from('commissions').update({ status: bulkStatus }).in('id', Array.from(selectedIds));
-    if (error) toast.error(error.message);
+    const { error } = await database.update('commissions', { id: Array.from(selectedIds) }, { status: bulkStatus });
+    if (error) toast.error(error);
     else { toast.success(`${selectedIds.size} comisión(es) marcadas como ${STATUSES.find(s => s.value === bulkStatus)?.label}`); setSelectedIds(new Set()); fetchAll(); }
     setBulkWorking(false);
   };
@@ -846,8 +848,8 @@ export default function AdminCommissionsPage() {
               <button onClick={() => setDeleteId(null)} className="flex-1 border border-border rounded-xl py-2.5 text-sm font-medium hover:bg-muted transition-colors">Cancelar</button>
               <button
                 onClick={async () => {
-                  const { error } = await supabase.from('commissions').delete().eq('id', deleteId!);
-                  if (error) toast.error(error.message);
+                  const { error } = await database.delete('commissions', deleteId!);
+                  if (error) toast.error(error);
                   else { toast.success('Comisión eliminada'); fetchAll(); }
                   setDeleteId(null);
                 }}

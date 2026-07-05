@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/backend';
+import { useDatabase } from '@/lib/backend';
 import { useAuthStore } from '@/store/authStore';
 import {
   AreaChart, Area, BarChart, Bar, LineChart, Line,
@@ -35,6 +35,7 @@ function CustomTooltip({ active, payload, label }: any) {
 }
 
 export default function ReportsPage() {
+  const database = useDatabase();
   const { user } = useAuthStore();
   const [loading, setLoading] = useState(true);
   const [commissionData, setCommissionData] = useState<any[]>([]);
@@ -46,10 +47,16 @@ export default function ReportsPage() {
     async function fetchReports() {
       if (!user) return;
       setLoading(true);
-      const { data: commissions } = await supabase
-        .from('commissions').select('amount, created_at').eq('user_id', user.id);
-      const { data: referrals } = await supabase
-        .from('profiles').select('id, rank, created_at, status').eq('sponsor_id', user.id);
+      const { data } = await database.select<any>('commissions', {
+        select: 'amount, created_at',
+        filter: { user_id: user.id },
+      });
+      const commissions = data as any;
+      const { data: rData } = await database.select<any>('profiles', {
+        select: 'id, rank, created_at, status',
+        filter: { sponsor_id: user.id },
+      });
+      const referrals = rData as any;
 
       // Monthly commission data
       const now = new Date();
@@ -57,10 +64,10 @@ export default function ReportsPage() {
       for (let i = 5; i >= 0; i--) {
         const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
         const monthName = d.toLocaleDateString('es-PE', { month: 'short' });
-        const total = (commissions || []).filter(c => {
+        const total = (commissions || []).filter((c: any) => {
           const cd = new Date(c.created_at);
           return cd.getMonth() === d.getMonth() && cd.getFullYear() === d.getFullYear();
-        }).reduce((s, c) => s + Number(c.amount), 0);
+        }).reduce((s: number, c: any) => s + Number(c.amount), 0);
         months.push({ name: monthName.charAt(0).toUpperCase() + monthName.slice(1), comisiones: total });
       }
       setCommissionData(months);
@@ -70,7 +77,7 @@ export default function ReportsPage() {
       for (let i = 5; i >= 0; i--) {
         const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
         const monthName = d.toLocaleDateString('es-PE', { month: 'short' });
-        const count = (referrals || []).filter(r => {
+        const count = (referrals || []).filter((r: any) => {
           const rd = new Date(r.created_at);
           return rd.getMonth() === d.getMonth() && rd.getFullYear() === d.getFullYear();
         }).length;
@@ -80,10 +87,10 @@ export default function ReportsPage() {
 
       // Rank distribution
       const rankMap: Record<string, number> = {};
-      (referrals || []).forEach(r => { rankMap[r.rank] = (rankMap[r.rank] || 0) + 1; });
+      (referrals || []).forEach((r: any) => { rankMap[r.rank] = (rankMap[r.rank] || 0) + 1; });
       setRankData(Object.entries(rankMap).map(([k, v]) => ({ name: rankLabels[k] || k, value: v, fill: rankColors[k] || '#999' })));
 
-      const total = (commissions || []).reduce((s, c) => s + Number(c.amount), 0);
+      const total = (commissions || []).reduce((s: number, c: any) => s + Number(c.amount), 0);
       setStats({ total, count: commissions?.length || 0, referrals: referrals?.length || 0, growth: 0 });
       setLoading(false);
     }

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/backend';
+import { useDatabase } from '@/lib/backend';
 import { useAuthStore } from '@/store/authStore';
 import {
   AreaChart, Area, PieChart, Pie, Cell, ResponsiveContainer,
@@ -52,6 +52,7 @@ function CustomTooltip({ active, payload, label }: any) {
 }
 
 export default function DashboardPage() {
+  const database = useDatabase();
   const { user } = useAuthStore();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ totalCommissions: 0, pendingCommissions: 0, totalReferrals: 0, activeReferrals: 0 });
@@ -66,22 +67,24 @@ export default function DashboardPage() {
       setLoading(true);
       try {
         // Fetch commissions
-        const { data: commissions } = await supabase
-          .from('commissions')
-          .select('amount, status, created_at')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false });
+        const { data: cData } = await database.select<any>('commissions', {
+          select: 'amount, status, created_at',
+          filter: { user_id: user.id },
+          order: { column: 'created_at', ascending: false },
+        });
+        const commissions = cData as any;
 
-        const total = commissions?.reduce((sum, c) => sum + Number(c.amount), 0) || 0;
-        const pending = commissions?.filter(c => c.status === 'pending').reduce((sum, c) => sum + Number(c.amount), 0) || 0;
+        const total = commissions?.reduce((sum: number, c: any) => sum + Number(c.amount), 0) || 0;
+        const pending = commissions?.filter((c: any) => c.status === 'pending').reduce((sum: number, c: any) => sum + Number(c.amount), 0) || 0;
 
         // Fetch referrals (downline)
-        const { data: referrals } = await supabase
-          .from('profiles')
-          .select('id, status, rank')
-          .eq('sponsor_id', user.id);
+        const { data: rData } = await database.select<any>('profiles', {
+          select: 'id, status, rank',
+          filter: { sponsor_id: user.id },
+        });
+        const referrals = rData as any;
 
-        const activeRef = referrals?.filter(r => r.status === 'active').length || 0;
+        const activeRef = referrals?.filter((r: any) => r.status === 'active').length || 0;
 
         // Build chart data from last 6 months of commissions
         const now = new Date();
@@ -89,37 +92,37 @@ export default function DashboardPage() {
         for (let i = 5; i >= 0; i--) {
           const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
           const monthName = d.toLocaleDateString('es-PE', { month: 'short' });
-          const monthCommissions = (commissions || []).filter(c => {
+          const monthCommissions = (commissions || []).filter((c: any) => {
             const cd = new Date(c.created_at);
             return cd.getMonth() === d.getMonth() && cd.getFullYear() === d.getFullYear();
           });
           months.push({
             name: monthName.charAt(0).toUpperCase() + monthName.slice(1),
-            comisiones: monthCommissions.reduce((s, c) => s + Number(c.amount), 0),
+            comisiones: monthCommissions.reduce((s: number, c: any) => s + Number(c.amount), 0),
             afiliados: Math.floor(Math.random() * 20) + 5, // placeholder
           });
         }
 
         // Rank distribution of downline
         const rankMap: Record<string, number> = {};
-        (referrals || []).forEach(r => { rankMap[r.rank] = (rankMap[r.rank] || 0) + 1; });
+        (referrals || []).forEach((r: any) => { rankMap[r.rank] = (rankMap[r.rank] || 0) + 1; });
         const rankData = Object.entries(rankMap).map(([name, value]) => ({ name, value }));
 
         // Recent activity from activity_logs
-        const { data: activity } = await supabase
-          .from('activity_logs')
-          .select('action, description, created_at')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(6);
+        const { data: activity } = await database.select<any>('activity_logs', {
+          select: 'action, description, created_at',
+          filter: { user_id: user.id },
+          order: { column: 'created_at', ascending: false },
+          limit: 6,
+        });
 
         // Notifications
-        const { data: notifs } = await supabase
-          .from('notifications')
-          .select('id, title, message, type, read, created_at')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(5);
+        const { data: notifs } = await database.select<any>('notifications', {
+          select: 'id, title, message, type, read, created_at',
+          filter: { user_id: user.id },
+          order: { column: 'created_at', ascending: false },
+          limit: 5,
+        });
 
         setStats({
           totalCommissions: total,

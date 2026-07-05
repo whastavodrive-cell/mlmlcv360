@@ -1,6 +1,6 @@
 import React from 'react';
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/backend';
+import { useDatabase } from '@/lib/backend';
 import { useCart } from '@/store/cartStore';
 import { useConfig } from '@/store/configStore';
 import { useNavigate } from '@/lib/router';
@@ -15,6 +15,7 @@ import Footer from '@/components/landing/Footer';
 function fmt(n: number) { return `S/ ${n.toFixed(2)}`; }
 
 export default function CartPage() {
+  const database = useDatabase();
   const { items, removeItem, updateQty, subtotal, itemCount } = useCart();
   const { company } = useConfig();
   const navigate = useNavigate();
@@ -31,16 +32,16 @@ export default function CartPage() {
   useEffect(() => {
     setLoadingShipping(true);
     Promise.all([
-      supabase.from('shipping_methods').select('*').eq('status', 'active'),
-      supabase.from('coupons').select('*').eq('status', 'active'),
+      database.select<ShippingMethod>('shipping_methods', { filter: { status: 'active' } }),
+      database.select<Coupon>('coupons', { filter: { status: 'active' } }),
     ]).then(([{ data: methods }, { data: coupons }]) => {
-      const ms = methods || [];
+      const ms = (methods || []) as ShippingMethod[];
       setShippingMethods(ms);
       if (ms.length > 0) setSelectedShipping(ms[0]);
       setLoadingShipping(false);
 
       const now = new Date();
-      const valid = (coupons || []).filter((c: Coupon) => {
+      const valid = ((coupons || []) as Coupon[]).filter((c: Coupon) => {
         if (c.expires_at && new Date(c.expires_at) < now) return false;
         if (c.usage_limit && c.used_count >= c.usage_limit) return false;
         if (c.min_order_amount && subtotal < c.min_order_amount) return false;
@@ -55,17 +56,22 @@ export default function CartPage() {
     if (!code.trim()) return;
     setCheckingCoupon(true);
     setCouponError('');
-    const { data } = await supabase.from('coupons').select('*')
-      .eq('code', code.trim().toUpperCase()).eq('status', 'active').maybeSingle();
+    const { data } = await database.select<Coupon>('coupons', {
+      filter: [
+        { column: 'code', operator: 'eq', value: code.trim().toUpperCase() },
+        { column: 'status', operator: 'eq', value: 'active' },
+      ],
+      maybeSingle: true,
+    });
     if (!data) {
       setCouponError('Cupón inválido o expirado');
       setCoupon(null);
-    } else if (data.min_order_amount && subtotal < data.min_order_amount) {
-      setCouponError(`Monto mínimo para este cupón: ${fmt(data.min_order_amount)}`);
+    } else if ((data as Coupon).min_order_amount && subtotal < (data as Coupon).min_order_amount!) {
+      setCouponError(`Monto mínimo para este cupón: ${fmt((data as Coupon).min_order_amount!)}`);
       setCoupon(null);
     } else {
       setCoupon(data as Coupon);
-      setCouponCode(data.code);
+      setCouponCode((data as Coupon).code);
       toast.success('Cupón aplicado');
     }
     setCheckingCoupon(false);

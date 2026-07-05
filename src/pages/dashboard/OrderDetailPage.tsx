@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/lib/backend';
+import { useDatabase } from '@/lib/backend';
 
 import { useNavigate } from '@/lib/router';
 import { cn } from '@/lib/utils';
@@ -96,6 +96,7 @@ function Invoice({ order, company }: { order: Order; company: any }) {
 }
 
 export default function OrderDetailPage() {
+  const database = useDatabase();
   const orderId = window.location.pathname.split('/').pop() || '';
   // const { user } = useAuthStore();
   const navigate = useNavigate();
@@ -108,12 +109,12 @@ export default function OrderDetailPage() {
     if (!orderId) return;
     setLoading(true);
     const [{ data: o }, { data: t }, { data: cfg }] = await Promise.all([
-      supabase.from('orders').select('*, items:order_items(*)').eq('id', orderId).maybeSingle(),
-      supabase.from('order_tracking').select('*').eq('order_id', orderId).order('created_at'),
-      supabase.from('system_config').select('key,value'),
+      database.select<Order>('orders', { select: '*, items:order_items(*)', filter: { id: orderId }, maybeSingle: true }),
+      database.select<OrderTracking>('order_tracking', { filter: { order_id: orderId }, order: { column: 'created_at' } }),
+      database.select<{ key: string; value: string }>('system_config', { select: 'key,value' }),
     ]);
-    if (o) setOrder({ ...(o as Order), tracking: t || [] });
-    setTracking(t || []);
+    if (o) setOrder({ ...(o as Order), tracking: (t as OrderTracking[]) || [] });
+    setTracking((t as OrderTracking[]) || []);
     if (cfg) {
       const c: Record<string, string> = {};
       (cfg as any[]).forEach(r => { c[r.key] = r.value; });
@@ -127,11 +128,10 @@ export default function OrderDetailPage() {
   // Realtime tracking
   useEffect(() => {
     if (!orderId) return;
-    const ch = supabase.channel(`tracking-${orderId}`)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'order_tracking', filter: `order_id=eq.${orderId}` },
-        payload => setTracking(prev => [...prev, payload.new as OrderTracking]))
-      .subscribe();
-    return () => { supabase.removeChannel(ch); };
+    const unsubscribe = database.subscribe('order_tracking',
+      payload => setTracking(prev => [...prev, (payload as any).new as OrderTracking]),
+      { event: 'INSERT', filter: `order_id=eq.${orderId}` });
+    return () => { unsubscribe(); };
   }, [orderId]);
 
   if (loading) return <div className="flex items-center justify-center h-48"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>;

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/lib/backend';
+import { useDatabase, useStorage } from '@/lib/backend';
 import { useCart } from '@/store/cartStore';
 import { useAuthStore } from '@/store/authStore';
 import { useConfig } from '@/store/configStore';
@@ -131,6 +131,8 @@ function DescriptionRenderer({ text }: { text: string }) {
 }
 
 export default function ProductDetailPage() {
+  const database = useDatabase();
+  const storage = useStorage();
   const slug = window.location.pathname.split('/').filter(p => p && p !== 'tienda').pop() || '';
   const { addItem, items } = useCart();
   const { user } = useAuthStore();
@@ -164,15 +166,20 @@ export default function ProductDetailPage() {
   const load = useCallback(async () => {
     if (!slug) return;
     setLoading(true);
-    const { data } = await supabase
-      .from('products')
-      .select(`*, category:product_categories(id,name,slug), variants:product_variants(*)`)
-      .eq('slug', slug).eq('status', 'active').maybeSingle();
+    const { data } = await database.select<Product>('products', {
+      select: '*, category:product_categories(id,name,slug), variants:product_variants(*)',
+      filter: [
+        { column: 'slug', operator: 'eq', value: slug },
+        { column: 'status', operator: 'eq', value: 'active' },
+      ],
+      maybeSingle: true,
+    });
 
     if (!data) { setLoading(false); return; }
-    setProduct(data as Product);
+    const p = data as Product;
+    setProduct(p);
 
-    const activeVariants = ((data.variants || []) as ProductVariant[])
+    const activeVariants = ((p.variants || []) as ProductVariant[])
       .filter(v => v.status === 'active')
       .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
 
@@ -186,22 +193,33 @@ export default function ProductDetailPage() {
     }
 
     const [{ data: revs }, { data: wl }] = await Promise.all([
-      supabase.from('product_reviews').select('*, profile:profiles(full_name,avatar_url)')
-        .eq('product_id', data.id).eq('status', 'approved').order('helpful_count', { ascending: false }),
-      user ? supabase.from('wishlists').select('id').eq('user_id', user.id).eq('product_id', data.id).maybeSingle()
+      database.select('product_reviews', {
+        select: '*, profile:profiles(full_name,avatar_url)',
+        filter: [
+          { column: 'product_id', operator: 'eq', value: p.id },
+          { column: 'status', operator: 'eq', value: 'approved' },
+        ],
+        order: { column: 'helpful_count', ascending: false },
+      }),
+      user ? database.select('wishlists', { select: 'id', filter: [{ column: 'user_id', operator: 'eq', value: user.id }, { column: 'product_id', operator: 'eq', value: p.id }], maybeSingle: true })
            : Promise.resolve({ data: null }),
     ]);
-    setReviews(revs || []);
+    setReviews((revs || []) as ProductReview[]);
     setIsWishlisted(!!wl);
 
     const saved = sessionStorage.getItem('compare');
     if (saved) setCompareList(JSON.parse(saved));
 
-    if (data.category_id) {
-      const { data: rel } = await supabase.from('products')
-        .select('*, variants:product_variants(id,price,stock,status,attributes,attribute_type,color_name)')
-        .eq('status', 'active').eq('category_id', data.category_id)
-        .neq('id', data.id).limit(8);
+    if (p.category_id) {
+      const { data: rel } = await database.select<Product>('products', {
+        select: '*, variants:product_variants(id,price,stock,status,attributes,attribute_type,color_name)',
+        filter: [
+          { column: 'status', operator: 'eq', value: 'active' },
+          { column: 'category_id', operator: 'eq', value: p.category_id },
+          { column: 'id', operator: 'neq', value: p.id },
+        ],
+        limit: 8,
+      });
       setRelated((rel as Product[]) || []);
     }
     setLoading(false);
@@ -270,9 +288,9 @@ export default function ProductDetailPage() {
     if (!user) { navigate('/login'); return; }
     if (!product) return;
     if (isWishlisted) {
-      await supabase.from('wishlists').delete().eq('user_id', user.id).eq('product_id', product.id);
+      await database.deleteWhere('wishlists', { user_id: user.id, product_id: product.id });
     } else {
-      await supabase.from('wishlists').insert({ user_id: user.id, product_id: product.id });
+      await database.insert('wishlists', { user_id: user.id, product_id: product.id });
       toast.success('Guardado en favoritos');
     }
     setIsWishlisted(v => !v);
@@ -294,10 +312,9 @@ export default function ProductDetailPage() {
     if (file.size > 5 * 1024 * 1024) { toast.error('Máx 5MB'); return; }
     setUploadingImg(true);
     const path = `reviews/${Date.now()}.${file.name.split('.').pop()}`;
-    const { data, error } = await supabase.storage.from('products').upload(path, file, { upsert: false });
-    if (!error && data) {
-      const { data: { publicUrl } } = supabase.storage.from('products').getPublicUrl(data.path);
-      setReviewForm(p => ({ ...p, images: [...p.images, publicUrl] }));
+    const { success, url } = await storage.upload('products', path, file, { upsert: false });
+    if (success && url) {
+      setReviewForm(p => ({ ...p, images: [...p.images, url] }));
     } else toast.error('Error al subir imagen');
     setUploadingImg(false);
   };
@@ -306,7 +323,7 @@ export default function ProductDetailPage() {
     if (!product || !user) { navigate('/login'); return; }
     if (reviewForm.rating === 0) { toast.error('Selecciona una calificación'); return; }
     setSubmittingReview(true);
-    const { error } = await supabase.from('product_reviews').insert({
+    const { error } = await database.insert('product_reviews', {
       product_id: product.id, user_id: user.id,
       rating: reviewForm.rating, title: reviewForm.title || null,
       body: reviewForm.body || null, images: reviewForm.images,
@@ -323,7 +340,7 @@ export default function ProductDetailPage() {
     if (helpfulIds.has(reviewId)) return;
     setHelpfulIds(s => new Set([...s, reviewId]));
     setReviews(prev => prev.map(r => r.id === reviewId ? { ...r, helpful_count: (r.helpful_count ?? 0) + 1 } : r));
-    await supabase.from('product_reviews').update({ helpful_count: currentCount + 1 }).eq('id', reviewId);
+    await database.update('product_reviews', reviewId, { helpful_count: currentCount + 1 });
     toast.success('Marcado como útil');
   };
 

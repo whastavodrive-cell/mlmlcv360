@@ -5,7 +5,7 @@ import { useCart } from '@/store/cartStore';
 import { useAuthStore } from '@/store/authStore';
 import { useConfig } from '@/store/configStore';
 import { useNavigate } from '@/lib/router';
-import { supabase } from '@/lib/backend';
+import { useDatabase } from '@/lib/backend';
 import { toast } from 'sonner';
 import { useState } from 'react';
 
@@ -33,6 +33,7 @@ export default function ProductCard({
   const { user } = useAuthStore();
   const { showUsd, exchangeRate } = useConfig();
   const navigate = useNavigate();
+  const database = useDatabase();
   const [wishlisted, setWishlisted] = useState(initialWishlisted);
   const [adding, setAdding] = useState(false);
 
@@ -70,10 +71,10 @@ export default function ProductCard({
     const next = !wishlisted;
     setWishlisted(next);
     if (next) {
-      await supabase.from('wishlists').insert({ user_id: user.id, product_id: product.id });
+      await database.insert('wishlists', { user_id: user.id, product_id: product.id });
       toast.success('Guardado en favoritos');
     } else {
-      await supabase.from('wishlists').delete().eq('user_id', user.id).eq('product_id', product.id);
+      await database.deleteWhere('wishlists', { user_id: user.id, product_id: product.id });
     }
     onWishlistToggle?.(product.id, next);
   };

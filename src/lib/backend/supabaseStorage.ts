@@ -1,10 +1,13 @@
-import { StorageInterface, FileUploadResult, FileMetadata, DeleteResult } from './types';
+import { StorageInterface, FileUploadResult, FileMetadata, DeleteResult, UploadOptions } from './types';
 import { supabase } from './client';
 
 export const supabaseStorageService: StorageInterface = {
-  async upload(bucket, path, file): Promise<FileUploadResult> {
+  async upload(bucket, path, file, options: UploadOptions = {}): Promise<FileUploadResult> {
     const { data, error } = await supabase.storage.from(bucket).upload(path, file, {
-      upsert: false,
+      upsert: options.upsert ?? false,
+      ...(options.contentType ? { contentType: options.contentType } : {}),
+      ...(options.cacheControl ? { cacheControl: options.cacheControl } : {}),
+      ...(options.metadata ? { metadata: options.metadata } : {}),
     });
     if (error) {
       return { success: false, error: error.message };

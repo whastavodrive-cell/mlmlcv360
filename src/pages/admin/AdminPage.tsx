@@ -1,5 +1,5 @@
 import { useState, useEffect, Fragment } from 'react';
-import { supabase } from '@/lib/backend';
+import { useDatabase } from '@/lib/backend';
 import { useAuthStore } from '@/store/authStore';
 import { useSearchParams } from '@/lib/router';
 import { cn } from '@/lib/utils';
@@ -103,6 +103,7 @@ function ToggleSwitch({ checked, onChange }: { checked: boolean; onChange: (v: b
 
 export default function AdminPage() {
   const { user } = useAuthStore();
+  const database = useDatabase();
   const [searchParamsAdmin] = useSearchParams();
   const [activeModule, setActiveModule] = useState(() => searchParamsAdmin.get('module') || 'empresa');
 
@@ -123,15 +124,15 @@ export default function AdminPage() {
 
   useEffect(() => {
     Promise.all([
-      supabase.from('system_config').select('*'),
-      supabase.from('custom_roles').select('name, label, color').order('sort_order'),
+      database.select('system_config'),
+      database.select('custom_roles', { select: 'name, label, color', order: { column: 'sort_order' } }),
     ]).then(([{ data: cfg }, { data: cr }]) => {
       if (cfg) {
         const map: Record<string, string> = {};
-        cfg.forEach((row: any) => { map[row.key] = row.value; });
+        (cfg as any[]).forEach((row: any) => { map[row.key] = row.value; });
         setConfig(map);
       }
-      if (cr && cr.length > 0) setCustomRoles(cr as { name: string; label: string; color: string }[]);
+      if (cr && (cr as any[]).length > 0) setCustomRoles(cr as { name: string; label: string; color: string }[]);
       setLoadingConfig(false);
     });
   }, []);
@@ -145,12 +146,12 @@ export default function AdminPage() {
 
   const savePermissions = async () => {
     setSavingPerms(true);
-    await supabase.from('system_config').upsert({
+    await database.upsert('system_config', {
       key: 'role_permissions',
       value: JSON.stringify(permissions),
       category: 'permissions',
       updated_at: new Date().toISOString(),
-    }, { onConflict: 'key' });
+    }, 'key');
     toast.success('Permisos guardados correctamente');
     setSavingPerms(false);
   };
@@ -158,9 +159,9 @@ export default function AdminPage() {
   const saveConfigKeys = async (keys: string[], category: string = 'general') => {
     setSavingConfig(true);
     for (const key of keys) {
-      await supabase.from('system_config').upsert({
+      await database.upsert('system_config', {
         key, value: config[key] ?? '', category, updated_at: new Date().toISOString(),
-      }, { onConflict: 'key' });
+      }, 'key');
     }
     toast.success('Configuración guardada');
     setSavingConfig(false);
@@ -676,6 +677,7 @@ export default function AdminPage() {
 // ── Plans Manager ──
 function PlansManager() {
   const { refresh } = useConfig();
+  const database = useDatabase();
   const [editing, setEditing] = useState<Plan | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -683,8 +685,8 @@ function PlansManager() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const fetchAll = async () => {
-    const { data } = await supabase.from('plans').select('*').order('sort_order');
-    if (data) setAllPlans(data.map((p: any) => ({ ...p, features: Array.isArray(p.features) ? p.features : JSON.parse(p.features || '[]') })));
+    const { data } = await database.select<Plan>('plans', { order: { column: 'sort_order' } });
+    if (data) setAllPlans((data as Plan[]).map((p: any) => ({ ...p, features: Array.isArray(p.features) ? p.features : JSON.parse(p.features || '[]') })));
   };
 
   useEffect(() => { fetchAll(); }, []);
@@ -694,9 +696,9 @@ function PlansManager() {
     const { id, created_at, updated_at, ...fields } = plan as any;
     const payload = { ...fields, features: JSON.stringify(fields.features || []), updated_at: new Date().toISOString() };
     if (id) {
-      await supabase.from('plans').update(payload).eq('id', id);
+      await database.update('plans', id, payload);
     } else {
-      await supabase.from('plans').insert(payload);
+      await database.insert('plans', payload);
     }
     setSaving(false);
     setShowForm(false);
@@ -707,7 +709,7 @@ function PlansManager() {
   };
 
   const handleDelete = async (id: string) => {
-    await supabase.from('plans').delete().eq('id', id);
+    await database.delete('plans', id);
     setDeleteId(null);
     fetchAll();
     refresh();
@@ -715,13 +717,13 @@ function PlansManager() {
   };
 
   const togglePopular = async (plan: Plan) => {
-    await supabase.from('plans').update({ is_popular: !plan.is_popular, updated_at: new Date().toISOString() }).eq('id', plan.id);
+    await database.update('plans', plan.id, { is_popular: !plan.is_popular, updated_at: new Date().toISOString() });
     fetchAll();
     refresh();
   };
 
   const toggleActive = async (plan: Plan) => {
-    await supabase.from('plans').update({ is_active: !plan.is_active, updated_at: new Date().toISOString() }).eq('id', plan.id);
+    await database.update('plans', plan.id, { is_active: !plan.is_active, updated_at: new Date().toISOString() });
     fetchAll();
     refresh();
   };
@@ -895,6 +897,7 @@ function PlanForm({ plan, onSave, onCancel, saving }: { plan: Plan | null; onSav
 // ── Ranks Manager ──
 function RanksManager() {
   const { refresh } = useConfig();
+  const database = useDatabase();
   const [editing, setEditing] = useState<Rank | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -902,7 +905,7 @@ function RanksManager() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const fetchAll = async () => {
-    const { data } = await supabase.from('ranks').select('*').order('sort_order');
+    const { data } = await database.select<Rank>('ranks', { order: { column: 'sort_order' } });
     if (data) setAllRanks(data as Rank[]);
   };
 
@@ -913,9 +916,9 @@ function RanksManager() {
     const { id, created_at, updated_at, ...fields } = rank as any;
     const payload = { ...fields, updated_at: new Date().toISOString() };
     if (id) {
-      await supabase.from('ranks').update(payload).eq('id', id);
+      await database.update('ranks', id, payload);
     } else {
-      await supabase.from('ranks').insert(payload);
+      await database.insert('ranks', payload);
     }
     setSaving(false);
     setShowForm(false);
@@ -926,7 +929,7 @@ function RanksManager() {
   };
 
   const handleDelete = async (id: string) => {
-    await supabase.from('ranks').delete().eq('id', id);
+    await database.delete('ranks', id);
     setDeleteId(null);
     fetchAll();
     refresh();
@@ -934,7 +937,7 @@ function RanksManager() {
   };
 
   const toggleActive = async (rank: Rank) => {
-    await supabase.from('ranks').update({ is_active: !rank.is_active, updated_at: new Date().toISOString() }).eq('id', rank.id);
+    await database.update('ranks', rank.id, { is_active: !rank.is_active, updated_at: new Date().toISOString() });
     fetchAll();
     refresh();
   };
@@ -1118,6 +1121,7 @@ function RankForm({ rank, onSave, onCancel, saving }: { rank: Rank | null; onSav
 
 // ── Gateways Manager ──
 function GatewaysManager() {
+  const database = useDatabase();
   const [gateways, setGateways] = useState<any[]>([]);
   const [saving, setSaving] = useState<string | null>(null);
   const [showSecrets, setShowSecrets] = useState<Record<string, boolean>>({});
@@ -1130,12 +1134,13 @@ function GatewaysManager() {
   const { refresh: refreshConfig } = useConfig();
 
   const fetchAll = async () => {
-    const { data } = await supabase.from('payment_gateways').select('*').order('created_at');
+    const { data } = await database.select('payment_gateways', { order: { column: 'created_at' } });
     if (data) {
-      setGateways(data);
+      const gws = data as any[];
+      setGateways(gws);
       const map: Record<string, Record<string, string>> = {};
       const ratesMap: Record<string, string> = {};
-      data.forEach((g: any) => {
+      gws.forEach((g: any) => {
         map[g.id] = { ...g.credentials };
         ratesMap[g.id] = String(g.commission_rate ?? 0);
       });
@@ -1146,9 +1151,9 @@ function GatewaysManager() {
 
   useEffect(() => {
     fetchAll();
-    supabase.from('system_config').select('key,value').in('key', ['fixer_api_key','exchange_rate_usd']).then(({ data }) => {
+    database.select('system_config', { select: 'key,value', filter: { key: ['fixer_api_key','exchange_rate_usd'] } }).then(({ data }) => {
       if (data) {
-        data.forEach((r: any) => {
+        (data as any[]).forEach((r: any) => {
           if (r.key === 'fixer_api_key') setFixerKey(r.value || '');
           if (r.key === 'exchange_rate_usd') setExchangeRate(r.value || '3.72');
         });
@@ -1158,10 +1163,10 @@ function GatewaysManager() {
 
   const saveCurrencyConfig = async () => {
     setSavingCurrency(true);
-    await supabase.from('system_config').upsert([
+    await database.upsert('system_config', [
       { key: 'fixer_api_key', value: fixerKey, category: 'currency', updated_at: new Date().toISOString() },
       { key: 'exchange_rate_usd', value: exchangeRate, category: 'currency', updated_at: new Date().toISOString() },
-    ], { onConflict: 'key' });
+    ], 'key');
     toast.success('Configuración de moneda guardada');
     setSavingCurrency(false);
   };
@@ -1169,7 +1174,7 @@ function GatewaysManager() {
   const refreshRate = async () => {
     setRefreshingRate(true);
     try {
-      const { data } = await supabase.functions.invoke('exchange-rate');
+      const { data } = await database.invoke<any>('exchange-rate');
       if (data?.rate) {
         setExchangeRate(String(data.rate));
         toast.success(`Tipo de cambio actualizado: S/ ${data.rate} (${data.source})`);
@@ -1185,24 +1190,24 @@ function GatewaysManager() {
   };
 
   const toggleActive = async (gw: any) => {
-    await supabase.from('payment_gateways').update({ is_active: !gw.is_active, updated_at: new Date().toISOString() }).eq('id', gw.id);
+    await database.update('payment_gateways', gw.id, { is_active: !gw.is_active, updated_at: new Date().toISOString() });
     fetchAll();
     toast.success(`${gw.name} ${!gw.is_active ? 'activado' : 'desactivado'}`);
   };
 
   const toggleTestMode = async (gw: any) => {
-    await supabase.from('payment_gateways').update({ test_mode: !gw.test_mode, updated_at: new Date().toISOString() }).eq('id', gw.id);
+    await database.update('payment_gateways', gw.id, { test_mode: !gw.test_mode, updated_at: new Date().toISOString() });
     fetchAll();
     toast.success(`${gw.name}: ${!gw.test_mode ? 'modo prueba' : 'modo producción'}`);
   };
 
   const saveCreds = async (gw: any) => {
     setSaving(gw.id);
-    await supabase.from('payment_gateways').update({
+    await database.update('payment_gateways', gw.id, {
       credentials: creds[gw.id] || {},
       commission_rate: parseFloat(commRates[gw.id] || '0') || 0,
       updated_at: new Date().toISOString(),
-    }).eq('id', gw.id);
+    });
     setSaving(null);
     fetchAll();
     toast.success(`Configuración de ${gw.name} guardada`);

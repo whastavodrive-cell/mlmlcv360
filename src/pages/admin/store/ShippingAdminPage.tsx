@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/lib/backend';
+import { useDatabase } from '@/lib/backend';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import type { ShippingZone, ShippingMethod } from '@/lib/storeTypes';
@@ -12,12 +12,14 @@ export default function ShippingAdminPage() {
   const [editZone, setEditZone] = useState<Partial<ShippingZone> | null>(null);
   const [editMethod, setEditMethod] = useState<Partial<ShippingMethod & { zone_id: string }> | null>(null);
 
+  const database = useDatabase();
+
   const load = useCallback(async () => {
     setLoading(true);
-    const { data: zs } = await supabase.from('shipping_zones').select('*, methods:shipping_methods(*)').order('name');
+    const { data: zs } = await database.select<ShippingZone>('shipping_zones', { select: '*, methods:shipping_methods(*)', order: { column: 'name' } });
     setZones((zs as ShippingZone[]) || []);
     setLoading(false);
-  }, []);
+  }, [database]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -26,9 +28,9 @@ export default function ShippingAdminPage() {
     setSaving(true);
     const payload = { name: editZone.name, status: editZone.status || 'active', countries: editZone.countries || [], regions: editZone.regions || [] };
     if (editZone.id) {
-      await supabase.from('shipping_zones').update(payload).eq('id', editZone.id);
+      await database.update('shipping_zones', editZone.id, payload);
     } else {
-      await supabase.from('shipping_zones').insert(payload);
+      await database.insert('shipping_zones', payload);
     }
     toast.success('Zona guardada');
     setEditZone(null);
@@ -48,8 +50,8 @@ export default function ShippingAdminPage() {
       estimated_days_max: editMethod.estimated_days_max || null,
       status: editMethod.status || 'active',
     };
-    if (editMethod.id) await supabase.from('shipping_methods').update(payload).eq('id', editMethod.id);
-    else await supabase.from('shipping_methods').insert(payload);
+    if (editMethod.id) await database.update('shipping_methods', editMethod.id, payload);
+    else await database.insert('shipping_methods', payload);
     toast.success('Método de envío guardado');
     setEditMethod(null);
     setSaving(false);
@@ -57,13 +59,13 @@ export default function ShippingAdminPage() {
   };
 
   const deleteMethod = async (id: string) => {
-    await supabase.from('shipping_methods').delete().eq('id', id);
+    await database.delete('shipping_methods', id);
     toast.success('Método eliminado');
     load();
   };
 
   const deleteZone = async (id: string) => {
-    await supabase.from('shipping_zones').delete().eq('id', id);
+    await database.delete('shipping_zones', id);
     toast.success('Zona eliminada');
     load();
   };

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/backend';
+import { useDatabase } from '@/lib/backend';
 import { useAuthStore } from '@/store/authStore';
 import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import { DollarSign, Clock, CircleCheck as CheckCircle, Circle as XCircle, Download } from 'lucide-react';
@@ -34,6 +34,7 @@ function CustomTooltip({ active, payload, label }: any) {
 
 export default function CommissionsPage() {
   const { user } = useAuthStore();
+  const database = useDatabase();
   const [loading, setLoading] = useState(true);
   const [commissions, setCommissions] = useState<any[]>([]);
   const [chartData, setChartData] = useState<any[]>([]);
@@ -45,23 +46,24 @@ export default function CommissionsPage() {
     async function fetchCommissions() {
       if (!user) return;
       setLoading(true);
-      const { data } = await supabase
-        .from('commissions')
-        .select('id, amount, type, status, description, created_at, from_user_id')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+      const { data } = await database.select<any>('commissions', {
+        select: 'id, amount, type, status, description, created_at, from_user_id',
+        filter: { user_id: user.id },
+        order: { column: 'created_at', ascending: false },
+      });
       if (data) {
-        setCommissions(data);
+        const rows = data as any[];
+        setCommissions(rows);
         // Build chart from last 6 months
         const now = new Date();
         const months: any[] = [];
         for (let i = 5; i >= 0; i--) {
           const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
           const monthName = d.toLocaleDateString('es-PE', { month: 'short' });
-          const total = data.filter(c => {
+          const total = rows.filter((c: any) => {
             const cd = new Date(c.created_at);
             return cd.getMonth() === d.getMonth() && cd.getFullYear() === d.getFullYear();
-          }).reduce((s, c) => s + Number(c.amount), 0);
+          }).reduce((s: any, c: any) => s + Number(c.amount), 0);
           months.push({ name: monthName.charAt(0).toUpperCase() + monthName.slice(1), comisiones: total });
         }
         setChartData(months);

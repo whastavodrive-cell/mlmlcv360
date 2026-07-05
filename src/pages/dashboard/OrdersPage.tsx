@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/lib/backend';
+import { useDatabase } from '@/lib/backend';
 import { useAuthStore } from '@/store/authStore';
 import { useNavigate } from '@/lib/router';
 import { cn } from '@/lib/utils';
@@ -17,6 +17,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }
 };
 
 export default function OrdersPage() {
+  const database = useDatabase();
   const { user } = useAuthStore();
   const navigate = useNavigate();
   const [orders, setOrders] = useState<Order[]>([]);
@@ -25,11 +26,11 @@ export default function OrdersPage() {
   const load = useCallback(async () => {
     if (!user) return;
     setLoading(true);
-    const { data } = await supabase
-      .from('orders')
-      .select('*, items:order_items(*)')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false });
+    const { data } = await database.select<Order>('orders', {
+      select: '*, items:order_items(*)',
+      filter: { user_id: user.id },
+      order: { column: 'created_at', ascending: false },
+    });
     setOrders((data as Order[]) || []);
     setLoading(false);
   }, [user]);

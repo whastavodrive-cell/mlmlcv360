@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/backend';
+import { useDatabase } from '@/lib/backend';
 import { useNavigate } from '@/lib/router';
 import { cn } from '@/lib/utils';
 import type { Product } from '@/lib/storeTypes';
@@ -12,6 +12,7 @@ import Footer from '@/components/landing/Footer';
 function fmt(n: number, c = 'PEN') { return c === 'USD' ? `$${n.toFixed(2)}` : `S/ ${n.toFixed(2)}`; }
 
 export default function ComparePage() {
+  const database = useDatabase();
   const navigate = useNavigate();
   const { addItem } = useCart();
   const [products, setProducts] = useState<Product[]>([]);
@@ -21,8 +22,13 @@ export default function ComparePage() {
     const params = new URLSearchParams(window.location.search);
     const ids = params.get('ids')?.split(',').filter(Boolean) || [];
     if (ids.length < 2) { navigate('/tienda'); return; }
-    supabase.from('products').select(`*, category:product_categories(id,name), variants:product_variants(*)`).in('id', ids).eq('status', 'active')
-      .then(({ data }) => { setProducts((data as Product[]) || []); setLoading(false); });
+    database.select<Product>('products', {
+      select: '*, category:product_categories(id,name), variants:product_variants(*)',
+      filter: [
+        { column: 'id', operator: 'in', value: ids },
+        { column: 'status', operator: 'eq', value: 'active' },
+      ],
+    }).then(({ data }) => { setProducts((data as Product[]) || []); setLoading(false); });
   }, [navigate]);
 
   const allSpecKeys = [...new Set(products.flatMap(p => Object.keys((p as any).specs || {})))];

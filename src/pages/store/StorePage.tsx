@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { supabase } from '@/lib/backend';
+import { useDatabase } from '@/lib/backend';
 import { useCart } from '@/store/cartStore';
 import { useAuthStore } from '@/store/authStore';
 import { useConfig } from '@/store/configStore';
@@ -97,6 +97,7 @@ function MiniProductRow({ products, onCompare, compareIds, wishlist, onWishlist 
 }
 
 export default function StorePage() {
+  const database = useDatabase();
   const { company, exchangeRate, showUsd, setShowUsd } = useConfig();
   const { user } = useAuthStore();
   const { itemCount, subtotal } = useCart();
@@ -124,24 +125,26 @@ export default function StorePage() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     const [{ data: prods }, { data: cats }] = await Promise.all([
-      supabase.from('products').select(`
-        *, category:product_categories(id,name,slug),
-        variants:product_variants(id,name,sku,price,compare_price,stock,attributes,images,status,sort_order,attribute_type,color_name)
-      `).eq('status', 'active').order('sort_order'),
-      supabase.from('product_categories').select('*').eq('status', 'active').order('sort_order'),
+      database.select<Product>('products', {
+        select: '*, category:product_categories(id,name,slug), variants:product_variants(id,name,sku,price,compare_price,stock,attributes,images,status,sort_order,attribute_type,color_name)',
+        filter: { status: 'active' },
+        order: { column: 'sort_order' },
+      }),
+      database.select<ProductCategory>('product_categories', { filter: { status: 'active' }, order: { column: 'sort_order' } }),
     ]);
-    setProducts((prods as any[]) || []);
-    setCategories(cats || []);
+    setProducts(((prods || []) as Product[]));
+    setCategories((cats || []) as ProductCategory[]);
     if (user) {
-      const { data: wl } = await supabase.from('wishlists').select('product_id').eq('user_id', user.id);
-      if (wl) setWishlist(new Set(wl.map((w: any) => w.product_id)));
+      const { data: wl } = await database.select('wishlists', { select: 'product_id', filter: { user_id: user.id } });
+      if (wl) setWishlist(new Set((wl as any[]).map((w: any) => w.product_id)));
     }
     // Bestsellers last 30 days
     const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-    const { data: orderItems } = await supabase.from('order_items').select('product_id, quantity').gte('created_at', since);
-    if (orderItems && orderItems.length > 0 && prods) {
+    const { data: orderItems } = await database.select<any>('order_items', { select: 'product_id, quantity', filter: [{ column: 'created_at', operator: 'gte', value: since }] });
+    const oiArr = (orderItems || []) as any[];
+    if (oiArr.length > 0 && prods) {
       const countMap: Record<string, number> = {};
-      for (const oi of orderItems) {
+      for (const oi of oiArr) {
         if (oi.product_id) countMap[oi.product_id] = (countMap[oi.product_id] || 0) + oi.quantity;
       }
       const sorted = Object.entries(countMap)

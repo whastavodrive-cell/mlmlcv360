@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { supabase } from '@/lib/backend';
+import { useDatabase } from '@/lib/backend';
 
 export interface Plan {
   id: string;
@@ -69,6 +69,7 @@ const ConfigContext = createContext<ConfigState>({
 });
 
 export function ConfigProvider({ children }: { children: ReactNode }) {
+  const database = useDatabase();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [ranks, setRanks] = useState<Rank[]>([]);
   const [currency, setCurrency] = useState('PEN');
@@ -88,15 +89,15 @@ export function ConfigProvider({ children }: { children: ReactNode }) {
         ]).catch(() => null);
 
       const [plansRes, ranksRes, configRes] = await Promise.all([
-        withTimeout(supabase.from('plans').select('*').order('sort_order')),
-        withTimeout(supabase.from('ranks').select('*').order('sort_order')),
-        withTimeout(supabase.from('system_config').select('key, value')),
+        withTimeout(database.select<Plan>('plans', { order: { column: 'sort_order' } })),
+        withTimeout(database.select<Rank>('ranks', { order: { column: 'sort_order' } })),
+        withTimeout(database.select<{ key: string; value: string }>('system_config', { select: ['key', 'value'] })),
       ]);
 
       if (plansRes && plansRes.data && Array.isArray(plansRes.data)) {
-        setPlans(plansRes.data.map((p: any) => ({
+        setPlans(plansRes.data.map((p) => ({
           ...p,
-          features: Array.isArray(p.features) ? p.features : (() => { try { return JSON.parse(p.features as string || '[]'); } catch { return []; } })(),
+          features: Array.isArray(p.features) ? p.features : (() => { try { return JSON.parse((p.features as unknown as string) || '[]'); } catch { return []; } })(),
         })));
       }
       if (ranksRes && ranksRes.data && Array.isArray(ranksRes.data)) {
@@ -123,23 +124,22 @@ export function ConfigProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [database]);
 
   useEffect(() => {
     }
     refresh();
 
-    const channel = supabase.channel('config-subscriptions');
-    channel
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'plans' }, () => refresh())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'ranks' }, () => refresh())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'system_config' }, () => refresh())
-      .subscribe();
+    const unsubPlans = database.subscribe('plans', () => refresh());
+    const unsubRanks = database.subscribe('ranks', () => refresh());
+    const unsubConfig = database.subscribe('system_config', () => refresh());
 
     return () => {
-      supabase.removeChannel(channel);
+      unsubPlans();
+      unsubRanks();
+      unsubConfig();
     };
-  }, [refresh]);
+  }, [refresh, database]);
 
   return (
     <ConfigContext.Provider value={{ plans, ranks, currency, currencySymbol, exchangeRate, company, tax, loading, showUsd, setShowUsd, refresh }}>

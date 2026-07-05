@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/lib/backend';
+import { useDatabase } from '@/lib/backend';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import type { ProductReview } from '@/lib/storeTypes';
@@ -35,33 +35,31 @@ export default function ReviewsAdminPage() {
   const [preview, setPreview] = useState<(ProductReview & { product: any; profile: any }) | null>(null);
   const [delId, setDelId] = useState<string | null>(null);
 
+  const database = useDatabase();
+
   const load = useCallback(async () => {
     setLoading(true);
-    const query = supabase
-      .from('product_reviews')
-      .select(`
-        *,
+    const { data } = await database.select<ProductReview & { product: any; profile: any }>('product_reviews', {
+      select: `*,
         profile:profiles(full_name, avatar_url),
-        product:products(id, name, slug, images)
-      `)
-      .order('created_at', { ascending: false });
-
-    const { data } = await query;
+        product:products(id, name, slug, images)`,
+      order: { column: 'created_at', ascending: false },
+    });
     setReviews((data as any) || []);
     setLoading(false);
-  }, []);
+  }, [database]);
 
   useEffect(() => { load(); }, [load]);
 
   const setStatus = async (id: string, status: 'approved' | 'rejected') => {
-    await supabase.from('product_reviews').update({ status }).eq('id', id);
+    await database.update('product_reviews', id, { status });
     toast.success(status === 'approved' ? 'Reseña aprobada' : 'Reseña rechazada');
     setReviews(prev => prev.map(r => r.id === id ? { ...r, status } : r));
     if (preview?.id === id) setPreview(prev => prev ? { ...prev, status } : null);
   };
 
   const deleteReview = async (id: string) => {
-    await supabase.from('product_reviews').delete().eq('id', id);
+    await database.delete('product_reviews', id);
     toast.success('Reseña eliminada');
     setDelId(null);
     setReviews(prev => prev.filter(r => r.id !== id));

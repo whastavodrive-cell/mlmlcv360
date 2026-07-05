@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/backend';
+import { useDatabase } from '@/lib/backend';
 import { useAuthStore } from '@/store/authStore';
 import { useConfig, formatPrice } from '@/store/configStore';
 import { cn } from '@/lib/utils';
@@ -25,6 +25,7 @@ function RankIcon({ icon, className }: { icon?: string; className?: string }) {
 
 export default function RanksPage() {
   const { user } = useAuthStore();
+  const database = useDatabase();
   const { ranks, currency, currencySymbol, exchangeRate } = useConfig();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ affiliates: 0, volume: 0, totalCommissions: 0 });
@@ -33,13 +34,11 @@ export default function RanksPage() {
     async function fetchStats() {
       if (!user) return;
       setLoading(true);
-      const { data: referrals } = await supabase
-        .from('profiles').select('id').eq('sponsor_id', user.id);
-      const { data: commissions } = await supabase
-        .from('commissions').select('amount').eq('user_id', user.id);
-      const totalCommissions = commissions?.reduce((s, c) => s + Number(c.amount), 0) || 0;
+      const { data: referrals } = await database.select('profiles', { select: 'id', filter: { sponsor_id: user.id } });
+      const { data: commissions } = await database.select('commissions', { select: 'amount', filter: { user_id: user.id } });
+      const totalCommissions = (commissions as any[])?.reduce((s, c) => s + Number(c.amount), 0) || 0;
       setStats({
-        affiliates: referrals?.length || 0,
+        affiliates: (referrals as any[])?.length || 0,
         volume: totalCommissions * 10,
         totalCommissions,
       });

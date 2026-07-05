@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/lib/backend';
+import { useDatabase, useStorage } from '@/lib/backend';
 import { useAuthStore } from '@/store/authStore';
 import { useNavigate } from '@/lib/router';
 import { cn } from '@/lib/utils';
@@ -75,6 +75,9 @@ export default function ProductFormPage() {
   const [attrType, setAttrType] = useState<'text' | 'color' | 'image'>('text');
   const [draggedVariantIdx, setDraggedVariantIdx] = useState<number | null>(null);
 
+  const database = useDatabase();
+  const storage = useStorage();
+
   const generateSKU = () => {
     const timestamp = Date.now().toString(36).toUpperCase();
     const random = Math.random().toString(36).substring(2, 6).toUpperCase();
@@ -83,12 +86,12 @@ export default function ProductFormPage() {
 
   const load = useCallback(async () => {
     const [{ data: cats }] = await Promise.all([
-      supabase.from('product_categories').select('*').order('sort_order'),
+      database.select<ProductCategory>('product_categories', { order: { column: 'sort_order' } }),
     ]);
-    setCategories(cats || []);
+    setCategories((cats as ProductCategory[]) || []);
 
     if (productId) {
-      const { data: p } = await supabase.from('products').select('*, variants:product_variants(*), commissions:product_commissions(*)').eq('id', productId).maybeSingle();
+      const { data: p } = await database.select<any>('products', { select: '*, variants:product_variants(*), commissions:product_commissions(*)', filter: { id: productId }, maybeSingle: true });
       if (p) {
         setForm({
           name: p.name, slug: p.slug, description: p.description || '',
@@ -130,7 +133,7 @@ export default function ProductFormPage() {
       setForm(p => ({ ...p, sku: generateSKU() }));
     }
     setLoading(false);
-  }, [productId]);
+  }, [productId, database]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -175,20 +178,20 @@ export default function ProductFormPage() {
 
     let pid = productId;
     if (productId) {
-      const { error } = await supabase.from('products').update(payload).eq('id', productId);
-      if (error) { toast.error(error.message); setSaving(false); return; }
+      const { error } = await database.update('products', productId, payload);
+      if (error) { toast.error(error); setSaving(false); return; }
     } else {
-      const { data, error } = await supabase.from('products').insert(payload).select().single();
-      if (error) { toast.error(error.message); setSaving(false); return; }
+      const { data, error } = await database.insert<any>('products', payload);
+      if (error) { toast.error(error); setSaving(false); return; }
       pid = data.id;
     }
 
     if (productId) {
-      await supabase.from('product_variants').delete().eq('product_id', pid!);
+      await database.deleteWhere('product_variants', { product_id: pid! });
     }
 
     for (const [idx, v] of variants.entries()) {
-      await supabase.from('product_variants').insert({
+      await database.insert('product_variants', {
         product_id: pid!, name: v.name, sku: v.sku || null,
         price: v.price ? parseFloat(v.price) : null,
         compare_price: v.compare_price ? parseFloat(v.compare_price) : null,
@@ -200,8 +203,8 @@ export default function ProductFormPage() {
     }
 
     if (commissions.length > 0) {
-      await supabase.from('product_commissions').delete().eq('product_id', pid!);
-      await supabase.from('product_commissions').insert(
+      await database.deleteWhere('product_commissions', { product_id: pid! });
+      await database.insert('product_commissions',
         commissions.filter(c => c.value).map(c => ({
           product_id: pid!, level: c.level, type: c.type, value: parseFloat(c.value),
           min_purchase_amount: 0, status: 'active',
@@ -219,9 +222,9 @@ export default function ProductFormPage() {
     setUploading(true);
     const bucket = isDigital ? 'products' : 'products';
     const path = `${isDigital ? 'digital' : 'media'}/${Date.now()}.${file.name.split('.').pop()}`;
-    const { data, error } = await supabase.storage.from(bucket).upload(path, file, { upsert: false });
-    if (error) { toast.error('Error subiendo archivo'); setUploading(false); return; }
-    const { data: { publicUrl } } = supabase.storage.from(bucket).getPublicUrl(data.path);
+    const { success, url, error } = await storage.upload(bucket, path, file, { upsert: false });
+    if (!success || !url) { toast.error(error || 'Error subiendo archivo'); setUploading(false); return; }
+    const publicUrl = url;
     if (isDigital) {
       setForm(p => ({ ...p, digital_file_url: publicUrl }));
       toast.success('Archivo digital subido');
@@ -655,9 +658,9 @@ export default function ProductFormPage() {
                             if (!file) return;
                             setUploading(true);
                             const path = `variants/${Date.now()}.${file.name.split('.').pop()}`;
-                            const { data, error } = await supabase.storage.from('products').upload(path, file, { upsert: false });
-                            if (!error && data) {
-                              const { data: { publicUrl } } = supabase.storage.from('products').getPublicUrl(data.path);
+                            const { success, url } = await storage.upload('products', path, file, { upsert: false });
+                            if (success && url) {
+                              const publicUrl = url;
                               setVariants(prev => prev.map((x, j) => j === i ? { ...x, images: [{ url: publicUrl, alt: x.name }] } : x));
                             }
                             setUploading(false);

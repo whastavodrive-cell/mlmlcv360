@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/lib/backend';
+import { useDatabase } from '@/lib/backend';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import type { Order } from '@/lib/storeTypes';
@@ -28,13 +28,15 @@ export default function OrdersAdminPage() {
   const [statusFilter, setStatusFilter] = useState('');
   const [updating, setUpdating] = useState<string | null>(null);
 
+  const database = useDatabase();
+
   const load = useCallback(async () => {
     setLoading(true);
-    let q = supabase.from('orders')
-      .select('*, items:order_items(id,product_name,image_url,quantity)')
-      .order('created_at', { ascending: false });
-    if (statusFilter) q = q.eq('status', statusFilter);
-    const { data } = await q;
+    const { data } = await database.select<Order>('orders', {
+      select: '*, items:order_items(id,product_name,image_url,quantity)',
+      order: { column: 'created_at', ascending: false },
+      ...(statusFilter ? { filter: { status: statusFilter } } : {}),
+    });
     let list = (data as Order[]) || [];
     if (search) list = list.filter(o =>
       o.order_number.toLowerCase().includes(search.toLowerCase()) ||
@@ -42,7 +44,7 @@ export default function OrdersAdminPage() {
     );
     setOrders(list);
     setLoading(false);
-  }, [statusFilter, search]);
+  }, [statusFilter, search, database]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -53,8 +55,8 @@ export default function OrdersAdminPage() {
     if (status === 'delivered') extra.delivered_at = new Date().toISOString();
     if (status === 'cancelled') extra.cancelled_at = new Date().toISOString();
 
-    const { error } = await supabase.from('orders').update({ status, ...extra, updated_at: new Date().toISOString() }).eq('id', orderId);
-    if (error) { toast.error(error.message); setUpdating(null); return; }
+    const { error } = await database.update('orders', orderId, { status, ...extra, updated_at: new Date().toISOString() });
+    if (error) { toast.error(error); setUpdating(null); return; }
 
     const trackDesc: Record<string, string> = {
       confirmed:  'Pedido confirmado — en preparación',
@@ -64,13 +66,13 @@ export default function OrdersAdminPage() {
       cancelled:  'Pedido cancelado',
     };
     if (trackDesc[status]) {
-      await supabase.from('order_tracking').insert({ order_id: orderId, status, description: trackDesc[status] });
+      await database.insert('order_tracking', { order_id: orderId, status, description: trackDesc[status] });
     }
     // Payment status for delivered
     if (status === 'delivered') {
-      await supabase.from('orders').update({ payment_status: 'paid' }).eq('id', orderId);
+      await database.update('orders', orderId, { payment_status: 'paid' });
       // Approve commissions
-      await supabase.from('commissions').update({ status: 'approved' }).eq('reference_id', orderId).eq('status', 'pending');
+      await database.update('commissions', { reference_id: orderId, status: 'pending' }, { status: 'approved' });
     }
 
     toast.success(`Estado actualizado a: ${STATUS_CONFIG[status]?.label}`);
