@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/backend';
 import { useAuthStore } from '@/store/authStore';
 import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
-import { DollarSign, Clock, CheckCircle, XCircle, Download } from 'lucide-react';
+import { DollarSign, Clock, CircleCheck as CheckCircle, Circle as XCircle, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 

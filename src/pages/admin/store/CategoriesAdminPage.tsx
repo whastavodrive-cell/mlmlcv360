@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/backend';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import type { ProductCategory } from '@/lib/storeTypes';
@@ -18,10 +18,7 @@ export default function CategoriesAdminPage() {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const { data } = await supabase
-      .from('product_categories')
-      .select('*')
-      .order('sort_order');
+    const { data } = await supabase.from('product_categories').select('*').order('sort_order');
     setCategories(data || []);
     setLoading(false);
   }, []);

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/backend';
 import { useAuthStore } from '@/store/authStore';
 import { useCart } from '@/store/cartStore';
 import { useNavigate } from '@/lib/router';

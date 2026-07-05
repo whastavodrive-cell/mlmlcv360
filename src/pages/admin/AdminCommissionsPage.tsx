@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/backend';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { Search, Plus, Trash2, RefreshCw, Download, ChevronLeft, ChevronRight, CircleCheck as CheckCircle, X, DollarSign, Clock, TrendingUp, Filter, Eye, Save, Loader as Loader2, CreditCard as Edit2, Info } from 'lucide-react';

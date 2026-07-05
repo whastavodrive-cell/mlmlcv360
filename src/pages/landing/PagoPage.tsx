@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import Navbar from '@/components/landing/Navbar';
 import Footer from '@/components/landing/Footer';
 import { useConfig, formatPrice } from '@/store/configStore';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/backend';
 import { useAuthStore } from '@/store/authStore';
 
 type Currency = 'PEN' | 'USD';

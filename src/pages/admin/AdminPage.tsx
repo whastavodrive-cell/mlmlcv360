@@ -1,5 +1,5 @@
 import { useState, useEffect, Fragment } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/backend';
 import { useAuthStore } from '@/store/authStore';
 import { useSearchParams } from '@/lib/router';
 import { cn } from '@/lib/utils';

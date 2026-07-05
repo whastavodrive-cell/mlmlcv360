@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/backend';
 import { useConfig } from '@/store/configStore';
 import { useNavigate } from '@/lib/router';
 import { Package, Printer, Download, QrCode, Check, Building2, Mail, Phone, MapPin, Hash, Truck, CreditCard, FileText } from 'lucide-react';

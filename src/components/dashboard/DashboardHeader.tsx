@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/lib/supabase';
+import { useDatabase } from '@/lib/backend';
 import { Link, useNavigate } from '@/lib/router';
 import { Bell, Search, Moon, Sun, Menu, LogOut, User, Settings, ChevronDown, ExternalLink, CheckCheck, Trash2 } from 'lucide-react';
 import { useThemeStore } from '@/store/themeStore';
@@ -17,6 +17,7 @@ export default function DashboardHeader() {
   const { theme, setTheme } = useThemeStore();
   const { user, signOut } = useAuthStore();
   const { setSidebarOpen } = useUIStore();
+  const database = useDatabase();
   const navigate = useNavigate();
   const [searchOpen, setSearchOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
@@ -29,37 +30,35 @@ export default function DashboardHeader() {
   const fetchNotifications = useCallback(async () => {
     if (!user?.id) return;
     setLoadingNotifs(true);
-    const { data } = await supabase
-      .from('notifications')
-      .select('id, title, message, type, read, created_at')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-      .limit(10);
-    setDbNotifications(data || []);
+    const { data } = await database.select<any>('notifications', {
+      filter: { user_id: user.id },
+      order: { column: 'created_at', ascending: false },
+      limit: 10,
+    });
+    setDbNotifications((data as any[]) || []);
     setLoadingNotifs(false);
-  }, [user?.id]);
+  }, [user?.id, database]);
 
   useEffect(() => {
     fetchNotifications();
-    // Poll for new notifications every 30 seconds
     const interval = setInterval(fetchNotifications, 30000);
     return () => clearInterval(interval);
   }, [fetchNotifications]);
 
   const markAsRead = async (id: string) => {
-    await supabase.rpc('mark_notification_read', { p_notification_id: id });
+    await database.rpc('mark_notification_read', { p_notification_id: id });
     setDbNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
   };
 
   const markAllAsRead = async () => {
     if (!user?.id || unread === 0) return;
-    await supabase.rpc('mark_all_notifications_read', { p_user_id: user.id });
+    await database.rpc('mark_all_notifications_read', { p_user_id: user.id });
     setDbNotifications(prev => prev.map(n => ({ ...n, read: true })));
     toast.success('Todas las notificaciones marcadas como leídas');
   };
 
   const deleteNotification = async (id: string) => {
-    await supabase.from('notifications').delete().eq('id', id);
+    await database.delete('notifications', id);
     setDbNotifications(prev => prev.filter(n => n.id !== id));
   };
 

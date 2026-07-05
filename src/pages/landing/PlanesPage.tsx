@@ -5,7 +5,7 @@ import { CircleCheck as CheckCircle, X, ArrowRight, Sparkles } from 'lucide-reac
 import { cn } from '@/lib/utils';
 import { useConfig, formatPrice } from '@/store/configStore';
 import { useAuthStore } from '@/store/authStore';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/backend';
 import { toast } from 'sonner';
 import { useState } from 'react';
 

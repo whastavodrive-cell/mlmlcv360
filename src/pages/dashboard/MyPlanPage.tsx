@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/backend';
 import { useAuthStore } from '@/store/authStore';
 import { useConfig, formatPrice } from '@/store/configStore';
 import { toast } from 'sonner';

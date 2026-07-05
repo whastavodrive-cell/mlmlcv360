@@ -1,6 +1,6 @@
 import React from 'react';
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/backend';
 import { useCart } from '@/store/cartStore';
 import { useConfig } from '@/store/configStore';
 import { useNavigate } from '@/lib/router';

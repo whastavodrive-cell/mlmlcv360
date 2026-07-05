@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/backend';
 import { useNavigate } from '@/lib/router';
 import { cn } from '@/lib/utils';
 import type { Product } from '@/lib/storeTypes';

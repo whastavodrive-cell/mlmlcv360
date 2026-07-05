@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/backend';
 import { useCart } from '@/store/cartStore';
 import { useAuthStore } from '@/store/authStore';
 import { useConfig } from '@/store/configStore';

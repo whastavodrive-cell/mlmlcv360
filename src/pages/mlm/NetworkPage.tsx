@@ -2,7 +2,8 @@ import {
   useState, useRef, useEffect, useCallback, useMemo, WheelEvent,
   PointerEvent as RPointerEvent, TouchEvent as RTouchEvent,
 } from 'react';
-import { supabase, type Profile } from '@/lib/supabase';
+import { supabase } from '@/lib/backend';
+import type { Profile } from '@/lib/backend';
 import { useAuthStore } from '@/store/authStore';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';

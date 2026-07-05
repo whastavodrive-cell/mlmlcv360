@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from './supabase';
+import { supabase } from '@/lib/backend';
 
 export type ConfigCategory = 'general' | 'email' | 'auth' | 'currency' | 'tax' | 'store' | 'network' | 'registration' | 'permissions' | 'whatsapp' | 'ai';
 

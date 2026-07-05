@@ -5,7 +5,7 @@ import { useCart } from '@/store/cartStore';
 import { useAuthStore } from '@/store/authStore';
 import { useConfig } from '@/store/configStore';
 import { useNavigate } from '@/lib/router';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/backend';
 import { toast } from 'sonner';
 import { useState } from 'react';
 

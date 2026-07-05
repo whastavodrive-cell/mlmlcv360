@@ -1,14 +1,11 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/backend';
 import { useAuthStore } from '@/store/authStore';
 import {
   AreaChart, Area, PieChart, Pie, Cell, ResponsiveContainer,
   XAxis, YAxis, CartesianGrid, Tooltip
 } from 'recharts';
-import {
-  DollarSign, Users, TrendingUp, Award, ArrowUpRight, ArrowDownRight,
-  Activity, Bell, ChevronRight, UserPlus, Copy, CheckCircle
-} from 'lucide-react';
+import { DollarSign, Users, TrendingUp, Award, ArrowUpRight, ArrowDownRight, Activity, Bell, ChevronRight, UserPlus, Copy, CircleCheck as CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Link } from '@/lib/router';
 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/backend';
 import { useCart } from '@/store/cartStore';
 import { useConfig } from '@/store/configStore';
 import { useAuthStore } from '@/store/authStore';
@@ -185,8 +185,7 @@ export default function CheckoutPage() {
 
   const applyCoupon = async () => {
     if (!couponCode.trim()) return;
-    const { data } = await supabase.from('coupons').select('*')
-      .eq('code', couponCode.trim().toUpperCase()).eq('status', 'active').maybeSingle();
+    const { data } = await supabase.from('coupons').select('*').eq('code', couponCode.trim().toUpperCase()).eq('status', 'active').single();
     if (!data) { setCouponError('Cupón inválido'); setCoupon(null); return; }
     if (subtotal < (data.min_order_amount ?? 0)) { setCouponError(`Mínimo: ${fmt(data.min_order_amount)}`); setCoupon(null); return; }
     setCoupon(data as Coupon); setCouponError(''); toast.success('Cupón aplicado');
