@@ -106,7 +106,6 @@ const userNav: NavItem[] = [
   { label: 'Mi Plan', href: '/dashboard/mi-plan', icon: CreditCard },
   { label: 'Mis Pedidos', href: '/dashboard/pedidos', icon: ShoppingCart },
   { label: 'Reportes', href: '/dashboard/reportes', icon: BarChart2 },
-  { label: 'Configuración', href: '/dashboard/configuracion', icon: Settings },
 ];
 
 const inspectorNav: NavItem[] = [
@@ -325,7 +324,21 @@ export default function Sidebar() {
   const navigate = useNavigate();
   const { sidebarOpen, setSidebarOpen, sidebarCollapsed, setSidebarCollapsed } = useUIStore();
   const { company, logoValue, logoSizes, plans, ranks } = useConfig();
+  const [logoCollapsed, setLogoCollapsed] = useState<string>('');
   const database = useDatabase();
+
+  useEffect(() => {
+    database.select<{ key: string; value: string }>('system_config', {
+      filter: { key: 'logo_collapsed_value' },
+      single: true,
+    }).then(({ data }) => {
+      if (data && !Array.isArray(data) && data.value) {
+        setLogoCollapsed(data.value);
+      }
+    }).catch(() => {});
+  }, [database]);
+
+  const effectiveLogoCollapsed = logoCollapsed || logoValue;
   const location = useLocation();
   const pathname = location.pathname;
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -412,16 +425,16 @@ export default function Sidebar() {
                 height: `${(logoSizes.collapsed || 40) + 4}px`,
               }}
             >
-              {logoValue ? (
-                logoValue.trim().toLowerCase().startsWith('<svg') ? (
+              {effectiveLogoCollapsed ? (
+                effectiveLogoCollapsed.trim().toLowerCase().startsWith('<svg') ? (
                   <span
                     className="inline-flex items-center justify-center [&_svg]:w-full [&_svg]:h-full"
                     style={{ width: `${logoSizes.collapsed || 40}px`, height: `${logoSizes.collapsed || 40}px` }}
-                    dangerouslySetInnerHTML={{ __html: logoValue }}
+                    dangerouslySetInnerHTML={{ __html: effectiveLogoCollapsed }}
                   />
                 ) : (
                   <img
-                    src={logoValue}
+                    src={effectiveLogoCollapsed}
                     alt={name}
                     style={{ width: `${logoSizes.collapsed || 40}px`, height: `${logoSizes.collapsed || 40}px` }}
                     className="object-contain"
@@ -454,10 +467,11 @@ export default function Sidebar() {
             </div>
           ) : null
         ) : (
-          <div className="px-4 py-2 border-b border-border/50 flex-shrink-0">
+          <div className="px-4 py-2 border-b border-border/50 flex-shrink-0 overflow-hidden">
             <span
-              className={cn('text-[10px] font-semibold uppercase tracking-wider', roleColorClass || 'text-muted-foreground')}
+              className={cn('block text-[10px] font-semibold uppercase tracking-wider truncate', roleColorClass || 'text-muted-foreground')}
               style={roleColorStyle}
+              title={roleLabel}
             >
               {roleLabel}
             </span>
@@ -482,10 +496,14 @@ export default function Sidebar() {
           {sidebarCollapsed ? (
             <div className="flex flex-col items-center gap-2 py-3 px-2">
               <UserAvatar size="md" />
-              {userPlan && (
-                <div className="w-full flex items-center justify-center" title={userPlan.name}>
-                  <div className="flex items-center gap-1 px-2 py-0.5 bg-amber-500/10 rounded-full">
-                    <Crown className="w-3 h-3 text-amber-500" />
+              {(userPlan || userRank) && (
+                <div className="w-full flex items-center justify-center" title={userRank ? userRank.name : userPlan?.name}>
+                  <div className={cn('flex items-center gap-1 px-2 py-0.5 rounded-full', userRank?.bg_color || userPlan?.bg_color || 'bg-primary/10')}>
+                    {userRank ? (
+                      <RankIcon rank={userRank} className={cn('w-3 h-3', userRank.color || 'text-primary')} />
+                    ) : (
+                      <Crown className="w-3 h-3 text-amber-500" />
+                    )}
                   </div>
                 </div>
               )}

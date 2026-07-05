@@ -32,7 +32,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     return (localStorage.getItem('mlm360-theme') as Theme) || 'dark';
   });
 
-  useEffect(() => { applyTheme(theme); }, [theme]);
+  useEffect(() => { applyTheme(theme, false); }, [theme]);
 
   const setTheme = (t: Theme) => {
     setThemeState(t);

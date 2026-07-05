@@ -4,7 +4,7 @@ import { Link, useNavigate, useLocation } from '@/lib/router';
 import {
   Bell, Search, Moon, Sun, Menu, LogOut, User, Settings,
   ChevronDown, ExternalLink, CheckCheck, Trash2, X, Users, Package, ShoppingBag,
-  LayoutDashboard, Crown, Star, Medal,
+  LayoutDashboard, Crown, Star, Medal, DollarSign, ArrowRight,
 } from 'lucide-react';
 import { useThemeStore } from '@/store/themeStore';
 import { useAuthStore } from '@/store/authStore';
@@ -19,7 +19,7 @@ import Logo from '@/components/Logo';
 const isMac = typeof navigator !== 'undefined' && /Mac|iPod|iPhone|iPad/.test(navigator.platform);
 
 interface SearchResult {
-  type: 'user' | 'product' | 'order';
+  type: 'user' | 'product' | 'order' | 'commission' | 'nav';
   id: string;
   title: string;
   subtitle: string;
@@ -98,12 +98,12 @@ export default function DashboardHeader() {
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
-        if (!query) setSearchOpen(false);
+        setSearchOpen(false);
       }
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
-  }, [query]);
+  }, []);
 
   // Close mobile search panel on scroll
   useEffect(() => {
@@ -160,8 +160,37 @@ export default function DashboardHeader() {
     const found: SearchResult[] = [];
     const pct = `%${q}%`;
     const isAdmin = user?.role === 'super_admin' || user?.role === 'admin' || user?.role === 'inspector';
+    const qLower = q.toLowerCase();
+
+    // Navigation quick links based on role
+    const navItems: { label: string; href: string; keywords: string[] }[] = [
+      { label: 'Dashboard', href: '/dashboard', keywords: ['panel', 'inicio', 'dashboard', 'home'] },
+      { label: 'Mi Perfil', href: '/dashboard/perfil', keywords: ['perfil', 'profile', 'cuenta', 'account'] },
+      { label: 'Mi Red', href: '/dashboard/red', keywords: ['red', 'network', 'afiliados', 'arbol', 'tree'] },
+      { label: 'Comisiones', href: '/dashboard/comisiones', keywords: ['comisiones', 'commissions', 'ingresos', 'ganancias'] },
+      { label: 'Rangos', href: '/dashboard/rangos', keywords: ['rangos', 'ranks', 'niveles', 'levels'] },
+      { label: 'Mi Plan', href: '/dashboard/mi-plan', keywords: ['plan', 'suscripcion', 'subscription'] },
+      { label: 'Pedidos', href: '/dashboard/pedidos', keywords: ['pedidos', 'orders', 'compras', 'compras'] },
+      { label: 'Reportes', href: '/dashboard/reportes', keywords: ['reportes', 'reports', 'estadisticas'] },
+      { label: 'Tienda', href: '/tienda', keywords: ['tienda', 'store', 'shop', 'productos'] },
+    ];
+    if (isAdmin) {
+      navItems.push(
+        { label: 'Usuarios', href: '/dashboard/usuarios', keywords: ['usuarios', 'users', 'afiliados'] },
+        { label: 'Gestin Admin', href: '/dashboard/admin', keywords: ['admin', 'administracion', 'gestion', 'configuracion'] },
+        { label: 'Productos Admin', href: '/dashboard/admin/productos', keywords: ['productos', 'admin products'] },
+        { label: 'Pedidos Admin', href: '/dashboard/admin/pedidos', keywords: ['pedidos admin', 'orders admin'] },
+      );
+    }
+    // Filter nav items by query
+    navItems.forEach(item => {
+      if (item.label.toLowerCase().includes(qLower) || item.keywords.some(k => k.includes(qLower))) {
+        found.push({ type: 'nav', id: `nav-${item.href}`, title: item.label, subtitle: 'Navegar', href: item.href });
+      }
+    });
+
     try {
-      const [usersRes, productsRes] = await Promise.all([
+      const [usersRes, productsRes, commissionsRes] = await Promise.all([
         isAdmin
           ? database.select<any>('profiles', {
               select: ['id', 'full_name', 'email', 'username', 'avatar_url'],
@@ -174,6 +203,13 @@ export default function DashboardHeader() {
           filter: `name.ilike.${pct},sku.ilike.${pct}`,
           limit: 5,
         }),
+        isAdmin
+          ? database.select<any>('commissions', {
+              select: ['id', 'user_id', 'amount', 'status', 'created_at'],
+              filter: `user_id.ilike.${pct}`,
+              limit: 3,
+            })
+          : Promise.resolve({ data: [] }),
       ]);
       if (Array.isArray(usersRes.data)) {
         usersRes.data.slice(0, 4).forEach((u: any) => found.push({
@@ -193,8 +229,16 @@ export default function DashboardHeader() {
           image: p.images?.[0]?.url,
         }));
       }
+      if (Array.isArray(commissionsRes.data)) {
+        commissionsRes.data.slice(0, 2).forEach((c: any) => found.push({
+          type: 'commission', id: c.id,
+          title: `Comision S/ ${c.amount || 0}`,
+          subtitle: c.status || 'pendiente',
+          href: '/dashboard/comisiones',
+        }));
+      }
     } catch { /* silent */ }
-    setResults(found.slice(0, 6));
+    setResults(found.slice(0, 8));
     setLoadingSearch(false);
   }, [database, user?.role]);
 
@@ -246,7 +290,12 @@ export default function DashboardHeader() {
     setDbNotifications(prev => prev.filter(n => n.id !== id));
   };
 
-  const iconFor = (type: string) => type === 'user' ? Users : type === 'product' ? Package : ShoppingBag;
+  const iconFor = (type: string) =>
+    type === 'user' ? Users :
+    type === 'product' ? Package :
+    type === 'commission' ? DollarSign :
+    type === 'nav' ? ArrowRight :
+    ShoppingBag;
 
   function SearchResultItem({ r }: { r: SearchResult }) {
     const Icon = iconFor(r.type);
@@ -264,7 +313,7 @@ export default function DashboardHeader() {
           <p className="text-xs text-muted-foreground truncate">{r.subtitle}</p>
         </div>
         <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full flex-shrink-0 capitalize">
-          {r.type === 'user' ? 'usuario' : r.type === 'product' ? 'producto' : 'pedido'}
+          {r.type === 'user' ? 'usuario' : r.type === 'product' ? 'producto' : r.type === 'commission' ? 'comision' : r.type === 'nav' ? 'ir' : 'pedido'}
         </span>
       </button>
     );
@@ -325,8 +374,8 @@ export default function DashboardHeader() {
                   <X className="w-3.5 h-3.5" />
                 </button>
               ) : (
-                <kbd className="pointer-events-none inline-flex items-center px-1.5 py-0.5 text-[11px] font-mono font-bold text-muted-foreground bg-background border border-border rounded-md leading-none">
-                  {isMac ? '⌘K' : 'Ctrl+K'}
+                <kbd className="pointer-events-none inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-mono font-semibold text-muted-foreground bg-background border border-border rounded leading-none">
+                  {isMac ? (<><span className="text-[11px]">⌘</span><span>K</span></>) : 'Ctrl+K'}
                 </kbd>
               )}
             </div>
