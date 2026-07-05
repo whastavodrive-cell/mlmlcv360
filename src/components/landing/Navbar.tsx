@@ -210,34 +210,33 @@ export default function Navbar() {
 
             {/* Right controls - improved styling */}
             <div className="ml-auto flex items-center gap-1">
-              {/* Cart button - better styling */}
+              {/* Cart button - icon only with badge */}
               <button onClick={() => navigate('/carrito')}
-                className="relative flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors"
+                className="relative w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors"
                 aria-label="Carrito">
-                <ShoppingBag className="w-4.5 h-4.5" />
-                <span className="text-sm font-medium hidden sm:inline">Carrito</span>
+                <ShoppingBag className="w-5 h-5" />
                 {itemCount > 0 && (
-                  <span className="min-w-[18px] h-[18px] px-1 bg-primary text-primary-foreground rounded-full text-[10px] font-bold flex items-center justify-center">
+                  <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-0.5 bg-primary text-primary-foreground rounded-full text-[10px] font-bold flex items-center justify-center">
                     {itemCount > 9 ? '9+' : itemCount}
                   </span>
                 )}
               </button>
 
-              {/* Theme toggle - better styling */}
+              {/* Theme toggle */}
               <button onClick={() => setTheme(isDark ? 'light' : 'dark')}
-                className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors border border-transparent hover:border-border/50"
+                className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors"
                 aria-label="Cambiar tema">
-                {isDark ? <Sun className="w-4.5 h-4.5" /> : <Moon className="w-4.5 h-4.5" />}
+                {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
               </button>
 
               {isLoggedIn ? (
                 <div className="hidden md:block ml-1"><DesktopUserMenu /></div>
               ) : (
                 <div className="hidden md:flex items-center gap-2 ml-2">
-                  <Link to="/login" className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+                  <Link to="/login" className="px-4 py-1.5 text-sm font-medium text-foreground border border-border/60 rounded-full hover:bg-muted/50 transition-colors">
                     Ingresar
                   </Link>
-                  <Link to="/registro" className="px-5 py-2 text-sm font-semibold bg-primary text-primary-foreground rounded-full hover:bg-primary/90 transition-all shadow-md shadow-primary/20">
+                  <Link to="/registro" className="px-5 py-1.5 text-sm font-semibold bg-primary text-primary-foreground rounded-full hover:bg-primary/90 transition-all shadow-md shadow-primary/20">
                     Registrarse
                   </Link>
                 </div>
