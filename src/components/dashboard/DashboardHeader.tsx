@@ -231,11 +231,11 @@ export default function DashboardHeader() {
       </div>
 
       {/* Right controls */}
-      <div className="flex items-center gap-1 flex-shrink-0 ml-1">
+      <div className="ml-auto flex items-center gap-1 flex-shrink-0">
 
         {/* Link to public site */}
         <Link to="/"
-          className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted text-foreground transition-colors"
+          className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted text-foreground/70 hover:text-foreground transition-colors"
         >
           <ExternalLink className="w-4 h-4" />
         </Link>
@@ -243,7 +243,7 @@ export default function DashboardHeader() {
         {/* Theme toggle */}
         <button
           onClick={() => setTheme(isDark ? 'light' : 'dark')}
-          className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted text-foreground transition-colors"
+          className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted text-foreground/70 hover:text-foreground transition-colors"
         >
           {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
         </button>
@@ -251,7 +251,7 @@ export default function DashboardHeader() {
         {/* Notifications */}
         <DropdownMenu open={notifOpen} onOpenChange={(open) => { setNotifOpen(open); if (open) fetchNotifications(); }}>
           <DropdownMenuTrigger asChild>
-            <button className="relative w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted text-foreground transition-colors">
+            <button className="relative w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted text-foreground/70 hover:text-foreground transition-colors">
               <Bell className="w-4 h-4" />
               {unread > 0 && (
                 <span className="absolute top-0.5 right-0.5 min-w-[16px] h-4 px-1 bg-primary text-white text-[10px] font-bold rounded-full flex items-center justify-center">
@@ -373,7 +373,7 @@ export default function DashboardHeader() {
         {/* Hamburger — mobile only, RIGHT */}
         <button
           onClick={() => setSidebarOpen(true)}
-          className="lg:hidden w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted text-foreground transition-colors"
+          className="lg:hidden w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted text-foreground/70 hover:text-foreground transition-colors"
           aria-label="Abrir menú"
         >
           <Menu className="w-5 h-5" />
