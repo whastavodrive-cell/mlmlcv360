@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import Navbar from '@/components/landing/Navbar';
 import Footer from '@/components/landing/Footer';
-import { Mail, Phone, MapPin, Send, CheckCircle } from 'lucide-react';
+import { Mail, Phone, MapPin, Send, CircleCheck as CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function ContactoPage() {
@@ -17,8 +17,7 @@ export default function ContactoPage() {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <div className="pt-16">
-        <section className="py-24">
+      <section className="py-24 mt-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
               <h1 className="text-5xl font-bold text-foreground mb-4">Contáctanos</h1>
@@ -101,7 +100,6 @@ export default function ContactoPage() {
             </div>
           </div>
         </section>
-      </div>
       <Footer />
     </div>
   );

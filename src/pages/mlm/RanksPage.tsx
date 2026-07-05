@@ -15,15 +15,15 @@ function RankIcon({ icon, className }: { icon?: string; className?: string }) {
   if (trimmed.toLowerCase().startsWith('<svg')) {
     return (
       <span
-        className={cn('inline-flex items-center justify-center [&>svg]:w-full [&>svg]:h-full', className)}
+        className={cn('inline-flex items-center justify-center w-full h-full [&>svg]:w-full [&>svg]:h-full [&>svg]:object-contain', className)}
         dangerouslySetInnerHTML={{ __html: trimmed }}
       />
     );
   }
-  if (trimmed.startsWith('http') || trimmed.startsWith('/')) return <img src={trimmed} alt="" className={className} />;
+  if (trimmed.startsWith('http') || trimmed.startsWith('/')) return <img src={trimmed} alt="" className={cn('w-full h-full object-contain', className)} />;
   const Comp = iconMap[trimmed.toLowerCase()];
   if (Comp) return <Comp className={className} />;
-  if (trimmed.length <= 4 && !trimmed.includes('.')) return <span className={className}>{trimmed}</span>;
+  if (trimmed.length <= 4 && !trimmed.includes('.')) return <span className={cn('flex items-center justify-center w-full h-full', className)}>{trimmed}</span>;
   return <Medal className={className} />;
 }
 

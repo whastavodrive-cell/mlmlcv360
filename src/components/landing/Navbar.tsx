@@ -24,15 +24,15 @@ function RankBadgeIcon({ rank, className }: { rank: Rank; className?: string }) 
   if (trimmed.toLowerCase().startsWith('<svg')) {
     return (
       <span
-        className={cn('inline-flex items-center justify-center [&>svg]:w-full [&>svg]:h-full', className)}
+        className={cn('inline-flex items-center justify-center w-full h-full [&>svg]:w-full [&>svg]:h-full [&>svg]:object-contain', className)}
         dangerouslySetInnerHTML={{ __html: trimmed }}
       />
     );
   }
-  if (trimmed.startsWith('http') || trimmed.startsWith('/')) return <img src={trimmed} alt="" className={className} />;
+  if (trimmed.startsWith('http') || trimmed.startsWith('/')) return <img src={trimmed} alt="" className={cn('w-full h-full object-contain', className)} />;
   const Comp = rankIconMap[trimmed.toLowerCase()];
   if (Comp) return <Comp className={className} />;
-  if (trimmed.length <= 4 && !trimmed.includes('.')) return <span className={className}>{trimmed}</span>;
+  if (trimmed.length <= 4 && !trimmed.includes('.')) return <span className={cn('flex items-center justify-center w-full h-full', className)}>{trimmed}</span>;
   return <Star className={className} />;
 }
 
@@ -141,7 +141,7 @@ function DesktopUserMenu() {
 
       {/* Logout confirmation dialog */}
       {showLogoutConfirm && (
-        <div className="fixed inset-0 z-[70] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[70] bg-black/50 flex items-center justify-center p-4">
           <div className="bg-card border border-border rounded-2xl w-full max-w-sm shadow-2xl p-6">
             <div className="flex flex-col items-center text-center mb-5">
               <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mb-3">
@@ -270,7 +270,7 @@ export default function Navbar() {
                     'px-3.5 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap',
                     location.pathname === link.href || location.pathname.startsWith(link.href + '/')
                       ? 'text-primary bg-primary/10'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/50',
+                      : 'text-foreground/70 hover:text-foreground hover:bg-muted/50',
                   )}>
                   {link.label}
                 </Link>
@@ -336,10 +336,10 @@ export default function Navbar() {
           'fixed top-16 left-0 right-0 bottom-0 z-[55] lg:hidden pointer-events-none',
         )}
       >
-        {/* Backdrop with blur */}
+        {/* Backdrop — subtle, no blur */}
         <div
           className={cn(
-            'absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300 pointer-events-auto',
+            'absolute inset-0 bg-black/40 transition-opacity duration-300 pointer-events-auto',
             mobileNavOpen ? 'opacity-100' : 'opacity-0',
           )}
           onClick={() => setMobileNavOpen(false)}
@@ -456,7 +456,7 @@ export default function Navbar() {
 
       {/* Logout confirmation dialog */}
       {showLogoutConfirm && (
-        <div className="fixed inset-0 z-[70] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[70] bg-black/50 flex items-center justify-center p-4">
           <div className="bg-card border border-border rounded-2xl w-full max-w-sm shadow-2xl p-6">
             <div className="flex flex-col items-center text-center mb-5">
               <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mb-3">

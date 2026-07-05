@@ -61,8 +61,7 @@ export default function BlogPage() {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <div className="pt-16">
-        <section className="py-24">
+      <section className="py-24 mt-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
               <h1 className="text-5xl font-bold text-foreground mb-4">Blog MLM 360</h1>
@@ -125,7 +124,6 @@ export default function BlogPage() {
             </div>
           </div>
         </section>
-      </div>
       <Footer />
     </div>
   );

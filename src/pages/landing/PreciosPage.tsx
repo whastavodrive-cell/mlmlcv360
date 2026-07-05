@@ -2,15 +2,14 @@ import { Link } from '@/lib/router';
 import Navbar from '@/components/landing/Navbar';
 import Footer from '@/components/landing/Footer';
 import { plans } from '@/lib/mockData';
-import { CheckCircle, ArrowRight } from 'lucide-react';
+import { CircleCheck as CheckCircle, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function PreciosPage() {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <div className="pt-16">
-        <section className="py-24">
+      <section className="py-24 mt-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
               <h1 className="text-5xl font-bold text-foreground mb-4">Precios transparentes</h1>
@@ -57,7 +56,6 @@ export default function PreciosPage() {
             </div>
           </div>
         </section>
-      </div>
       <Footer />
     </div>
   );

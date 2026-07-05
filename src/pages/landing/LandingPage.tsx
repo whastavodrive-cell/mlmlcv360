@@ -161,7 +161,7 @@ export default function LandingPage() {
       <Navbar />
 
       {/* ── HERO ──────────────────────────────────────────────────────────── */}
-      <section className="relative min-h-[96vh] flex items-center pt-16">
+      <section className="relative min-h-[96vh] flex items-center">
         {/* Layered background */}
         <div className="absolute inset-0 -z-10 overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-b from-background via-background/95 to-muted/30" />

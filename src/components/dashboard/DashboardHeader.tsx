@@ -38,18 +38,18 @@ function RankBadgeIcon({ rank, className }: { rank: Rank; className?: string }) 
   if (trimmed.toLowerCase().startsWith('<svg')) {
     return (
       <span
-        className={cn('inline-flex items-center justify-center [&>svg]:w-full [&>svg]:h-full', className)}
+        className={cn('inline-flex items-center justify-center w-full h-full [&>svg]:w-full [&>svg]:h-full [&>svg]:object-contain', className)}
         dangerouslySetInnerHTML={{ __html: trimmed }}
       />
     );
   }
   if (trimmed.startsWith('http') || trimmed.startsWith('/')) {
-    return <img src={trimmed} alt="" className={className} />;
+    return <img src={trimmed} alt="" className={cn('w-full h-full object-contain', className)} />;
   }
   const Comp = rankIconMap[trimmed.toLowerCase()];
   if (Comp) return <Comp className={className} />;
   if (trimmed.length === 1 || (trimmed.length <= 4 && !trimmed.includes('.'))) {
-    return <span className={className}>{trimmed}</span>;
+    return <span className={cn('flex items-center justify-center w-full h-full', className)}>{trimmed}</span>;
   }
   return <Star className={className} />;
 }
@@ -138,6 +138,7 @@ export default function DashboardHeader() {
       if (isModifierPressed && e.key === 'k') {
         e.preventDefault();
         setSearchOpen(true);
+        setSidebarOpen(false); // Close mobile sidebar when search opens
         setTimeout(() => inputRef.current?.focus(), 50);
       }
       if (e.key === 'Escape') {
@@ -148,7 +149,7 @@ export default function DashboardHeader() {
     };
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
-  }, []);
+  }, [setSidebarOpen]);
 
   const performSearch = useCallback(async (q: string) => {
     if (q.length < 2) { setResults([]); return; }
@@ -317,8 +318,9 @@ export default function DashboardHeader() {
                 <X className="w-3.5 h-3.5" />
               </button>
             ) : (
-              <kbd className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground bg-muted border border-border/60 rounded">
-                {isMac ? '⌘' : 'Ctrl'}K
+              <kbd className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none inline-flex items-center gap-0.5 px-2 py-1 text-[11px] font-semibold text-muted-foreground/70 bg-muted/60 border border-border/50 rounded-md shadow-sm">
+                <span className="text-[10px]">{isMac ? '⌘' : 'Ctrl'}</span>
+                <span>K</span>
               </kbd>
             )}
           </div>
@@ -336,7 +338,7 @@ export default function DashboardHeader() {
 
           {/* Mobile search icon */}
           <button
-            onClick={() => { setSearchOpen(v => !v); setTimeout(() => inputRef.current?.focus(), 50); }}
+            onClick={() => { setSearchOpen(v => !v); setSidebarOpen(false); setTimeout(() => inputRef.current?.focus(), 50); }}
             className="lg:hidden w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors"
             aria-label="Buscar"
           >
@@ -555,7 +557,7 @@ export default function DashboardHeader() {
 
       {/* Logout confirmation dialog */}
       {showLogoutConfirm && (
-        <div className="fixed inset-0 z-[70] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[70] bg-black/50 flex items-center justify-center p-4">
           <div className="bg-card border border-border rounded-2xl w-full max-w-sm shadow-2xl p-6">
             <div className="flex flex-col items-center text-center mb-5">
               <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mb-3">

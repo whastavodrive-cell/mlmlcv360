@@ -19,15 +19,15 @@ function RankIcon({ rank, className }: { rank: Rank; className?: string }) {
   if (trimmed.toLowerCase().startsWith('<svg')) {
     return (
       <span
-        className={cn('inline-flex items-center justify-center [&>svg]:w-full [&>svg]:h-full', className)}
+        className={cn('inline-flex items-center justify-center w-full h-full [&>svg]:w-full [&>svg]:h-full [&>svg]:object-contain', className)}
         dangerouslySetInnerHTML={{ __html: trimmed }}
       />
     );
   }
-  if (trimmed.startsWith('http') || trimmed.startsWith('/')) return <img src={trimmed} alt="" className={className} />;
+  if (trimmed.startsWith('http') || trimmed.startsWith('/')) return <img src={trimmed} alt="" className={cn('w-full h-full object-contain', className)} />;
   const Comp = rankIconMap[trimmed.toLowerCase()];
   if (Comp) return <Comp className={className} />;
-  if (trimmed.length <= 4 && !trimmed.includes('.')) return <span className={className}>{trimmed}</span>;
+  if (trimmed.length <= 4 && !trimmed.includes('.')) return <span className={cn('flex items-center justify-center w-full h-full', className)}>{trimmed}</span>;
   return <Star className={className} />;
 }
 import { LogoWithText } from '@/components/Logo';
@@ -379,10 +379,10 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* Mobile backdrop with blur */}
+      {/* Mobile backdrop — subtle, no blur */}
       {sidebarOpen && (
         <div
-          className="fixed top-16 left-0 right-0 bottom-0 z-[45] bg-black/50 backdrop-blur-sm lg:hidden"
+          className="fixed top-16 left-0 right-0 bottom-0 z-[45] bg-black/40 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -627,7 +627,7 @@ export default function Sidebar() {
 
       {/* Logout confirmation dialog */}
       {showLogoutConfirm && (
-        <div className="fixed inset-0 z-[70] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[70] bg-black/50 flex items-center justify-center p-4">
           <div className="bg-card border border-border rounded-2xl w-full max-w-sm shadow-2xl p-6">
             <div className="flex flex-col items-center text-center mb-5">
               <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mb-3">
