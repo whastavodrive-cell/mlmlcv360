@@ -68,6 +68,13 @@ const ConfigContext = createContext<ConfigState>({
   refresh: async () => {},
 });
 
+async function withTimeout<T>(p: PromiseLike<T>): Promise<T | null> {
+  return Promise.race<T | null>([
+    Promise.resolve(p),
+    new Promise<null>((_, rej) => setTimeout(() => rej(new Error('timeout')), 5000)),
+  ]).catch(() => null);
+}
+
 export function ConfigProvider({ children }: { children: ReactNode }) {
   const database = useDatabase();
   const [plans, setPlans] = useState<Plan[]>([]);
@@ -82,12 +89,6 @@ export function ConfigProvider({ children }: { children: ReactNode }) {
 
   const refresh = useCallback(async () => {
     try {
-      const withTimeout = <T,>(p: PromiseLike<T>): Promise<T | null> =>
-        Promise.race<T | null>([
-          Promise.resolve(p),
-          new Promise<null>((_, rej) => setTimeout(() => rej(new Error('timeout')), 5000)),
-        ]).catch(() => null);
-
       const [plansRes, ranksRes, configRes] = await Promise.all([
         withTimeout(database.select<Plan>('plans', { order: { column: 'sort_order' } })),
         withTimeout(database.select<Rank>('ranks', { order: { column: 'sort_order' } })),
@@ -97,7 +98,9 @@ export function ConfigProvider({ children }: { children: ReactNode }) {
       if (plansRes && plansRes.data && Array.isArray(plansRes.data)) {
         setPlans(plansRes.data.map((p) => ({
           ...p,
-          features: Array.isArray(p.features) ? p.features : (() => { try { return JSON.parse((p.features as unknown as string) || '[]'); } catch { return []; } })(),
+          features: Array.isArray(p.features)
+            ? p.features
+            : (() => { try { return JSON.parse((p.features as unknown as string) || '[]'); } catch { return []; } })(),
         })));
       }
       if (ranksRes && ranksRes.data && Array.isArray(ranksRes.data)) {
@@ -119,7 +122,6 @@ export function ConfigProvider({ children }: { children: ReactNode }) {
         });
       }
     } catch {
-      }
       // Non-fatal: use defaults already set in state
     } finally {
       setLoading(false);
@@ -127,7 +129,6 @@ export function ConfigProvider({ children }: { children: ReactNode }) {
   }, [database]);
 
   useEffect(() => {
-    }
     refresh();
 
     const unsubPlans = database.subscribe('plans', () => refresh());
@@ -149,8 +150,6 @@ export function ConfigProvider({ children }: { children: ReactNode }) {
 }
 
 export function useConfig() {
-  }
-  )
   return useContext(ConfigContext);
 }
 
