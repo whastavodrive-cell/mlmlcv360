@@ -37,6 +37,7 @@ interface NavItem {
   href?: string;
   icon: React.ComponentType<{ className?: string }>;
   children?: NavItem[];
+  exact?: boolean;
 }
 
 const superAdminNav: NavItem[] = [
@@ -67,7 +68,7 @@ const superAdminNav: NavItem[] = [
   },
   { label: 'Mi Plan', href: '/dashboard/mi-plan', icon: CreditCard },
   { label: 'Reportes', href: '/dashboard/reportes', icon: BarChart3 },
-  { label: 'Gestión Admin', href: '/dashboard/admin', icon: Shield },
+  { label: 'Gestión Admin', href: '/dashboard/admin', icon: Shield, exact: true },
   { label: 'Configuración', href: '/dashboard/configuracion', icon: Settings },
 ];
 
@@ -93,7 +94,7 @@ const adminNav: NavItem[] = [
   },
   { label: 'Mi Plan', href: '/dashboard/mi-plan', icon: CreditCard },
   { label: 'Reportes', href: '/dashboard/reportes', icon: BarChart3 },
-  { label: 'Gestión Admin', href: '/dashboard/admin', icon: Shield },
+  { label: 'Gestión Admin', href: '/dashboard/admin', icon: Shield, exact: true },
 ];
 
 const userNav: NavItem[] = [
@@ -139,8 +140,8 @@ function NavItemComponent({
   forceClosed?: boolean;
 }) {
   const isActiveLeaf = item.href
-    ? item.href === '/dashboard'
-      ? pathname === '/dashboard'
+    ? (item.href === '/dashboard' || item.exact)
+      ? pathname === item.href
       : pathname === item.href || pathname.startsWith(item.href + '/')
     : false;
 
@@ -503,7 +504,7 @@ export default function Sidebar() {
                       </span>
                     )}
                     {userRank && (
-                      <span className={cn('flex items-center gap-0.5 text-[9px] font-semibold px-1.5 py-0.5 rounded-full leading-none', userRank.color || 'text-primary', userRank.bg_color || 'bg-primary/10')}>
+                      <span className={cn('inline-flex items-center gap-0.5 text-[9px] font-semibold px-1.5 py-0.5 rounded-full leading-none', userRank.color || 'text-primary', userRank.bg_color || 'bg-primary/10')}>
                         <RankIcon rank={userRank} className="w-2.5 h-2.5" />
                         {userRank.name}
                       </span>
@@ -554,7 +555,7 @@ export default function Sidebar() {
                       </span>
                     )}
                     {userRank && (
-                      <span className={cn('flex items-center gap-0.5 text-[9px] font-semibold px-1.5 py-0.5 rounded-full', userRank.color || 'text-primary', userRank.bg_color || 'bg-primary/10')}>
+                      <span className={cn('inline-flex items-center gap-0.5 text-[9px] font-semibold px-1.5 py-0.5 rounded-full', userRank.color || 'text-primary', userRank.bg_color || 'bg-primary/10')}>
                         <RankIcon rank={userRank} className="w-2.5 h-2.5" />{userRank.name}
                       </span>
                     )}

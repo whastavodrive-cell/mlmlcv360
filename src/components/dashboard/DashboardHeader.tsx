@@ -158,7 +158,7 @@ export default function DashboardHeader() {
             })
           : Promise.resolve({ data: [] }),
         database.select<any>('products', {
-          select: ['id', 'name', 'sku', 'slug', 'image_url', 'price'],
+          select: ['id', 'name', 'sku', 'slug', 'images', 'base_price'],
           filter: `name.ilike.${pct},sku.ilike.${pct}`,
           limit: 5,
         }),
@@ -176,9 +176,9 @@ export default function DashboardHeader() {
         productsRes.data.slice(0, 4).forEach((p: any) => found.push({
           type: 'product', id: p.id,
           title: p.name,
-          subtitle: [p.sku ? `SKU: ${p.sku}` : null, p.price != null ? `S/ ${p.price}` : null].filter(Boolean).join(' · ') || 'Producto',
+          subtitle: [p.sku ? `SKU: ${p.sku}` : null, p.base_price != null ? `S/ ${p.base_price}` : null].filter(Boolean).join(' · ') || 'Producto',
           href: `/tienda/${p.slug || p.id}`,
-          image: p.image_url,
+          image: p.images?.[0]?.url,
         }));
       }
     } catch { /* silent */ }
@@ -300,8 +300,8 @@ export default function DashboardHeader() {
               value={query}
               onChange={e => setQuery(e.target.value)}
               onFocus={() => setSearchOpen(true)}
-              placeholder={`Buscar usuarios, productos... (${isMac ? '⌘' : 'Ctrl'}K)`}
-              className="w-full pl-10 pr-4 py-2 bg-muted/50 border border-border rounded-xl text-sm text-foreground outline-none focus:border-primary focus:bg-card transition-colors"
+              placeholder={`Buscar usuarios, productos ... (${isMac ? '⌘' : 'Ctrl'}K)`}
+              className="w-full pl-10 pr-4 py-2 bg-muted/50 border border-border rounded-xl text-sm text-foreground outline-none focus:border-border focus:bg-card transition-colors"
             />
             {query && (
               <button onClick={() => { setQuery(''); setResults([]); inputRef.current?.focus(); }}
@@ -325,7 +325,7 @@ export default function DashboardHeader() {
           {/* Mobile search icon */}
           <button
             onClick={() => { setSearchOpen(v => !v); setTimeout(() => inputRef.current?.focus(), 50); }}
-            className="lg:hidden w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted/60 text-foreground hover:text-foreground transition-colors"
+            className="lg:hidden w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors"
             aria-label="Buscar"
           >
             <Search className="w-5 h-5" />
@@ -333,7 +333,7 @@ export default function DashboardHeader() {
 
           {/* Link to public site */}
           <Link to="/"
-            className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted/60 text-foreground hover:text-foreground transition-colors"
+            className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors"
           >
             <ExternalLink className="w-5 h-5" />
           </Link>
@@ -341,7 +341,7 @@ export default function DashboardHeader() {
           {/* Theme toggle */}
           <button
             onClick={() => setTheme(isDark ? 'light' : 'dark')}
-            className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted/60 text-foreground hover:text-foreground transition-colors"
+            className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors"
           >
             {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
           </button>
@@ -350,7 +350,7 @@ export default function DashboardHeader() {
           <div className="relative">
             <button
               onClick={() => { setNotifOpen(v => !v); if (!notifOpen) fetchNotifications(); }}
-              className="relative w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted/60 text-foreground hover:text-foreground transition-colors"
+              className="relative w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors"
             >
               <Bell className="w-5 h-5" />
               {unread > 0 && (
@@ -466,7 +466,7 @@ export default function DashboardHeader() {
                           </span>
                         )}
                         {userRank && (
-                          <span className={cn('flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full', userRank.color || 'text-primary', userRank.bg_color || 'bg-primary/10')}>
+                          <span className={cn('inline-flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full', userRank.color || 'text-primary', userRank.bg_color || 'bg-primary/10')}>
                             <RankBadgeIcon rank={userRank} className="w-2.5 h-2.5" />{userRank.name}
                           </span>
                         )}
@@ -519,8 +519,8 @@ export default function DashboardHeader() {
                 type="text"
                 value={query}
                 onChange={e => setQuery(e.target.value)}
-                placeholder={`Buscar usuarios, productos... (${isMac ? '⌘' : 'Ctrl'}K)`}
-                className="w-full pl-10 pr-10 py-2.5 bg-muted/50 border border-border rounded-xl text-sm text-foreground outline-none focus:border-primary focus:bg-card transition-colors"
+                placeholder={`Buscar usuarios, productos ... (${isMac ? '⌘' : 'Ctrl'}K)`}
+                className="w-full pl-10 pr-10 py-2.5 bg-muted/50 border border-border rounded-xl text-sm text-foreground outline-none focus:border-border focus:bg-card transition-colors"
                 autoFocus
               />
               <button
