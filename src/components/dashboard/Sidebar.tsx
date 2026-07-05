@@ -530,37 +530,39 @@ export default function Sidebar() {
           sidebarOpen ? 'translate-y-0' : 'translate-y-full',
         )}
       >
-        <div className="bg-background rounded-t-3xl border-t border-border shadow-2xl">
+        <div className="bg-background rounded-t-3xl border-t border-border shadow-2xl max-w-full overflow-hidden">
           {/* Handle */}
           <div className="flex justify-center pt-3 pb-2">
             <div className="w-10 h-1 rounded-full bg-muted-foreground/20" />
           </div>
 
-          {/* Header */}
-          <div className="flex items-center gap-3 px-4 pb-3">
-            <UserAvatar size="md" />
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-bold text-foreground truncate">{user?.full_name || name}</p>
-              <div className="flex items-center gap-1 mt-0.5 flex-wrap">
-                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                  {roleLabel}
-                </p>
-                {userPlan && (
-                  <span className="flex items-center gap-0.5 text-[9px] font-semibold text-amber-600 bg-amber-500/10 px-1.5 py-0.5 rounded-full">
-                    <Crown className="w-2.5 h-2.5" />{userPlan.name}
-                  </span>
-                )}
-                {userRank && (
-                  <span className="flex items-center gap-0.5 text-[9px] font-semibold text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">
-                    <Star className="w-2.5 h-2.5" />{userRank.name}
-                  </span>
+          {/* Header — styled like landing nav user card */}
+          <div className="px-4 pb-3">
+            <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-primary/8 to-muted/30 border border-border/50 rounded-2xl">
+              <UserAvatar size="lg" />
+              <div className="min-w-0 flex-1">
+                <p className="font-bold text-foreground truncate">{user?.full_name || name}</p>
+                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mt-0.5">{roleLabel}</p>
+                {(userPlan || userRank) && (
+                  <div className="flex items-center gap-1 mt-1 flex-wrap">
+                    {userPlan && (
+                      <span className="flex items-center gap-0.5 text-[9px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded-full">
+                        <Crown className="w-2.5 h-2.5" />{userPlan.name}
+                      </span>
+                    )}
+                    {userRank && (
+                      <span className="flex items-center gap-0.5 text-[9px] font-semibold text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">
+                        <Star className="w-2.5 h-2.5" />{userRank.name}
+                      </span>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
           </div>
 
           {/* Scrollable nav */}
-          <div className="px-4 pb-2 overflow-y-auto max-h-[65vh]">
+          <div className="px-4 pb-2 overflow-y-auto max-h-[60vh] overflow-x-hidden">
             {/* Grid for simple items */}
             {(() => {
               const simple = navItems.filter(item => !item.children);
