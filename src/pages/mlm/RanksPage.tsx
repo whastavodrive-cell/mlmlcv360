@@ -11,11 +11,20 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
 
 function RankIcon({ icon, className }: { icon?: string; className?: string }) {
   if (!icon) return <Medal className={className} />;
-  if (icon.length <= 4 && !icon.includes('.')) return <span className={className}>{icon}</span>;
-  const Comp = iconMap[icon.toLowerCase()];
+  const trimmed = icon.trim();
+  if (trimmed.toLowerCase().startsWith('<svg')) {
+    return (
+      <span
+        className={cn('inline-flex items-center justify-center [&>svg]:w-full [&>svg]:h-full', className)}
+        dangerouslySetInnerHTML={{ __html: trimmed }}
+      />
+    );
+  }
+  if (trimmed.startsWith('http') || trimmed.startsWith('/')) return <img src={trimmed} alt="" className={className} />;
+  const Comp = iconMap[trimmed.toLowerCase()];
   if (Comp) return <Comp className={className} />;
-  if (icon.startsWith('http') || icon.startsWith('/')) return <img src={icon} alt="" className={className} />;
-  return <span className={className}>{icon}</span>;
+  if (trimmed.length <= 4 && !trimmed.includes('.')) return <span className={className}>{trimmed}</span>;
+  return <Medal className={className} />;
 }
 
 function RanksSkeleton() {

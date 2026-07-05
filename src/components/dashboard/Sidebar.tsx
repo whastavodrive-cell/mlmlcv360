@@ -5,7 +5,31 @@ import { useDatabase } from '@/lib/backend';
 import { cn } from '@/lib/utils';
 import { Link, useLocation, useNavigate } from '@/lib/router';
 import { useState, useEffect, useRef } from 'react';
-import { LayoutDashboard, Users, GitBranch, DollarSign, Award, ChartBar as BarChart3, Settings, ChevronDown, ChevronRight, UserCog, CreditCard, User, ShoppingBag, Package, Truck, Tag, ChartBar as BarChart2, ShoppingCart, FolderOpen, MessageSquare, Shield, Crown, Star, LogOut } from 'lucide-react';
+import { LayoutDashboard, Users, GitBranch, DollarSign, Award, ChartBar as BarChart3, Settings, ChevronDown, ChevronRight, UserCog, CreditCard, User, ShoppingBag, Package, Truck, Tag, ChartBar as BarChart2, ShoppingCart, FolderOpen, MessageSquare, Shield, Crown, Star, Medal, LogOut } from 'lucide-react';
+import { type Rank } from '@/store/configStore';
+
+const rankIconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+  medal: Medal, crown: Crown, star: Star,
+  bronze: Medal, silver: Medal, gold: Medal, platinum: Medal, diamond: Medal,
+};
+
+function RankIcon({ rank, className }: { rank: Rank; className?: string }) {
+  const icon = rank.icon || '';
+  const trimmed = icon.trim();
+  if (trimmed.toLowerCase().startsWith('<svg')) {
+    return (
+      <span
+        className={cn('inline-flex items-center justify-center [&>svg]:w-full [&>svg]:h-full', className)}
+        dangerouslySetInnerHTML={{ __html: trimmed }}
+      />
+    );
+  }
+  if (trimmed.startsWith('http') || trimmed.startsWith('/')) return <img src={trimmed} alt="" className={className} />;
+  const Comp = rankIconMap[trimmed.toLowerCase()];
+  if (Comp) return <Comp className={className} />;
+  if (trimmed.length <= 4 && !trimmed.includes('.')) return <span className={className}>{trimmed}</span>;
+  return <Star className={className} />;
+}
 import { LogoWithText } from '@/components/Logo';
 
 interface NavItem {
@@ -473,14 +497,14 @@ export default function Sidebar() {
                   {/* Plan + Rank badges */}
                   <div className="flex items-center gap-1 mt-0.5 flex-wrap">
                     {userPlan && (
-                      <span className="flex items-center gap-0.5 text-[9px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded-full leading-none">
+                      <span className={cn('flex items-center gap-0.5 text-[9px] font-semibold px-1.5 py-0.5 rounded-full leading-none', userPlan.color || 'text-amber-600 dark:text-amber-400', userPlan.bg_color || 'bg-amber-500/10')}>
                         <Crown className="w-2.5 h-2.5" />
                         {userPlan.name}
                       </span>
                     )}
                     {userRank && (
-                      <span className="flex items-center gap-0.5 text-[9px] font-semibold text-primary bg-primary/10 px-1.5 py-0.5 rounded-full leading-none">
-                        <Star className="w-2.5 h-2.5" />
+                      <span className={cn('flex items-center gap-0.5 text-[9px] font-semibold px-1.5 py-0.5 rounded-full leading-none', userRank.color || 'text-primary', userRank.bg_color || 'bg-primary/10')}>
+                        <RankIcon rank={userRank} className="w-2.5 h-2.5" />
                         {userRank.name}
                       </span>
                     )}
@@ -512,9 +536,12 @@ export default function Sidebar() {
             <div className="w-10 h-1 rounded-full bg-muted-foreground/20" />
           </div>
 
-          {/* Header — styled like landing nav user card */}
+          {/* Header — styled like landing nav user card, clickable to profile */}
           <div className="px-4 pb-3">
-            <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-primary/8 to-muted/30 border border-border/50 rounded-2xl">
+            <button
+              onClick={() => { navigate('/dashboard/perfil'); setSidebarOpen(false); }}
+              className="w-full flex items-center gap-3 p-3 bg-gradient-to-r from-primary/8 to-muted/30 border border-border/50 rounded-2xl text-left active:scale-[0.98] transition-transform"
+            >
               <UserAvatar size="lg" />
               <div className="min-w-0 flex-1">
                 <p className="font-bold text-foreground truncate">{user?.full_name || name}</p>
@@ -522,20 +549,20 @@ export default function Sidebar() {
                 {(userPlan || userRank) && (
                   <div className="flex items-center gap-1 mt-1 flex-wrap">
                     {userPlan && (
-                      <span className="flex items-center gap-0.5 text-[9px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded-full">
+                      <span className={cn('flex items-center gap-0.5 text-[9px] font-semibold px-1.5 py-0.5 rounded-full', userPlan.color || 'text-amber-600 dark:text-amber-400', userPlan.bg_color || 'bg-amber-500/10')}>
                         <Crown className="w-2.5 h-2.5" />{userPlan.name}
                       </span>
                     )}
                     {userRank && (
-                      <span className="flex items-center gap-0.5 text-[9px] font-semibold text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">
-                        <Star className="w-2.5 h-2.5" />{userRank.name}
+                      <span className={cn('flex items-center gap-0.5 text-[9px] font-semibold px-1.5 py-0.5 rounded-full', userRank.color || 'text-primary', userRank.bg_color || 'bg-primary/10')}>
+                        <RankIcon rank={userRank} className="w-2.5 h-2.5" />{userRank.name}
                       </span>
                     )}
                   </div>
                 )}
               </div>
               <ChevronDown className="w-4 h-4 text-muted-foreground -rotate-90 flex-shrink-0" />
-            </div>
+            </button>
           </div>
 
           {/* Scrollable nav */}

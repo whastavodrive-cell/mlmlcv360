@@ -10,6 +10,9 @@ export interface Plan {
   currency: string;
   features: string[];
   badge: string | null;
+  icon?: string;
+  color?: string;
+  bg_color?: string;
   is_popular: boolean;
   is_active: boolean;
   is_free: boolean;

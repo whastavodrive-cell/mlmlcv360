@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useDatabase } from '@/lib/backend';
 import { useAuthStore } from '@/store/authStore';
+import { useConfig } from '@/store/configStore';
 import {
   AreaChart, Area, PieChart, Pie, Cell, ResponsiveContainer,
   XAxis, YAxis, CartesianGrid, Tooltip
@@ -147,6 +148,10 @@ function DashboardSkeleton() {
 export default function DashboardPage() {
   const database = useDatabase();
   const { user } = useAuthStore();
+  const { ranks } = useConfig();
+  const userRankObj = user && ranks.length > 0
+    ? ranks.find(r => r.slug === user.rank || r.name?.toLowerCase() === user.rank?.toLowerCase())
+    : null;
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ totalCommissions: 0, pendingCommissions: 0, totalReferrals: 0, activeReferrals: 0 });
   const [chartData, setChartData] = useState<any[]>([]);
@@ -239,7 +244,7 @@ export default function DashboardPage() {
         <StatCard label="Comisiones totales" value={`S/ ${stats.totalCommissions.toLocaleString('es-PE', { minimumFractionDigits: 2 })}`} change="+18%" icon={DollarSign} color="text-green-500 bg-green-500/10" />
         <StatCard label="Pendientes" value={`S/ ${stats.pendingCommissions.toLocaleString('es-PE', { minimumFractionDigits: 2 })}`} icon={TrendingUp} color="text-yellow-500 bg-yellow-500/10" />
         <StatCard label="Afiliados totales" value={String(stats.totalReferrals)} change={`+${stats.activeReferrals}`} icon={Users} color="text-blue-500 bg-blue-500/10" />
-        <StatCard label="Rango actual" value={user?.rank || 'Bronce'} icon={Award} color="text-purple-500 bg-purple-500/10" />
+        <StatCard label="Rango actual" value={userRankObj?.name || user?.rank || 'Bronce'} icon={Award} color={[userRankObj?.color, userRankObj?.bg_color].filter(Boolean).join(' ') || 'text-purple-500 bg-purple-500/10'} />
       </div>
 
       <ReferralCard />

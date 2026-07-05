@@ -4,17 +4,17 @@ import { Link, useNavigate } from '@/lib/router';
 import {
   Bell, Search, Moon, Sun, Menu, LogOut, User, Settings,
   ChevronDown, ExternalLink, CheckCheck, Trash2, X, Users, Package, ShoppingBag,
-  LayoutDashboard, Crown, Star, ChevronRight,
+  LayoutDashboard, Crown, Star, Medal,
 } from 'lucide-react';
 import { useThemeStore } from '@/store/themeStore';
 import { useAuthStore } from '@/store/authStore';
 import { useUIStore } from '@/store/uiStore';
-import { useConfig } from '@/store/configStore';
+import { useConfig, type Rank } from '@/store/configStore';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
-import { LogoWithText } from '@/components/Logo';
+import Logo from '@/components/Logo';
 
 const isMac = typeof navigator !== 'undefined' && /Mac|iPod|iPhone|iPad/.test(navigator.platform);
 
@@ -24,6 +24,34 @@ interface SearchResult {
   title: string;
   subtitle: string;
   href: string;
+  image?: string;
+}
+
+const rankIconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+  medal: Medal, crown: Crown, star: Star,
+  bronze: Medal, silver: Medal, gold: Medal, platinum: Medal, diamond: Medal,
+};
+
+function RankBadgeIcon({ rank, className }: { rank: Rank; className?: string }) {
+  const icon = rank.icon || '';
+  const trimmed = icon.trim();
+  if (trimmed.toLowerCase().startsWith('<svg')) {
+    return (
+      <span
+        className={cn('inline-flex items-center justify-center [&>svg]:w-full [&>svg]:h-full', className)}
+        dangerouslySetInnerHTML={{ __html: trimmed }}
+      />
+    );
+  }
+  if (trimmed.startsWith('http') || trimmed.startsWith('/')) {
+    return <img src={trimmed} alt="" className={className} />;
+  }
+  const Comp = rankIconMap[trimmed.toLowerCase()];
+  if (Comp) return <Comp className={className} />;
+  if (trimmed.length === 1 || (trimmed.length <= 4 && !trimmed.includes('.'))) {
+    return <span className={className}>{trimmed}</span>;
+  }
+  return <Star className={className} />;
 }
 
 export default function DashboardHeader() {
@@ -118,21 +146,40 @@ export default function DashboardHeader() {
     if (q.length < 2) { setResults([]); return; }
     setLoadingSearch(true);
     const found: SearchResult[] = [];
-    const lower = q.toLowerCase();
+    const pct = `%${q}%`;
     const isAdmin = user?.role === 'super_admin' || user?.role === 'admin' || user?.role === 'inspector';
     try {
-      if (isAdmin) {
-        const { data: users } = await database.select<any>('profiles', { select: ['id', 'full_name', 'email', 'username'], limit: 20 });
-        if (Array.isArray(users)) {
-          users.filter((u: any) =>
-            u.full_name?.toLowerCase().includes(lower) || u.email?.toLowerCase().includes(lower) || u.username?.toLowerCase().includes(lower)
-          ).slice(0, 3).forEach((u: any) => found.push({ type: 'user', id: u.id, title: u.full_name || u.username, subtitle: u.email, href: '/dashboard/usuarios' }));
-        }
+      const [usersRes, productsRes] = await Promise.all([
+        isAdmin
+          ? database.select<any>('profiles', {
+              select: ['id', 'full_name', 'email', 'username', 'avatar_url'],
+              filter: `full_name.ilike.${pct},email.ilike.${pct},username.ilike.${pct}`,
+              limit: 5,
+            })
+          : Promise.resolve({ data: [] }),
+        database.select<any>('products', {
+          select: ['id', 'name', 'sku', 'slug', 'image_url', 'price'],
+          filter: `name.ilike.${pct},sku.ilike.${pct}`,
+          limit: 5,
+        }),
+      ]);
+      if (Array.isArray(usersRes.data)) {
+        usersRes.data.slice(0, 4).forEach((u: any) => found.push({
+          type: 'user', id: u.id,
+          title: u.full_name || u.username || u.email,
+          subtitle: u.email,
+          href: `/dashboard/usuarios?id=${u.id}`,
+          image: u.avatar_url,
+        }));
       }
-      const { data: products } = await database.select<any>('products', { select: ['id', 'name', 'sku', 'slug', 'image_url'], limit: 20 });
-      if (Array.isArray(products)) {
-        products.filter((p: any) => p.name?.toLowerCase().includes(lower) || p.sku?.toLowerCase().includes(lower))
-          .slice(0, 3).forEach((p: any) => found.push({ type: 'product', id: p.id, title: p.name, subtitle: p.sku ? `SKU: ${p.sku}` : 'Producto', href: `/tienda/${p.slug || p.id}` }));
+      if (Array.isArray(productsRes.data)) {
+        productsRes.data.slice(0, 4).forEach((p: any) => found.push({
+          type: 'product', id: p.id,
+          title: p.name,
+          subtitle: [p.sku ? `SKU: ${p.sku}` : null, p.price != null ? `S/ ${p.price}` : null].filter(Boolean).join(' · ') || 'Producto',
+          href: `/tienda/${p.slug || p.id}`,
+          image: p.image_url,
+        }));
       }
     } catch { /* silent */ }
     setResults(found.slice(0, 6));
@@ -149,6 +196,7 @@ export default function DashboardHeader() {
     setQuery('');
     setResults([]);
     setSearchOpen(false);
+    setSidebarOpen(false);
   };
 
   const fetchNotifications = useCallback(async () => {
@@ -188,18 +236,59 @@ export default function DashboardHeader() {
 
   const iconFor = (type: string) => type === 'user' ? Users : type === 'product' ? Package : ShoppingBag;
 
+  function SearchResultItem({ r }: { r: SearchResult }) {
+    const Icon = iconFor(r.type);
+    return (
+      <button onClick={() => go(r.href)}
+        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/60 transition-colors text-left">
+        <div className="w-9 h-9 rounded-xl bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden">
+          {r.image
+            ? <img src={r.image} alt={r.title} className="w-full h-full object-cover" />
+            : <Icon className="w-4 h-4 text-muted-foreground" />
+          }
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-foreground truncate">{r.title}</p>
+          <p className="text-xs text-muted-foreground truncate">{r.subtitle}</p>
+        </div>
+        <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full flex-shrink-0 capitalize">
+          {r.type === 'user' ? 'usuario' : r.type === 'product' ? 'producto' : 'pedido'}
+        </span>
+      </button>
+    );
+  }
+
+  function SearchResultsList() {
+    if (loadingSearch) {
+      return (
+        <div className="py-3">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="flex items-center gap-3 px-4 py-2.5">
+              <Skeleton className="w-9 h-9 rounded-xl flex-shrink-0" />
+              <div className="flex-1 space-y-1.5"><Skeleton className="h-3.5 w-3/4 rounded" /><Skeleton className="h-2.5 w-1/2 rounded" /></div>
+            </div>
+          ))}
+        </div>
+      );
+    }
+    if (results.length > 0) {
+      return <div className="py-1.5">{results.map(r => <SearchResultItem key={`${r.type}-${r.id}`} r={r} />)}</div>;
+    }
+    return (
+      <div className="px-4 py-8 text-center">
+        <Search className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
+        <p className="text-sm text-muted-foreground">Sin resultados para "{query}"</p>
+      </div>
+    );
+  }
+
   return (
     <>
       <header className="h-16 border-b border-border bg-background flex items-center px-4 lg:px-6 sticky top-0 z-30 gap-3">
 
-        {/* Logo — only visible on desktop (lg+) */}
-        <Link to="/" className="flex-shrink-0 hidden lg:flex">
-          <LogoWithText
-            value={logoValue}
-            fallbackText={companyName}
-            pixelSize={logoSizes.navbar || 32}
-            textClass="text-base font-bold text-foreground"
-          />
+        {/* Logo — mobile only (desktop sidebar already has it) */}
+        <Link to="/" className="flex-shrink-0 flex lg:hidden">
+          <Logo value={logoValue} fallbackText={companyName} pixelSize={logoSizes.navbar || 28} />
         </Link>
 
         {/* Search — large inline on desktop, icon-collapsible on mobile */}
@@ -225,38 +314,7 @@ export default function DashboardHeader() {
           {/* Results dropdown */}
           {searchOpen && query.length >= 2 && (
             <div className="absolute left-0 right-0 top-full mt-2 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden z-50">
-              {loadingSearch ? (
-                <div className="py-3">
-                  {[1, 2, 3].map(i => (
-                    <div key={i} className="flex items-center gap-3 px-4 py-2.5">
-                      <Skeleton className="w-8 h-8 rounded-xl flex-shrink-0" />
-                      <div className="flex-1 space-y-1.5"><Skeleton className="h-3.5 w-3/4 rounded" /><Skeleton className="h-2.5 w-1/2 rounded" /></div>
-                    </div>
-                  ))}
-                </div>
-              ) : results.length > 0 ? (
-                <div className="py-1.5">
-                  {results.map(r => {
-                    const Icon = iconFor(r.type);
-                    return (
-                      <button key={`${r.type}-${r.id}`} onClick={() => go(r.href)}
-                        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/60 transition-colors text-left">
-                        <div className="w-8 h-8 rounded-xl bg-muted flex items-center justify-center flex-shrink-0">
-                          <Icon className="w-4 h-4 text-muted-foreground" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-foreground truncate">{r.title}</p>
-                          <p className="text-xs text-muted-foreground truncate">{r.subtitle}</p>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="px-4 py-6 text-center">
-                  <p className="text-sm text-muted-foreground">Sin resultados para "{query}"</p>
-                </div>
-              )}
+              <SearchResultsList />
             </div>
           )}
         </div>
@@ -267,34 +325,34 @@ export default function DashboardHeader() {
           {/* Mobile search icon */}
           <button
             onClick={() => { setSearchOpen(v => !v); setTimeout(() => inputRef.current?.focus(), 50); }}
-            className="lg:hidden w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted text-foreground/70 hover:text-foreground transition-colors"
+            className="lg:hidden w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted/60 text-foreground hover:text-foreground transition-colors"
             aria-label="Buscar"
           >
-            <Search className="w-4 h-4" />
+            <Search className="w-5 h-5" />
           </button>
 
           {/* Link to public site */}
           <Link to="/"
-            className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted text-foreground/70 hover:text-foreground transition-colors"
+            className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted/60 text-foreground hover:text-foreground transition-colors"
           >
-            <ExternalLink className="w-4 h-4" />
+            <ExternalLink className="w-5 h-5" />
           </Link>
 
           {/* Theme toggle */}
           <button
             onClick={() => setTheme(isDark ? 'light' : 'dark')}
-            className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted text-foreground/70 hover:text-foreground transition-colors"
+            className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted/60 text-foreground hover:text-foreground transition-colors"
           >
-            {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
           </button>
 
           {/* Notifications */}
           <div className="relative">
             <button
               onClick={() => { setNotifOpen(v => !v); if (!notifOpen) fetchNotifications(); }}
-              className="relative w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted text-foreground/70 hover:text-foreground transition-colors"
+              className="relative w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted/60 text-foreground hover:text-foreground transition-colors"
             >
-              <Bell className="w-4 h-4" />
+              <Bell className="w-5 h-5" />
               {unread > 0 && (
                 <span className="absolute top-0.5 right-0.5 min-w-[16px] h-4 px-1 bg-primary text-white text-[10px] font-bold rounded-full flex items-center justify-center">
                   {unread > 9 ? '9+' : unread}
@@ -403,13 +461,13 @@ export default function DashboardHeader() {
                     {(userPlan || userRank) && (
                       <div className="flex items-center gap-1 mt-1 flex-wrap">
                         {userPlan && (
-                          <span className="flex items-center gap-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded-full">
+                          <span className={cn('flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full', userPlan.color || 'text-amber-600 dark:text-amber-400', userPlan.bg_color || 'bg-amber-500/10')}>
                             <Crown className="w-2.5 h-2.5" />{userPlan.name}
                           </span>
                         )}
                         {userRank && (
-                          <span className="flex items-center gap-0.5 text-[10px] font-semibold text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">
-                            <Star className="w-2.5 h-2.5" />{userRank.name}
+                          <span className={cn('flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full', userRank.color || 'text-primary', userRank.bg_color || 'bg-primary/10')}>
+                            <RankBadgeIcon rank={userRank} className="w-2.5 h-2.5" />{userRank.name}
                           </span>
                         )}
                       </div>
@@ -442,7 +500,7 @@ export default function DashboardHeader() {
           {/* Hamburger — mobile only */}
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="lg:hidden w-9 h-9 flex items-center justify-center text-foreground/70 hover:text-foreground transition-colors"
+            className="lg:hidden w-9 h-9 flex items-center justify-center text-foreground hover:text-foreground transition-colors"
             aria-label={sidebarOpen ? 'Cerrar menú' : 'Abrir menú'}
           >
             {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -475,40 +533,7 @@ export default function DashboardHeader() {
             {/* Results */}
             {query.length >= 2 && (
               <div className="mt-2 bg-card border border-border rounded-xl overflow-hidden max-h-[60vh] overflow-y-auto">
-                {loadingSearch ? (
-                  <div className="py-3">
-                    {[1, 2, 3].map(i => (
-                      <div key={i} className="flex items-center gap-3 px-4 py-2.5">
-                        <Skeleton className="w-10 h-10 rounded-xl flex-shrink-0" />
-                        <div className="flex-1 space-y-1.5"><Skeleton className="h-3.5 w-3/4 rounded" /><Skeleton className="h-2.5 w-1/2 rounded" /></div>
-                      </div>
-                    ))}
-                  </div>
-                ) : results.length > 0 ? (
-                  <div className="py-1.5">
-                    {results.map(r => {
-                      const Icon = iconFor(r.type);
-                      return (
-                        <button key={`${r.type}-${r.id}`} onClick={() => go(r.href)}
-                          className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/60 transition-colors text-left">
-                          <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center flex-shrink-0">
-                            <Icon className="w-5 h-5 text-muted-foreground" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-foreground truncate">{r.title}</p>
-                            <p className="text-xs text-muted-foreground truncate">{r.subtitle}</p>
-                          </div>
-                          <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                        </button>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div className="px-4 py-8 text-center">
-                    <Search className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
-                    <p className="text-sm text-muted-foreground">Sin resultados para "{query}"</p>
-                  </div>
-                )}
+                <SearchResultsList />
               </div>
             )}
           </div>
