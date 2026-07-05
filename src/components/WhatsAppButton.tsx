@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useDatabase } from '@/lib/backend';
+import { useUIStore } from '@/store/uiStore';
 import { MessageCircle, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function WhatsAppButton() {
   const database = useDatabase();
+  const { mobileNavOpen } = useUIStore();
   const [loaded, setLoaded] = useState(false);
   const [config, setConfig] = useState({
     enabled: false,
@@ -35,7 +37,8 @@ export default function WhatsAppButton() {
   }, [database]);
 
   // Render nothing until config is fetched — prevents flash on reload
-  if (!loaded || !config.enabled) return null;
+  // Also hide when mobile nav is open to avoid z-index conflicts
+  if (!loaded || !config.enabled || mobileNavOpen) return null;
 
   const openWhatsApp = () => {
     const cleanNumber = config.number.replace(/[^0-9]/g, '');

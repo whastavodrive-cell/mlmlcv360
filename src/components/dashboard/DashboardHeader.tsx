@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useDatabase } from '@/lib/backend';
 import { Link, useNavigate } from '@/lib/router';
-import { Bell, Search, Moon, Sun, Menu, LogOut, User, Settings, ChevronDown, ExternalLink, CheckCheck, Trash2 } from 'lucide-react';
+import { Bell, Search, Moon, Sun, Menu, LogOut, User, Settings, ChevronDown, ExternalLink, CheckCheck, Trash2, X, Users, Package, ShoppingBag, FileText } from 'lucide-react';
 import { useThemeStore } from '@/store/themeStore';
 import { useAuthStore } from '@/store/authStore';
 import { useUIStore } from '@/store/uiStore';
@@ -13,19 +13,142 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 
+interface SearchResult {
+  type: 'user' | 'product' | 'order';
+  id: string;
+  title: string;
+  subtitle: string;
+  href: string;
+}
+
 export default function DashboardHeader() {
   const { theme, setTheme } = useThemeStore();
   const { user, signOut } = useAuthStore();
   const { setSidebarOpen } = useUIStore();
   const database = useDatabase();
   const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
 
   const [dbNotifications, setDbNotifications] = useState<any[]>([]);
   const [loadingNotifs, setLoadingNotifs] = useState(false);
   const unread = dbNotifications.filter(n => !n.read).length;
   const isDark = theme === 'dark';
+
+  // Close search results when clicking outside
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+        setSearchOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  // Search functionality
+  const performSearch = useCallback(async (query: string) => {
+    if (!query.trim() || query.length < 2) {
+      setSearchResults([]);
+      return;
+    }
+
+    setSearchLoading(true);
+    const results: SearchResult[] = [];
+    const q = query.toLowerCase();
+    const isAdmin = user?.role === 'super_admin' || user?.role === 'admin' || user?.role === 'inspector';
+
+    try {
+      // Search users (admin only)
+      if (isAdmin) {
+        const { data: users } = await database.select<any>('profiles', {
+          select: ['id', 'full_name', 'email', 'username'],
+          limit: 5,
+        });
+        if (users && Array.isArray(users)) {
+          const filtered = users.filter((u: any) =>
+            (u.full_name?.toLowerCase().includes(q)) ||
+            (u.email?.toLowerCase().includes(q)) ||
+            (u.username?.toLowerCase().includes(q))
+          );
+          filtered.forEach((u: any) => {
+            results.push({
+              type: 'user',
+              id: u.id,
+              title: u.full_name || u.username || 'Usuario',
+              subtitle: u.email,
+              href: '/dashboard/usuarios',
+            });
+          });
+        }
+      }
+
+      // Search products
+      const { data: products } = await database.select<any>('products', {
+        select: ['id', 'name', 'sku'],
+        limit: 5,
+      });
+      if (products && Array.isArray(products)) {
+        const filtered = products.filter((p: any) =>
+          (p.name?.toLowerCase().includes(q)) ||
+          (p.sku?.toLowerCase().includes(q))
+        );
+        filtered.slice(0, 3).forEach((p: any) => {
+          results.push({
+            type: 'product',
+            id: p.id,
+            title: p.name,
+            subtitle: p.sku ? `SKU: ${p.sku}` : 'Producto',
+            href: `/tienda/${p.id}`,
+          });
+        });
+      }
+
+      // Search orders (for admins)
+      if (isAdmin) {
+        const { data: orders } = await database.select<any>('orders', {
+          select: ['id', 'order_number', 'status', 'created_at'],
+          limit: 5,
+        });
+        if (orders && Array.isArray(orders)) {
+          const filtered = orders.filter((o: any) =>
+            o.order_number?.toLowerCase().includes(q) ||
+            o.id?.toLowerCase().includes(q)
+          );
+          filtered.slice(0, 3).forEach((o: any) => {
+            results.push({
+              type: 'order',
+              id: o.id,
+              title: `Pedido #${o.order_number || o.id.slice(0, 8)}`,
+              subtitle: o.status || 'Orden',
+              href: '/dashboard/admin/pedidos',
+            });
+          });
+        }
+      }
+    } catch {
+      // Silent fail
+    }
+
+    setSearchResults(results.slice(0, 8));
+    setSearchLoading(false);
+  }, [database, user?.role]);
+
+  // Debounced search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchQuery.length >= 2) {
+        performSearch(searchQuery);
+      } else {
+        setSearchResults([]);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery, performSearch]);
 
   const fetchNotifications = useCallback(async () => {
     if (!user?.id) return;
@@ -67,54 +190,118 @@ export default function DashboardHeader() {
     navigate('/login');
   };
 
+  const getResultIcon = (type: string) => {
+    switch (type) {
+      case 'user': return Users;
+      case 'product': return Package;
+      case 'order': return ShoppingBag;
+      default: return FileText;
+    }
+  };
+
   return (
-    <header className="h-16 border-b border-border bg-card/80 backdrop-blur-md flex items-center gap-3 px-4 lg:px-6 sticky top-0 z-30">
+    <header className="h-16 border-b border-border bg-background/80 backdrop-blur-md flex items-center gap-3 px-4 lg:px-6 sticky top-0 z-30">
       <button
         onClick={() => setSidebarOpen(true)}
-        className="p-2 rounded-lg hover:bg-muted text-muted-foreground lg:hidden"
+        className="p-2 rounded-full hover:bg-muted text-muted-foreground lg:hidden transition-colors"
       >
         <Menu className="w-5 h-5" />
       </button>
 
-      <div className={cn(
-        'flex items-center gap-2 bg-muted rounded-lg px-3 h-9 transition-all duration-200',
-        searchOpen ? 'w-64 lg:w-96' : 'w-40 lg:w-64'
-      )}>
-        <Search className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-        <input
-          type="text"
-          placeholder="Buscar en el sistema..."
-          onFocus={() => setSearchOpen(true)}
-          onBlur={() => setSearchOpen(false)}
-          className="bg-transparent text-sm outline-none flex-1 text-foreground placeholder:text-muted-foreground"
-        />
+      {/* Search bar with results dropdown */}
+      <div ref={searchRef} className="relative flex-1 max-w-md">
+        <div className={cn(
+          'flex items-center gap-2 bg-muted/50 border border-border/50 rounded-full px-4 h-10 transition-all duration-200',
+          searchQuery.length >= 2 && 'bg-muted border-primary/30'
+        )}>
+          <Search className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onFocus={() => setSearchOpen(true)}
+            placeholder="Buscar usuarios, productos, pedidos..."
+            className="bg-transparent text-sm outline-none flex-1 text-foreground placeholder:text-muted-foreground"
+          />
+          {searchQuery && (
+            <button onClick={() => { setSearchQuery(''); setSearchResults([]); }} className="p-1 hover:bg-muted rounded-full">
+              <X className="w-3 h-3 text-muted-foreground" />
+            </button>
+          )}
+        </div>
+
+        {/* Search results dropdown */}
+        {searchOpen && searchQuery.length >= 2 && (
+          <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-2xl shadow-xl overflow-hidden z-50">
+            {searchLoading ? (
+              <div className="px-4 py-8 text-center">
+                <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+                <p className="text-xs text-muted-foreground mt-2">Buscando...</p>
+              </div>
+            ) : searchResults.length > 0 ? (
+              <div className="py-2">
+                <div className="px-3 py-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                  Resultados
+                </div>
+                {searchResults.map((result) => {
+                  const Icon = getResultIcon(result.type);
+                  return (
+                    <button
+                      key={`${result.type}-${result.id}`}
+                      onClick={() => {
+                        navigate(result.href);
+                        setSearchQuery('');
+                        setSearchResults([]);
+                        setSearchOpen(false);
+                      }}
+                      className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-muted transition-colors"
+                    >
+                      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                        <Icon className="w-4 h-4 text-muted-foreground" />
+                      </div>
+                      <div className="flex-1 min-w-0 text-left">
+                        <p className="text-sm font-medium text-foreground truncate">{result.title}</p>
+                        <p className="text-xs text-muted-foreground truncate">{result.subtitle}</p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="px-4 py-8 text-center">
+                <Search className="w-8 h-8 text-muted-foreground/30 mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground">Sin resultados para "{searchQuery}"</p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
-      <div className="ml-auto flex items-center gap-2">
-        <Link to="/" className="hidden sm:flex w-9 h-9 rounded-lg items-center justify-center hover:bg-muted text-muted-foreground transition-colors">
+      <div className="ml-auto flex items-center gap-1">
+        <Link to="/" className="hidden sm:flex w-9 h-9 rounded-full items-center justify-center hover:bg-muted text-muted-foreground transition-colors">
           <ExternalLink className="w-4 h-4" />
         </Link>
 
         <button
           onClick={() => setTheme(isDark ? 'light' : 'dark')}
-          className="w-9 h-9 rounded-lg flex items-center justify-center hover:bg-muted text-muted-foreground transition-colors"
+          className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted text-muted-foreground transition-colors"
         >
           {isDark ? <Sun className="w-4.5 h-4.5" /> : <Moon className="w-4.5 h-4.5" />}
         </button>
 
-        {/* Notifications - fully functional */}
+        {/* Notifications */}
         <DropdownMenu open={notifOpen} onOpenChange={(open) => { setNotifOpen(open); if (open) fetchNotifications(); }}>
           <DropdownMenuTrigger asChild>
-            <button className="relative w-9 h-9 rounded-lg flex items-center justify-center hover:bg-muted text-muted-foreground transition-colors">
+            <button className="relative w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted text-muted-foreground transition-colors">
               <Bell className="w-4.5 h-4.5" />
               {unread > 0 && (
-                <span className="absolute top-1 right-1 min-w-[16px] h-4 px-1 bg-primary text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                <span className="absolute top-0.5 right-0.5 min-w-[16px] h-4 px-1 bg-primary text-white text-[10px] font-bold rounded-full flex items-center justify-center">
                   {unread > 9 ? '9+' : unread}
                 </span>
               )}
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-80 p-0">
+          <DropdownMenuContent align="end" className="w-80 p-0 rounded-2xl">
             <div className="flex items-center justify-between px-4 py-3 border-b border-border">
               <span className="font-semibold text-sm">Notificaciones</span>
               <div className="flex items-center gap-2">
@@ -188,7 +375,7 @@ export default function DashboardHeader() {
         {/* User menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="flex items-center gap-2.5 pl-2 pr-3 py-1.5 rounded-xl hover:bg-muted transition-colors">
+            <button className="flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-full hover:bg-muted transition-colors">
               {user?.avatar_url ? (
                 <img src={user.avatar_url} alt={user.full_name || 'Avatar'}
                   className="w-8 h-8 rounded-full object-cover border border-border flex-shrink-0" />
@@ -204,21 +391,21 @@ export default function DashboardHeader() {
               <ChevronDown className="w-3.5 h-3.5 text-muted-foreground hidden md:block" />
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
+          <DropdownMenuContent align="end" className="w-48 rounded-2xl">
             <DropdownMenuItem asChild>
-              <Link to="/dashboard/perfil" className="flex items-center gap-2">
+              <Link to="/dashboard/perfil" className="flex items-center gap-2 rounded-xl">
                 <User className="w-4 h-4" />
                 Mi Perfil
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link to="/dashboard/configuracion" className="flex items-center gap-2">
+              <Link to="/dashboard/configuracion" className="flex items-center gap-2 rounded-xl">
                 <Settings className="w-4 h-4" />
                 Configuración
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleSignOut} className="text-destructive flex items-center gap-2">
+            <DropdownMenuItem onClick={handleSignOut} className="text-destructive flex items-center gap-2 rounded-xl">
               <LogOut className="w-4 h-4" />
               Cerrar Sesión
             </DropdownMenuItem>
