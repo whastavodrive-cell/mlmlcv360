@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { Building2, Shield, Smartphone, Search, Mail, Save, ChevronRight, RefreshCw, MessageCircle, Eye, EyeOff, Lock, CreditCard, Award, Plus, Trash2, CreditCard as Edit2, X, CircleCheck as CheckCircle, DollarSign, Wrench, TriangleAlert as AlertTriangle, Image } from 'lucide-react';
 import { useConfig, type Plan, type Rank } from '@/store/configStore';
-import Logo from '@/components/Logo';
+import { LogoWithText } from '@/components/Logo';
 
 // Smart icon renderer: detects SVG markup, URL images, emoji, or plain text
 function RenderIcon({ value, className }: { value: string; className?: string }) {
@@ -211,19 +211,16 @@ function LogoAdminSection({ value, onChange, onSave, saving, storage }: LogoAdmi
           </label>
           {/* Dark preview */}
           <div className="bg-gray-900 rounded-xl p-4 flex items-center gap-3">
-            <Logo value={value} fallbackText="MLM 360" size="w-10 h-10" />
-            <span className="text-base font-bold text-white">MLM 360</span>
+            <LogoWithText value={value} fallbackText="MLM 360" size="w-10 h-10" textClass="text-base font-bold text-white" />
           </div>
           {/* Light preview */}
           <div className="bg-gray-50 border border-border rounded-xl p-4 flex items-center gap-3">
-            <Logo value={value} fallbackText="MLM 360" size="w-10 h-10" />
-            <span className="text-base font-bold text-gray-900">MLM 360</span>
+            <LogoWithText value={value} fallbackText="MLM 360" size="w-10 h-10" textClass="text-base font-bold text-gray-900" />
           </div>
           {/* Navbar bar preview */}
-          <div className="bg-card border border-border rounded-xl p-3 flex items-center gap-2">
-            <Logo value={value} fallbackText="MLM 360" size="w-7 h-7" />
-            <span className="text-sm font-bold text-foreground">MLM 360</span>
-            <span className="ml-auto text-xs text-muted-foreground italic">Navbar</span>
+          <div className="bg-card border border-border rounded-xl p-3 flex items-center justify-between gap-2">
+            <LogoWithText value={value} fallbackText="MLM 360" size="w-7 h-7" textClass="text-sm font-bold text-foreground" />
+            <span className="text-xs text-muted-foreground italic">Navbar</span>
           </div>
         </div>
       </div>

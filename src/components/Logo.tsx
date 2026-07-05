@@ -2,137 +2,134 @@ import { useMemo } from 'react';
 import { Boxes } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-// Allowed SVG tags for sanitization
-const SAFE_SVG_TAGS = new Set([
-  'svg', 'g', 'path', 'circle', 'ellipse', 'rect', 'line', 'polyline',
-  'polygon', 'text', 'tspan', 'defs', 'linearGradient', 'radialGradient',
-  'stop', 'clipPath', 'mask', 'use', 'symbol', 'title', 'desc', 'pattern',
-]);
+// ── SVG sanitisation ──────────────────────────────────────────────────────────
 
-// Allowed SVG attributes
-const SAFE_SVG_ATTRS = new Set([
-  'xmlns', 'xmlns:xlink', 'viewBox', 'width', 'height', 'fill', 'stroke',
-  'stroke-width', 'stroke-linecap', 'stroke-linejoin', 'stroke-miterlimit',
-  'stroke-dasharray', 'stroke-dashoffset', 'd', 'cx', 'cy', 'r', 'rx', 'ry',
-  'x', 'y', 'x1', 'y1', 'x2', 'y2', 'points', 'transform', 'opacity',
-  'fill-opacity', 'stroke-opacity', 'clip-path', 'clip-rule', 'fill-rule',
-  'id', 'class', 'style', 'offset', 'stop-color', 'stop-opacity',
-  'gradientUnits', 'gradientTransform', 'spreadMethod', 'cx', 'cy', 'r',
-  'fx', 'fy', 'patternUnits', 'patternTransform', 'href', 'xlink:href',
-  'preserveAspectRatio', 'text-anchor', 'font-size', 'font-family',
-  'font-weight', 'letter-spacing', 'dominant-baseline', 'aria-hidden',
-  'role', 'focusable', 'mask', 'maskUnits',
+const SAFE_SVG_TAGS = new Set([
+  'svg','g','path','circle','ellipse','rect','line','polyline','polygon',
+  'text','tspan','defs','lineargradient','radialgradient','stop','clippath',
+  'mask','use','symbol','title','desc','pattern',
 ]);
 
 function sanitizeSvg(raw: string): string {
-  // Strip script, event handlers, and foreign elements
-  let safe = raw
+  return raw
     .replace(/<script[\s\S]*?<\/script>/gi, '')
-    .replace(/on\w+="[^"]*"/gi, '')
-    .replace(/on\w+='[^']*'/gi, '')
+    .replace(/on\w+\s*=\s*["'][^"']*["']/gi, '')
     .replace(/javascript:/gi, '')
     .replace(/<foreignObject[\s\S]*?<\/foreignObject>/gi, '')
-    .replace(/<use[^>]+href="data:/gi, '');
-
-  // Only keep allowed elements — remove unknown tags but keep their children
-  safe = safe.replace(/<\/?([a-zA-Z][a-zA-Z0-9]*)[^>]*>/g, (match, tag) => {
-    const lower = tag.toLowerCase();
-    if (!SAFE_SVG_TAGS.has(lower)) return '';
-
-    // For opening tags, strip unsafe attributes
-    if (!match.startsWith('</')) {
-      return match.replace(/\s([a-zA-Z:_][a-zA-Z0-9:_.-]*)(?:=(?:"[^"]*"|'[^']*'|[^\s>]*))?/g, (attrMatch, attr) => {
-        const attrLower = attr.toLowerCase();
-        // Block data URIs and event handlers
-        if (attrLower.startsWith('on') || attrLower === 'data') return '';
-        if (SAFE_SVG_ATTRS.has(attrLower) || attrLower.startsWith('xlink:') || attrLower.startsWith('aria-')) return attrMatch;
-        return '';
-      });
-    }
-    return match;
-  });
-
-  return safe.trim();
+    .replace(/<([a-zA-Z][a-zA-Z0-9]*)([^>]*)>/g, (match, tag) => {
+      if (!SAFE_SVG_TAGS.has(tag.toLowerCase())) return '';
+      // strip event handlers from kept tags
+      const safe = match.replace(/\s+on\w+\s*=\s*["'][^"']*["']/gi, '');
+      return safe;
+    })
+    .trim();
 }
 
-type LogoType = 'svg' | 'img' | 'fallback';
+// ── Type detection ────────────────────────────────────────────────────────────
 
-function detectLogoType(value: string): LogoType {
-  if (!value || !value.trim()) return 'fallback';
-  const trimmed = value.trim();
-  if (trimmed.toLowerCase().startsWith('<svg')) return 'svg';
-  if (
-    trimmed.startsWith('http://') ||
-    trimmed.startsWith('https://') ||
-    trimmed.startsWith('/')
-  ) return 'img';
+export type LogoType = 'svg' | 'img' | 'fallback';
+
+export function detectLogoType(value: string): LogoType {
+  const t = (value || '').trim();
+  if (!t) return 'fallback';
+  if (t.toLowerCase().startsWith('<svg')) return 'svg';
+  if (t.startsWith('http://') || t.startsWith('https://') || t.startsWith('/')) return 'img';
   return 'fallback';
 }
 
+// ── Component ─────────────────────────────────────────────────────────────────
+
 interface LogoProps {
+  /** The raw logo value from system_config: SVG code, URL, or empty */
   value?: string;
+  /** Text to show as fallback AND as alt text for images */
   fallbackText?: string;
-  /** Size class applied to icon/img wrapper. Default: 'w-8 h-8' */
+  /** Tailwind size for the mark wrapper. Default: 'w-8 h-8' */
   size?: string;
-  /** img className override */
+  /** Extra className on the img tag */
   imgClass?: string;
-  /** Show text label beside the mark? */
-  showText?: boolean;
-  textClass?: string;
 }
 
+/**
+ * Renders the system logo from `value`.
+ * - SVG string  → sanitised inline SVG
+ * - URL / path  → <img>
+ * - empty       → Boxes icon in a primary-coloured pill
+ *
+ * Never renders the raw string as visible text.
+ */
 export default function Logo({
   value = '',
   fallbackText = 'MLM 360',
   size = 'w-8 h-8',
   imgClass,
-  showText = false,
-  textClass = 'text-lg font-bold text-foreground',
 }: LogoProps) {
   const type = useMemo(() => detectLogoType(value), [value]);
   const safeSvg = useMemo(() => (type === 'svg' ? sanitizeSvg(value) : ''), [type, value]);
 
-  const mark = (() => {
-    if (type === 'svg') {
-      return (
-        <span
-          className={cn(size, 'flex items-center justify-center [&>svg]:w-full [&>svg]:h-full')}
-          // sanitized above — no external scripts, no event handlers
-          // eslint-disable-next-line react/no-danger
-          dangerouslySetInnerHTML={{ __html: safeSvg }}
-          aria-hidden="true"
-        />
-      );
-    }
-    if (type === 'img') {
-      return (
-        <img
-          src={value.trim()}
-          alt={fallbackText}
-          className={cn(size, 'object-contain rounded', imgClass)}
-          onError={(e) => {
-            // If image fails to load, hide it — parent will show fallback text
-            (e.target as HTMLImageElement).style.display = 'none';
-          }}
-        />
-      );
-    }
-    // Fallback: icon mark
+  if (type === 'svg') {
     return (
-      <div className={cn(size, 'rounded-lg bg-primary flex items-center justify-center flex-shrink-0')}>
-        <Boxes className="w-[55%] h-[55%] text-primary-foreground" />
-      </div>
+      <span
+        className={cn(size, 'inline-flex items-center justify-center [&>svg]:w-full [&>svg]:h-full flex-shrink-0')}
+        // sanitised above — no scripts, no event handlers
+        // eslint-disable-next-line react/no-danger
+        dangerouslySetInnerHTML={{ __html: safeSvg }}
+        aria-label={fallbackText}
+        role="img"
+      />
     );
-  })();
+  }
 
-  if (!showText) return <>{mark}</>;
+  if (type === 'img') {
+    return (
+      <img
+        src={value.trim()}
+        alt={fallbackText}
+        className={cn(size, 'object-contain flex-shrink-0', imgClass)}
+        onError={(e) => {
+          const el = e.currentTarget;
+          el.style.display = 'none';
+          // reveal sibling fallback if present
+          const fallback = el.nextElementSibling as HTMLElement | null;
+          if (fallback) fallback.style.display = '';
+        }}
+      />
+    );
+  }
+
+  // Fallback: branded icon box
+  return (
+    <div className={cn(size, 'rounded-lg bg-primary flex items-center justify-center flex-shrink-0')}>
+      <Boxes className="w-[55%] h-[55%] text-primary-foreground" />
+    </div>
+  );
+}
+
+/**
+ * Logo + optional text label side by side.
+ * The text label is hidden automatically when a real logo (image or SVG) is set,
+ * unless `forceText` is passed as true.
+ */
+export function LogoWithText({
+  value = '',
+  fallbackText = 'MLM 360',
+  size = 'w-8 h-8',
+  textClass = 'text-lg font-bold text-foreground',
+  forceText = false,
+}: {
+  value?: string;
+  fallbackText?: string;
+  size?: string;
+  textClass?: string;
+  forceText?: boolean;
+}) {
+  const type = detectLogoType(value);
+  const showLabel = forceText || type === 'fallback';
 
   return (
     <span className="flex items-center gap-2.5 min-w-0">
-      <span className="flex-shrink-0">{mark}</span>
-      {type === 'fallback' && (
-        <span className={textClass}>{fallbackText}</span>
-      )}
+      <Logo value={value} fallbackText={fallbackText} size={size} />
+      {showLabel && <span className={cn(textClass, 'truncate')}>{fallbackText}</span>}
     </span>
   );
 }

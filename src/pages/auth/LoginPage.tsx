@@ -8,7 +8,7 @@ import { useThemeStore } from '@/store/themeStore';
 import { useAuthStore } from '@/store/authStore';
 import { toast } from 'sonner';
 import { useConfig } from '@/store/configStore';
-import Logo from '@/components/Logo';
+import { LogoWithText } from '@/components/Logo';
 import { Eye, EyeOff, Mail, Lock, TrendingUp, Users, DollarSign, Sun, Moon, ArrowRight, Shield, CircleCheck as CheckCircle, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -102,11 +102,13 @@ export default function LoginPage() {
 
         <div className="relative z-10 flex flex-col justify-between p-12 w-full">
           <Link to="/" className="flex items-center gap-3">
-            <Logo value={logoValue} fallbackText={companyName} size="w-10 h-10" />
-            <div>
-              <div className="text-xl font-bold text-white">{companyName}</div>
-              <div className="text-xs text-blue-300/60">Sistema Empresarial Premium</div>
-            </div>
+            <LogoWithText
+              value={logoValue}
+              fallbackText={companyName}
+              size="w-10 h-10"
+              textClass="text-xl font-bold text-white"
+            />
+            <div className="text-xs text-blue-300/60 ml-0.5">Sistema Empresarial Premium</div>
           </Link>
 
           <div className="max-w-md">
@@ -173,8 +175,7 @@ export default function LoginPage() {
         <div className="flex items-center justify-between px-6 py-4 border-b border-border">
           {/* Mobile logo */}
           <Link to="/" className="flex items-center gap-2 lg:hidden">
-            <Logo value={logoValue} fallbackText={companyName} size="w-8 h-8" />
-            <span className="font-bold text-foreground">{companyName}</span>
+            <LogoWithText value={logoValue} fallbackText={companyName} size="w-8 h-8" textClass="font-bold text-foreground" />
           </Link>
           <div className="hidden lg:block" />
 

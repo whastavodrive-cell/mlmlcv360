@@ -1,7 +1,7 @@
 import { Link } from '@/lib/router';
 import { Mail, Phone, MapPin, Facebook, Instagram, Linkedin, Twitter } from 'lucide-react';
 import { useConfig } from '@/store/configStore';
-import Logo from '@/components/Logo';
+import { LogoWithText } from '@/components/Logo';
 
 export default function Footer() {
   const { company, logoValue } = useConfig();
@@ -16,26 +16,24 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
           {/* Brand */}
           <div>
-            <div className="flex items-center gap-2.5 mb-4">
-              <Logo value={logoValue} fallbackText={companyName} size="w-9 h-9" />
-              <div>
-                <div className="font-bold text-foreground">{companyName}</div>
-                <div className="text-xs text-muted-foreground">Sistema Empresarial</div>
-              </div>
+            <div className="mb-4">
+              <LogoWithText value={logoValue} fallbackText={companyName} size="w-9 h-9" textClass="font-bold text-foreground" />
+              <div className="text-xs text-muted-foreground mt-1 ml-0.5">Sistema Empresarial</div>
             </div>
-            <p className="text-sm text-muted-foreground leading-relaxed mb-4">
+            <p className="text-sm text-muted-foreground leading-relaxed mb-5">
               El sistema MLM empresarial más completo del Perú. Gestiona tu red y multiplica tus ingresos.
             </p>
             <div className="flex gap-3">
               {[Facebook, Instagram, Linkedin, Twitter].map((Icon, i) => (
-                <a key={i} href="#" className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors">
+                <a key={i} href="#"
+                  className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors">
                   <Icon className="w-4 h-4" />
                 </a>
               ))}
             </div>
           </div>
 
-          {/* Plataforma links */}
+          {/* Plataforma */}
           <div>
             <h4 className="font-semibold text-foreground mb-4">Plataforma</h4>
             <ul className="space-y-2.5">
@@ -70,16 +68,13 @@ export default function Footer() {
             <h4 className="font-semibold text-foreground mb-4">Contacto</h4>
             <ul className="space-y-3">
               <li className="flex items-center gap-2.5 text-sm text-muted-foreground">
-                <Mail className="w-4 h-4 text-primary flex-shrink-0" />
-                {companyEmail}
+                <Mail className="w-4 h-4 text-primary flex-shrink-0" />{companyEmail}
               </li>
               <li className="flex items-center gap-2.5 text-sm text-muted-foreground">
-                <Phone className="w-4 h-4 text-primary flex-shrink-0" />
-                {companyPhone}
+                <Phone className="w-4 h-4 text-primary flex-shrink-0" />{companyPhone}
               </li>
               <li className="flex items-start gap-2.5 text-sm text-muted-foreground">
-                <MapPin className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
-                {companyAddress}
+                <MapPin className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />{companyAddress}
               </li>
             </ul>
           </div>

@@ -14,7 +14,7 @@ import {
   Camera, CreditCard,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import Logo from '@/components/Logo';
+import { LogoWithText } from '@/components/Logo';
 
 const step1Schema = z.object({
   full_name: z.string().min(3, 'Mínimo 3 caracteres'),
@@ -233,10 +233,7 @@ export default function RegisterPage() {
       {/* Top bar */}
       <div className="flex items-center justify-between px-6 py-4 border-b border-border">
         <Link to="/" className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl flex-shrink-0">
-            <Logo value={logoValue} fallbackText={companyName} size="w-9 h-9" />
-          </div>
-          <span className="font-bold text-xl text-foreground">{companyName}</span>
+          <LogoWithText value={logoValue} fallbackText={companyName} size="w-9 h-9" textClass="font-bold text-xl text-foreground" />
         </Link>
         <p className="text-sm text-muted-foreground hidden sm:block">
           ¿Ya tienes cuenta?{' '}
