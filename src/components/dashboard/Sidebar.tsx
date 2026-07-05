@@ -37,7 +37,7 @@ const superAdminNav: NavItem[] = [
       { label: 'Pedidos', href: '/dashboard/admin/pedidos', icon: ShoppingCart },
       { label: 'Cupones', href: '/dashboard/admin/cupones', icon: Tag },
       { label: 'Envíos', href: '/dashboard/admin/envios', icon: Truck },
-      { label: 'Comisiones Tienda', href: '/dashboard/admin/comisiones-tienda', icon: DollarSign },
+      { label: 'Comisiones Tienda', href: '/dashboard/admin/comisiones-mlm', icon: DollarSign },
       { label: 'Reseñas', href: '/dashboard/admin/resenas', icon: MessageSquare },
     ],
   },
