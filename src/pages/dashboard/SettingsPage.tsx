@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { useDatabase } from '@/lib/backend';
 import { useThemeStore } from '@/store/themeStore';
 import { useAuthStore } from '@/store/authStore';
 import { toast } from 'sonner';
@@ -37,6 +37,7 @@ function ToggleSwitch({ checked, onChange }: { checked: boolean; onChange: (v: b
 export default function SettingsPage() {
   const { theme, setTheme } = useThemeStore();
   const { user } = useAuthStore();
+  const database = useDatabase();
   const [activeTab, setActiveTab] = useState<Tab>('general');
   const [config, setConfig] = useState<Config>({});
   const [loading, setLoading] = useState(true);
@@ -46,21 +47,20 @@ export default function SettingsPage() {
   const isAdmin = user?.role === 'super_admin' || user?.role === 'admin';
 
   useEffect(() => {
-    supabase.from('system_config').select('*').then(({ data }) => {
-      if (data) {
+    database.select<{ key: string; value: string }>('system_config').then(({ data }) => {
+      if (data && Array.isArray(data)) {
         const map: Config = {};
-        data.forEach((row: any) => { map[row.key] = row.value; });
+        data.forEach((row) => { map[row.key] = row.value; });
         setConfig(map);
       }
       setLoading(false);
     });
-  }, []);
+  }, [database]);
 
   const saveConfig = async (keys: string[], category: string = 'general') => {
     setSaving(true);
     for (const key of keys) {
-      await supabase.from('system_config')
-        .upsert({ key, value: config[key] ?? '', category, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+      await database.upsert('system_config', { key, value: config[key] ?? '', category, updated_at: new Date().toISOString() }, 'key');
     }
     toast.success('Configuración guardada');
     setSaving(false);
@@ -392,7 +392,7 @@ export default function SettingsPage() {
             <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 text-xs text-blue-700 dark:text-blue-300">
               <p className="font-medium mb-1">Instrucciones:</p>
               <ol className="list-decimal list-inside space-y-0.5">
-                <li>Ve a Google Cloud Console → APIs & Services → Credentials</li>
+                <li>Ve a Google Cloud Console → APIs &amp; Services → Credentials</li>
                 <li>Crea un OAuth 2.0 Client ID</li>
                 <li>Copia el Client ID y Client Secret aquí</li>
                 <li>Configura la URL de redirección: <code className="bg-blue-500/10 px-1 rounded">https://tu-dominio.supabase.co/auth/v1/callback</code></li>
@@ -414,23 +414,22 @@ export default function SettingsPage() {
 
 function NotificationPreferences() {
   const { user } = useAuthStore();
+  const database = useDatabase();
   const [prefs, setPrefs] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (!user) return;
-    supabase.from('notification_preferences')
-      .select('*').eq('user_id', user.id).maybeSingle()
-      .then(({ data }) => {
-        if (data) setPrefs(data);
-        else setPrefs({
-          user_id: user.id, new_affiliates: true, commissions: true,
-          rank_changes: true, weekly_reports: false, system_alerts: true, promotions: false,
-        });
-        setLoading(false);
+    database.select<any>('notification_preferences', { filter: { user_id: user.id }, single: true }).then(({ data }) => {
+      if (data) setPrefs(data);
+      else setPrefs({
+        user_id: user.id, new_affiliates: true, commissions: true,
+        rank_changes: true, weekly_reports: false, system_alerts: true, promotions: false,
       });
-  }, [user]);
+      setLoading(false);
+    });
+  }, [user, database]);
 
   const toggle = (key: string) => {
     setPrefs((prev: any) => ({ ...prev, [key]: !prev[key] }));
@@ -439,8 +438,7 @@ function NotificationPreferences() {
   const save = async () => {
     if (!user || !prefs) return;
     setSaving(true);
-    const { error } = await supabase.from('notification_preferences')
-      .upsert({ ...prefs, user_id: user.id, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
+    const { error } = await database.upsert('notification_preferences', { ...prefs, user_id: user.id, updated_at: new Date().toISOString() }, 'user_id');
     if (error) toast.error('Error al guardar');
     else toast.success('Preferencias guardadas');
     setSaving(false);

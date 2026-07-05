@@ -3,7 +3,7 @@ import { Link, useNavigate, Navigate, useSearchParams } from '@/lib/router';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { supabase } from '@/lib/supabase';
+import { useBackend, useDatabase, useStorage } from '@/lib/backend';
 import { useAuthStore } from '@/store/authStore';
 import { useConfig, formatPrice } from '@/store/configStore';
 import { toast } from 'sonner';
@@ -47,6 +47,9 @@ function translateAuthError(msg: string): string {
 
 export default function RegisterPage() {
   const { user } = useAuthStore();
+  const backend = useBackend();
+  const database = useDatabase();
+  const storage = useStorage();
   const { plans, currency, currencySymbol, exchangeRate, company, loading: configLoading } = useConfig();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -114,12 +117,13 @@ export default function RegisterPage() {
       return;
     }
     const t = setTimeout(async () => {
-      const { data } = await supabase.rpc('check_user_exists', { p_username: '', p_email: emailVal });
+      const result = await database.rpc<{ email_exists: boolean }>('check_user_exists', { p_username: '', p_email: emailVal });
+      const data = result.data && !Array.isArray(result.data) ? result.data : null;
       if (data?.email_exists) setDupError(p => ({ ...p, email: 'Este correo ya está registrado' }));
       else setDupError(p => ({ ...p, email: undefined }));
     }, 600);
     return () => clearTimeout(t);
-  }, [emailVal]);
+  }, [emailVal, database]);
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -132,8 +136,9 @@ export default function RegisterPage() {
   const handleStep1 = async (data: Step1Data) => {
     if (dupError.email) { toast.error('El correo ya está registrado'); return; }
     setValidating(true);
-    const { data: check } = await supabase.rpc('check_user_exists', { p_username: '', p_email: data.email });
+    const result = await database.rpc<{ email_exists: boolean }>('check_user_exists', { p_username: '', p_email: data.email });
     setValidating(false);
+    const check = result.data && !Array.isArray(result.data) ? result.data : null;
     if (check?.email_exists) {
       setDupError({ email: 'Este correo ya está registrado' });
       toast.error('El correo ya está registrado');
@@ -171,39 +176,29 @@ export default function RegisterPage() {
     const refCode = (formData.referral_code || searchParams.get('ref') || '').trim().toUpperCase();
 
     // signUp returns a session directly when email confirmation is OFF
-    // Do NOT call signInWithPassword after signUp — it triggers a separate rate-limit hit
-    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-      email: formData.email,
-      password: formData.password,
-      options: {
-        data: {
-          full_name: formData.full_name,
-          plan: planSlug,
-          referral_code: refCode,
-        },
-      },
+    const signUpResult = await backend.auth.signUp(formData.email, formData.password, {
+      full_name: formData.full_name,
+      plan: planSlug,
+      referral_code: refCode,
     });
 
-    if (signUpError) {
-      toast.error(translateAuthError(signUpError.message));
+    if (signUpResult.error) {
+      toast.error(translateAuthError(signUpResult.error));
       setLoading(false);
       return;
     }
 
-    const userId = signUpData?.user?.id;
-    const hasSession = !!signUpData?.session; // true when email confirmation is disabled
+    const userId = signUpResult.session?.user?.id;
+    const hasSession = !!signUpResult.session;
 
     // Upload avatar (best-effort)
     if (avatarFile && userId) {
       try {
         const ext = avatarFile.name.split('.').pop() || 'jpg';
         const path = `${userId}/avatar.${ext}`;
-        const { error: upErr } = await supabase.storage
-          .from('avatars')
-          .upload(path, avatarFile, { upsert: true, contentType: avatarFile.type });
-        if (!upErr) {
-          const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path);
-          await supabase.from('profiles').update({ avatar_url: publicUrl, updated_at: new Date().toISOString() }).eq('id', userId);
+        const uploadResult = await storage.upload('avatars', path, avatarFile);
+        if (uploadResult.url) {
+          await database.update('profiles', userId, { avatar_url: uploadResult.url, updated_at: new Date().toISOString() });
         }
       } catch { /* best-effort */ }
     }
@@ -388,13 +383,12 @@ export default function RegisterPage() {
                 type="button"
                 onClick={async () => {
                   const ref = (watch('referral_code') || searchParams.get('ref') || '').trim();
-                  await supabase.auth.signInWithOAuth({
-                    provider: 'google',
-                    options: {
-                      redirectTo: window.location.origin,
-                      queryParams: ref ? { referral_code: ref } : undefined,
-                    },
-                  });
+                  const result = await backend.auth.signInWithOAuth('google');
+                  if (result.url) {
+                    const url = new URL(result.url);
+                    if (ref) url.searchParams.set('referral_code', ref);
+                    window.location.href = url.toString();
+                  }
                 }}
                 className="w-full mt-3 border border-border hover:bg-muted py-3 rounded-xl transition-colors flex items-center justify-center gap-3 text-sm font-medium text-foreground"
               >

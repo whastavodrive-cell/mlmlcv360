@@ -3,7 +3,7 @@ import { Link, useNavigate, Navigate } from '@/lib/router';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { supabase } from '@/lib/supabase';
+import { useBackend } from '@/lib/backend';
 import { useThemeStore } from '@/store/themeStore';
 import { useAuthStore } from '@/store/authStore';
 import { toast } from 'sonner';
@@ -20,6 +20,7 @@ type FormData = z.infer<typeof schema>;
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const backend = useBackend();
   const { theme, setTheme } = useThemeStore();
   const { user } = useAuthStore();
   const [showPassword, setShowPassword] = useState(false);
@@ -43,20 +44,16 @@ export default function LoginPage() {
 
   const onSubmit = async (data: FormData) => {
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({
-      email: data.email,
-      password: data.password,
-    });
-    if (error) {
-      const msg = error.message === 'Invalid login credentials'
+    const result = await backend.auth.signIn(data.email, data.password);
+    if (result.error) {
+      const msg = result.error === 'Invalid login credentials'
         ? 'Credenciales incorrectas. Verifica tu correo y contraseña.'
-        : error.message === 'Email not confirmed'
+        : result.error === 'Email not confirmed'
         ? 'Tu correo no ha sido confirmado. Contacta al administrador.'
-        : error.message;
+        : result.error;
       toast.error(msg);
       setLoading(false);
     } else {
-      // Remember session: store email for pre-fill next time
       if (data.remember) {
         localStorage.setItem('mlm360-remembered-email', data.email);
       } else {
@@ -69,21 +66,17 @@ export default function LoginPage() {
 
   const handleGoogle = async () => {
     setGoogleLoading(true);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: window.location.origin }
-    });
-    if (error) toast.error('Error al conectar con Google');
+    const result = await backend.auth.signInWithOAuth('google');
+    if (result.error) toast.error('Error al conectar con Google');
+    else if (result.url) window.location.href = result.url;
     setGoogleLoading(false);
   };
 
   const handleForgot = async () => {
     if (!forgotEmail) return;
     setForgotLoading(true);
-    const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    });
-    if (error) toast.error('Error al enviar el correo de recuperación');
+    const result = await backend.auth.resetPassword(forgotEmail);
+    if (result.error) toast.error('Error al enviar el correo de recuperación');
     else { setForgotSent(true); toast.success('Correo de recuperación enviado'); }
     setForgotLoading(false);
   };

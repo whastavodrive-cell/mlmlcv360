@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 import { useState, useEffect, useCallback } from 'react';
 import { useAuthStore } from '@/store/authStore';
 import { useConfig, formatPrice } from '@/store/configStore';
-import { supabase } from '@/lib/supabase';
+import { useDatabase } from '@/lib/backend';
 import { useCart } from '@/store/cartStore';
 import type { Product, ProductCategory } from '@/lib/storeTypes';
 import ProductCard from '@/components/store/ProductCard';
@@ -30,6 +30,7 @@ const stats = [
 
 // ── Store section embedded in landing ──────────────────────────────────────
 function StoreSection() {
+  const database = useDatabase();
   const [categories, setCategories] = useState<ProductCategory[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [activeCat, setActiveCat] = useState('');
@@ -38,14 +39,14 @@ function StoreSection() {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const [{ data: cats }, { data: prods }] = await Promise.all([
-      supabase.from('product_categories').select('*').eq('status','active').order('sort_order').limit(10),
-      supabase.from('products').select('*, category:product_categories(id,name,slug), variants:product_variants(id,price,stock,attributes,status)').eq('status','active').order('sort_order').limit(12),
+    const [catsRes, prodsRes] = await Promise.all([
+      database.select<ProductCategory>('product_categories', { filter: { status: 'active' }, order: { column: 'sort_order' }, limit: 10 }),
+      database.select<Product>('products', { filter: { status: 'active' }, order: { column: 'sort_order' }, limit: 12 }),
     ]);
-    setCategories(cats || []);
-    setProducts((prods as Product[]) || []);
+    setCategories((catsRes.data as ProductCategory[]) || []);
+    setProducts((prodsRes.data as Product[]) || []);
     setLoading(false);
-  }, []);
+  }, [database]);
 
   useEffect(() => { load(); }, [load]);
 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { useBackend, useDatabase, useStorage } from '@/lib/backend';
 import { useAuthStore } from '@/store/authStore';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -19,6 +19,8 @@ const roleLabels: Record<string, string> = {
 
 export default function ProfilePage() {
   const { user, fetchProfile, getInviteLink } = useAuthStore();
+  const database = useDatabase();
+  const storage = useStorage();
   const [copied, setCopied] = useState(false);
   const inviteLink = getInviteLink();
 
@@ -51,16 +53,13 @@ export default function ProfilePage() {
 
   const handleSave = async () => {
     setSaving(true);
-    const { error } = await supabase
-      .from('profiles')
-      .update({
-        full_name: form.full_name,
-        username: form.username,
-        phone: form.phone,
-        avatar_url: form.avatar_url,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', user.id);
+    const { error } = await database.update('profiles', user.id, {
+      full_name: form.full_name,
+      username: form.username,
+      phone: form.phone,
+      avatar_url: form.avatar_url,
+      updated_at: new Date().toISOString(),
+    });
     if (error) {
       toast.error('Error al guardar los cambios');
     } else {
@@ -77,11 +76,10 @@ export default function ProfilePage() {
     if (file.size > 2 * 1024 * 1024) { toast.error('La imagen no debe superar 2MB'); return; }
     const ext = file.name.split('.').pop();
     const path = `${user.id}/avatar.${ext}`;
-    const { error: upErr } = await supabase.storage.from('avatars').upload(path, file, { upsert: true });
-    if (upErr) { toast.error('Error al subir imagen'); return; }
-    const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path);
-    setForm(f => ({ ...f, avatar_url: publicUrl }));
-    await supabase.from('profiles').update({ avatar_url: publicUrl, updated_at: new Date().toISOString() }).eq('id', user.id);
+    const result = await storage.upload('avatars', path, file);
+    if (result.error || !result.url) { toast.error('Error al subir imagen'); return; }
+    setForm(f => ({ ...f, avatar_url: result.url! }));
+    await database.update('profiles', user.id, { avatar_url: result.url, updated_at: new Date().toISOString() });
     toast.success('Avatar actualizado');
     await fetchProfile(user.id);
   };
@@ -207,12 +205,13 @@ export default function ProfilePage() {
       </div>
 
       {/* Change password */}
-      <ChangePasswordSection userId={user.id} />
+      <ChangePasswordSection />
     </div>
   );
 }
 
-function ChangePasswordSection({ userId: _userId }: { userId: string }) {
+function ChangePasswordSection() {
+  const backend = useBackend();
   const [passwords, setPasswords] = useState({ current: '', next: '', confirm: '' });
   const [show, setShow] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -231,9 +230,9 @@ function ChangePasswordSection({ userId: _userId }: { userId: string }) {
       return;
     }
     setSaving(true);
-    const { error } = await supabase.auth.updateUser({ password: passwords.next });
-    if (error) {
-      toast.error(error.message);
+    const result = await backend.auth.updatePassword(passwords.next);
+    if (result.error) {
+      toast.error(result.error);
     } else {
       toast.success('Contraseña actualizada correctamente');
       setPasswords({ current: '', next: '', confirm: '' });

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { useBackend } from '@/lib/backend';
 import { useNavigate } from '@/lib/router';
 import { toast } from 'sonner';
 import { Lock, Eye, EyeOff, Boxes, CircleCheck as CheckCircle } from 'lucide-react';
@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 
 export default function ResetPasswordPage() {
   const navigate = useNavigate();
+  const backend = useBackend();
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [showPw, setShowPw] = useState(false);
@@ -16,25 +17,22 @@ export default function ResetPasswordPage() {
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
-    // Supabase puts the recovery token in the URL hash as access_token
-    // onAuthStateChange fires PASSWORD_RECOVERY when the hash is present
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+    const checkSession = async () => {
+      const session = await backend.auth.getSession();
+      if (session) setHasSession(true);
+      setChecking(false);
+    };
+    checkSession();
+
+    const unsubscribe = backend.auth.onAuthStateChange((event) => {
       if (event === 'PASSWORD_RECOVERY') {
         setHasSession(true);
         setChecking(false);
       }
     });
 
-    // Also check if we already have a session from the hash
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        setHasSession(true);
-      }
-      setChecking(false);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+    return unsubscribe;
+  }, [backend.auth]);
 
   const handleReset = async () => {
     if (!password || password.length < 8) {
@@ -46,12 +44,12 @@ export default function ResetPasswordPage() {
       return;
     }
     setLoading(true);
-    const { error } = await supabase.auth.updateUser({ password });
-    if (error) {
+    const result = await backend.auth.updatePassword(password);
+    if (result.error) {
       toast.error('Error al actualizar la contraseña. El enlace puede haber expirado.');
     } else {
       setDone(true);
-      toast.success('¡Contraseña actualizada correctamente!');
+      toast.success('!Contraseña actualizada correctamente!');
       setTimeout(() => navigate('/dashboard'), 2500);
     }
     setLoading(false);
@@ -83,7 +81,7 @@ export default function ResetPasswordPage() {
               <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mx-auto">
                 <CheckCircle className="w-8 h-8 text-green-500" />
               </div>
-              <h2 className="text-xl font-bold text-foreground">¡Listo!</h2>
+              <h2 className="text-xl font-bold text-foreground">!Listo!</h2>
               <p className="text-sm text-muted-foreground">
                 Tu contraseña fue actualizada. Serás redirigido al panel...
               </p>

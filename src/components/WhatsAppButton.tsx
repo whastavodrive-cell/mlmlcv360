@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { useDatabase } from '@/lib/backend';
 import { MessageCircle, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function WhatsAppButton() {
+  const database = useDatabase();
   const [config, setConfig] = useState({
     enabled: true,
     number: '+51987654321',
@@ -13,30 +14,25 @@ export default function WhatsAppButton() {
   const [showChat, setShowChat] = useState(false);
 
   useEffect(() => {
-    const fetchConfig = () => {
-      supabase.from('system_config')
-        .select('key, value')
-        .in('key', ['whatsapp_enabled', 'whatsapp_number', 'whatsapp_message', 'whatsapp_position'])
-        .then(({ data }) => {
-          if (!data) return;
-          const map: Record<string, string> = {};
-          data.forEach(r => { map[r.key] = r.value; });
-          setConfig({
-            enabled: map.whatsapp_enabled === 'true',
-            number: map.whatsapp_number || '+51987654321',
-            message: map.whatsapp_message || 'Hola, vengo desde MLM 360 y quiero más información.',
-            position: (map.whatsapp_position || 'right').replace('bottom-', '') as 'right' | 'left',
-          });
-        });
+    const fetchConfig = async () => {
+      const { data } = await database.select<{ key: string; value: string }>('system_config', {
+        filter: { key: ['whatsapp_enabled', 'whatsapp_number', 'whatsapp_message', 'whatsapp_position'] },
+      });
+      if (!data || !Array.isArray(data)) return;
+      const map: Record<string, string> = {};
+      data.forEach((r) => { map[r.key] = r.value; });
+      setConfig({
+        enabled: map.whatsapp_enabled === 'true',
+        number: map.whatsapp_number || '+51987654321',
+        message: map.whatsapp_message || 'Hola, vengo desde MLM 360 y quiero más información.',
+        position: (map.whatsapp_position || 'right').replace('bottom-', '') as 'right' | 'left',
+      });
     };
     fetchConfig();
 
-    const channel = supabase.channel('whatsapp-config')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'system_config' }, fetchConfig)
-      .subscribe();
-
-    return () => { supabase.removeChannel(channel); };
-  }, []);
+    const unsubscribe = database.subscribe('system_config', fetchConfig);
+    return unsubscribe;
+  }, [database]);
 
   if (!config.enabled) return null;
 
