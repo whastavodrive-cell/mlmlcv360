@@ -184,7 +184,6 @@ export default function Navbar() {
   const { itemCount } = useCart();
   const { mobileNavOpen, setMobileNavOpen } = useUIStore();
   const companyName = company.company_name || 'MLM 360';
-  const [scrolled, setScrolled] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const isDark = theme === 'dark';
   const isLoggedIn = !!user;
@@ -209,12 +208,6 @@ export default function Navbar() {
       document.body.style.width = '';
     };
   }, [mobileNavOpen]);
-
-  useEffect(() => {
-    const handler = () => setScrolled(window.scrollY > 8);
-    window.addEventListener('scroll', handler, { passive: true });
-    return () => window.removeEventListener('scroll', handler);
-  }, []);
 
   useEffect(() => { setMobileNavOpen(false); }, [location.pathname]);
 
@@ -244,52 +237,48 @@ export default function Navbar() {
 
   return (
     <>
-      {/* Fixed top bar */}
+      {/* Fixed top bar — dub.co style: clean border, no shadow */}
       <nav className={cn(
         'fixed top-0 left-0 right-0 z-50 transition-all duration-300',
-        mobileNavOpen
-          ? 'bg-background border-b-0'
-          : scrolled
-            ? 'bg-background/95 backdrop-blur-md border-b border-border/50 shadow-sm'
-            : 'bg-background',
+        'bg-background/80 backdrop-blur-xl border-b border-border',
       )}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="h-16 flex items-center gap-4">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="h-14 flex items-center gap-6">
 
             {/* Logo */}
             <Link to="/" className="flex-shrink-0" onClick={() => mobileNavOpen && setMobileNavOpen(false)}>
               <LogoWithText
                 value={logoValue}
                 fallbackText={companyName}
-                pixelSize={logoSizes.navbar || 32}
-                textClass="text-lg font-bold text-foreground"
+                pixelSize={logoSizes.navbar || 28}
+                textClass="text-base font-bold text-foreground tracking-tight"
               />
             </Link>
 
-            {/* Desktop nav links */}
-            <div className="hidden lg:flex items-center gap-0.5 flex-1 justify-center">
+            {/* Desktop nav links — dub.co style: text links, no pills */}
+            <div className="hidden lg:flex items-center gap-1 flex-1">
               {navLinks.map(link => (
                 <Link key={link.href} to={link.href}
                   className={cn(
-                    'px-3.5 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap',
+                    'px-3 py-1.5 text-sm font-medium transition-colors whitespace-nowrap rounded-lg',
                     location.pathname === link.href || location.pathname.startsWith(link.href + '/')
-                      ? 'text-primary bg-primary/10'
-                      : 'text-foreground/70 hover:text-foreground hover:bg-muted/50',
+                      ? 'text-foreground'
+                      : 'text-muted-foreground hover:text-foreground',
                   )}>
                   {link.label}
                 </Link>
               ))}
             </div>
 
-            {/* Right controls - improved styling */}
-            <div className="ml-auto flex items-center gap-1">
-              {/* Cart button - icon only with badge */}
+            {/* Right controls */}
+            <div className="ml-auto flex items-center gap-1.5">
+              {/* Cart button */}
               <button onClick={() => navigate('/carrito')}
-                className="relative w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors"
+                className="relative w-8 h-8 rounded-lg flex items-center justify-center hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
                 aria-label="Carrito">
-                <ShoppingBag className="w-5 h-5" />
+                <ShoppingBag className="w-4 h-4" />
                 {itemCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-0.5 bg-primary text-primary-foreground rounded-full text-[10px] font-bold flex items-center justify-center">
+                  <span className="absolute -top-0.5 -right-0.5 min-w-[14px] h-3.5 px-0.5 bg-primary text-primary-foreground rounded-full text-[9px] font-bold flex items-center justify-center">
                     {itemCount > 9 ? '9+' : itemCount}
                   </span>
                 )}
@@ -297,19 +286,19 @@ export default function Navbar() {
 
               {/* Theme toggle */}
               <button onClick={() => setTheme(isDark ? 'light' : 'dark')}
-                className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors"
+                className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
                 aria-label="Cambiar tema">
-                {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+                {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
               </button>
 
               {isLoggedIn ? (
-                <div className="hidden md:block ml-1"><DesktopUserMenu /></div>
+                <div className="hidden md:block ml-0.5"><DesktopUserMenu /></div>
               ) : (
-                <div className="hidden md:flex items-center gap-2 ml-2">
-                  <Link to="/login" className="px-4 py-1.5 text-sm font-medium text-foreground border border-border/60 rounded-full hover:bg-muted/50 transition-colors">
+                <div className="hidden md:flex items-center gap-1.5 ml-1">
+                  <Link to="/login" className="px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
                     Ingresar
                   </Link>
-                  <Link to="/registro" className="px-5 py-1.5 text-sm font-semibold bg-primary text-primary-foreground rounded-full hover:bg-primary/90 transition-all shadow-md shadow-primary/20">
+                  <Link to="/registro" className="px-3.5 py-1.5 text-sm font-medium bg-foreground text-background rounded-lg hover:bg-foreground/90 transition-all">
                     Registrarse
                   </Link>
                 </div>
@@ -319,13 +308,11 @@ export default function Navbar() {
               <button
                 onClick={() => setMobileNavOpen(!mobileNavOpen)}
                 className={cn(
-                  'lg:hidden w-9 h-9 flex items-center justify-center transition-colors ml-1',
-                  mobileNavOpen
-                    ? 'text-foreground'
-                    : 'text-foreground hover:text-foreground',
+                  'lg:hidden w-8 h-8 flex items-center justify-center rounded-lg transition-colors',
+                  'text-foreground hover:bg-muted',
                 )}
                 aria-label={mobileNavOpen ? 'Cerrar menu' : 'Abrir menu'}>
-                {mobileNavOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                {mobileNavOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
               </button>
             </div>
           </div>
@@ -488,7 +475,7 @@ export default function Navbar() {
       )}
 
       {/* Spacer below fixed nav */}
-      <div className="h-16" />
+      <div className="h-14" />
     </>
   );
 }

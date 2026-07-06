@@ -11,19 +11,23 @@ export default function Footer() {
   const companyAddress = company.company_address || 'Av. Javier Prado Este 4200, San Isidro, Lima, Peru';
 
   return (
-    <footer className="bg-muted/30 border-t border-border">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="py-12 lg:py-14">
-          <div className="flex flex-col lg:flex-row lg:items-start gap-10 lg:gap-16">
+    <footer className="relative bg-foreground text-background overflow-hidden">
+      {/* Subtle grid on dark */}
+      <div className="absolute inset-0 bg-dub-grid-dark opacity-50" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[200px] bg-primary/10 rounded-full blur-[100px]" />
+
+      <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
+        <div className="py-16 lg:py-20">
+          <div className="flex flex-col lg:flex-row lg:items-start gap-12 lg:gap-16">
             {/* Brand section */}
-            <div className="lg:w-80 flex-shrink-0">
+            <div className="lg:w-72 flex-shrink-0">
               <LogoWithText
                 value={logoValue}
                 fallbackText={companyName}
-                size="w-8 h-8"
-                textClass="text-lg font-bold text-foreground"
+                size="w-7 h-7"
+                textClass="text-base font-bold text-background tracking-tight"
               />
-              <p className="text-sm text-muted-foreground leading-relaxed mt-4">
+              <p className="text-sm text-background/60 leading-relaxed mt-4 max-w-xs">
                 Plataforma empresarial para gestion de redes y comercio. Impulsa tu negocio al siguiente nivel.
               </p>
               <div className="flex gap-1.5 mt-5">
@@ -37,7 +41,7 @@ export default function Footer() {
                     key={label}
                     href="#"
                     aria-label={label}
-                    className="w-9 h-9 rounded-lg bg-background border border-border flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary/30 hover:bg-primary/5 transition-colors"
+                    className="w-8 h-8 rounded-lg bg-background/10 border border-background/10 flex items-center justify-center text-background/60 hover:text-background hover:bg-background/15 transition-colors"
                   >
                     <Icon className="w-4 h-4" />
                   </a>
@@ -48,8 +52,8 @@ export default function Footer() {
             {/* Links grid */}
             <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 gap-8 lg:gap-12">
               <div>
-                <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider mb-4">Plataforma</h4>
-                <ul className="space-y-2.5">
+                <h4 className="text-xs font-semibold text-background uppercase tracking-wider mb-4">Plataforma</h4>
+                <ul className="space-y-3">
                   {[
                     { href: '/planes', label: 'Planes' },
                     { href: '/tienda', label: 'Tienda' },
@@ -61,7 +65,7 @@ export default function Footer() {
                     <li key={l.href}>
                       <Link
                         to={l.href}
-                        className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                        className="text-sm text-background/60 hover:text-background transition-colors"
                       >
                         {l.label}
                       </Link>
@@ -71,11 +75,11 @@ export default function Footer() {
               </div>
 
               <div>
-                <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider mb-4">Legal</h4>
-                <ul className="space-y-2.5">
+                <h4 className="text-xs font-semibold text-background uppercase tracking-wider mb-4">Legal</h4>
+                <ul className="space-y-3">
                   {['Terminos de servicio', 'Politica de privacidad', 'Politica de cookies', 'Aviso legal'].map(l => (
                     <li key={l}>
-                      <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                      <a href="#" className="text-sm text-background/60 hover:text-background transition-colors">
                         {l}
                       </a>
                     </li>
@@ -84,12 +88,12 @@ export default function Footer() {
               </div>
 
               <div className="col-span-2 sm:col-span-1">
-                <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider mb-4">Contacto</h4>
+                <h4 className="text-xs font-semibold text-background uppercase tracking-wider mb-4">Contacto</h4>
                 <ul className="space-y-3">
                   <li>
                     <a
                       href={`mailto:${companyEmail}`}
-                      className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-start gap-2.5"
+                      className="text-sm text-background/60 hover:text-background transition-colors flex items-start gap-2.5"
                     >
                       <Mail className="w-4 h-4 text-primary/70 flex-shrink-0 mt-0.5" />
                       <span className="break-all">{companyEmail}</span>
@@ -98,13 +102,13 @@ export default function Footer() {
                   <li>
                     <a
                       href={`tel:${companyPhone.replace(/\s/g, '')}`}
-                      className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-start gap-2.5"
+                      className="text-sm text-background/60 hover:text-background transition-colors flex items-start gap-2.5"
                     >
                       <Phone className="w-4 h-4 text-primary/70 flex-shrink-0 mt-0.5" />
                       <span>{companyPhone}</span>
                     </a>
                   </li>
-                  <li className="text-sm text-muted-foreground flex items-start gap-2.5">
+                  <li className="text-sm text-background/60 flex items-start gap-2.5">
                     <MapPin className="w-4 h-4 text-primary/70 flex-shrink-0 mt-0.5" />
                     <span>{companyAddress}</span>
                   </li>
@@ -115,11 +119,11 @@ export default function Footer() {
         </div>
 
         {/* Bottom bar */}
-        <div className="border-t border-border/60 py-5 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <p className="text-sm text-muted-foreground">
+        <div className="border-t border-background/10 py-6 flex flex-col sm:flex-row items-center justify-between gap-2">
+          <p className="text-sm text-background/50">
             © {new Date().getFullYear()} {companyName}. Todos los derechos reservados.
           </p>
-          <p className="text-xs text-muted-foreground">Hecho en Lima, Peru</p>
+          <p className="text-xs text-background/40">Hecho en Lima, Peru</p>
         </div>
       </div>
     </footer>
