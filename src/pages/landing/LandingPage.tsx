@@ -38,20 +38,24 @@ const regionStats = [
 
 // ─── payment brands ───────────────────────────────────────────────────────────
 const row1Brands = [
-  { name: 'Visa', style: 'font-black italic tracking-tight' },
-  { name: 'Mastercard', style: 'font-bold' },
-  { name: 'Yape', style: 'font-black tracking-wide text-violet-600 dark:text-violet-400' },
-  { name: 'Plin', style: 'font-bold text-emerald-600 dark:text-emerald-400' },
-  { name: 'BCP', style: 'font-black tracking-widest text-blue-700 dark:text-blue-400' },
-  { name: 'BBVA', style: 'font-black text-blue-800 dark:text-blue-300' },
+  { name: 'Visa', style: 'font-black italic tracking-tight text-blue-800 dark:text-blue-200' },
+  { name: 'Mastercard', style: 'font-bold text-red-700 dark:text-red-300' },
+  { name: 'Yape', style: 'font-black tracking-wide text-violet-700 dark:text-violet-400' },
+  { name: 'Plin', style: 'font-black text-teal-700 dark:text-teal-400' },
+  { name: 'BCP', style: 'font-black tracking-widest text-sky-800 dark:text-sky-400' },
+  { name: 'BBVA', style: 'font-black text-blue-900 dark:text-blue-300' },
+  { name: 'Culqi', style: 'font-bold text-rose-700 dark:text-rose-400' },
+  { name: 'Izipay', style: 'font-black italic text-orange-700 dark:text-orange-400' },
 ];
 const row2Brands = [
-  { name: 'PayPal', style: 'font-bold tracking-tight text-blue-500 dark:text-blue-300' },
-  { name: 'Interbank', style: 'font-semibold text-green-700 dark:text-green-400' },
-  { name: 'Culqi', style: 'font-bold text-rose-600 dark:text-rose-400' },
-  { name: 'Izipay', style: 'font-black italic text-orange-600 dark:text-orange-400' },
-  { name: 'INDECOPI', style: 'font-black tracking-wider text-xs' },
-  { name: 'Scotiabank', style: 'font-bold text-red-600 dark:text-red-400' },
+  { name: 'PayPal', style: 'font-bold tracking-tight text-blue-700 dark:text-blue-300' },
+  { name: 'Interbank', style: 'font-bold text-emerald-800 dark:text-emerald-400' },
+  { name: 'Scotiabank', style: 'font-bold text-red-700 dark:text-red-400' },
+  { name: 'INDECOPI', style: 'font-black tracking-wider text-xs text-zinc-700 dark:text-zinc-300' },
+  { name: 'Diners', style: 'font-bold tracking-wide text-slate-700 dark:text-slate-300' },
+  { name: 'Niubiz', style: 'font-black text-sky-700 dark:text-sky-400' },
+  { name: 'SafetyPay', style: 'font-bold text-amber-700 dark:text-amber-400' },
+  { name: 'GlobalPay', style: 'font-bold text-indigo-700 dark:text-indigo-400' },
 ];
 
 // ─── extended testimonials ────────────────────────────────────────────────────
@@ -84,8 +88,8 @@ function SectionDivider() {
 // ─── brands marquee ───────────────────────────────────────────────────────────
 function BrandPill({ name, style }: { name: string; style: string }) {
   return (
-    <div className="shrink-0 mx-2 px-5 py-2.5 bg-card border border-border/50 rounded-full shadow-sm">
-      <span className={cn('text-sm text-foreground/70 whitespace-nowrap select-none', style)}>{name}</span>
+    <div className="shrink-0 mx-2 px-5 py-2.5 bg-card border border-border/60 rounded-full shadow-sm hover:border-border transition-colors">
+      <span className={cn('text-sm whitespace-nowrap select-none', style)}>{name}</span>
     </div>
   );
 }
@@ -94,14 +98,14 @@ function BrandsCarousel() {
   const doubled1 = [...row1Brands, ...row1Brands];
   const doubled2 = [...row2Brands, ...row2Brands];
   return (
-    <div className="relative overflow-hidden py-2">
-      <div className="absolute left-0 top-0 bottom-0 w-16 sm:w-32 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
-      <div className="absolute right-0 top-0 bottom-0 w-16 sm:w-32 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
+    <div className="relative overflow-hidden py-1">
+      <div className="absolute left-0 top-0 bottom-0 w-20 sm:w-40 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
+      <div className="absolute right-0 top-0 bottom-0 w-20 sm:w-40 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
       <div className="flex mb-3 animate-marquee-brands">
-        {doubled1.map((b, i) => <BrandPill key={i} {...b} />)}
+        {doubled1.map((b, i) => <BrandPill key={`r1-${i}`} {...b} />)}
       </div>
-      <div className="flex animate-marquee-brands-reverse">
-        {doubled2.map((b, i) => <BrandPill key={i} {...b} />)}
+      <div className="flex animate-marquee-brands-slow">
+        {doubled2.map((b, i) => <BrandPill key={`r2-${i}`} {...b} />)}
       </div>
     </div>
   );
@@ -423,9 +427,11 @@ export default function LandingPage() {
       </section>
 
       {/* ── BRANDS MARQUEE ────────────────────────────────────────────────────*/}
-      <section className="py-8 sm:py-10 border-y border-border/40">
+      <section className="py-8 sm:py-12 border-y border-border/40 bg-muted/10">
         <Reveal>
-          <p className="text-center text-xs font-semibold text-muted-foreground/40 uppercase tracking-widest mb-6">Pagos y certificaciones aceptadas</p>
+          <p className="text-center text-[11px] font-semibold text-muted-foreground/60 uppercase tracking-widest mb-6">
+            Pagos y certificaciones aceptadas
+          </p>
         </Reveal>
         <BrandsCarousel />
       </section>
@@ -536,29 +542,35 @@ export default function LandingPage() {
 
             {/* Card 4: Tienda — wide */}
             <Reveal className="md:col-span-2">
-              <div className="h-full bg-card/70 border border-border/50 rounded-2xl p-5 sm:p-7 card-lift hover:border-blue-500/25 group backdrop-blur-sm flex flex-col sm:flex-row gap-6">
-                <div className="flex-1 flex flex-col">
+              <div className="h-full bg-card/70 border border-border/50 rounded-2xl p-5 sm:p-7 card-lift hover:border-blue-500/25 group backdrop-blur-sm flex flex-col sm:flex-row gap-5 overflow-hidden">
+                <div className="flex-1 flex flex-col min-w-0">
                   <div className="flex items-center gap-3 mb-3">
                     <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0">
                       <ShoppingBag className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                     </div>
                     <h3 className="text-base sm:text-lg font-bold text-foreground">Tienda integrada</h3>
                   </div>
-                  <p className="text-sm text-muted-foreground/80 leading-relaxed mb-4 flex-1">Catálogo completo donde cada compra activa comisiones automáticas en tu red.</p>
-                  <Link to="/tienda" className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:gap-2.5 transition-all">
-                    Explorar tienda <ArrowRight className="w-4 h-4" />
+                  <p className="text-sm text-muted-foreground/80 leading-relaxed mb-4 flex-1">Catálogo completo. Cada compra activa comisiones automáticas en toda tu red de forma instantánea.</p>
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {['Vitaminas', 'Bienestar', 'Nutrición', 'Cuidado personal'].map(tag => (
+                      <span key={tag} className="px-2.5 py-1 bg-blue-500/8 text-blue-700 dark:text-blue-400 rounded-full text-xs font-medium border border-blue-500/15">{tag}</span>
+                    ))}
+                  </div>
+                  <Link to="/tienda" className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:gap-2.5 transition-all group/link">
+                    Explorar tienda <ArrowRight className="w-4 h-4 group-hover/link:translate-x-0.5 transition-transform" />
                   </Link>
                 </div>
-                {/* mini product grid */}
-                <div className="grid grid-cols-2 gap-2 sm:w-44 shrink-0">
+                {/* mini product grid with real photos */}
+                <div className="grid grid-cols-2 gap-2 sm:w-48 shrink-0">
                   {[
-                    { bg: 'bg-blue-500/8', accent: 'bg-blue-500/30' },
-                    { bg: 'bg-emerald-500/8', accent: 'bg-emerald-500/30' },
-                    { bg: 'bg-amber-500/8', accent: 'bg-amber-500/30' },
-                    { bg: 'bg-rose-500/8', accent: 'bg-rose-500/30' },
-                  ].map((item, i) => (
-                    <div key={i} className={cn('rounded-xl aspect-square border border-border/40 flex items-end p-2', item.bg)}>
-                      <div className={cn('w-full h-1.5 rounded-full', item.accent)} />
+                    'https://images.pexels.com/photos/3762879/pexels-photo-3762879.jpeg?auto=compress&cs=tinysrgb&w=200',
+                    'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=200',
+                    'https://images.pexels.com/photos/3997993/pexels-photo-3997993.jpeg?auto=compress&cs=tinysrgb&w=200',
+                    'https://images.pexels.com/photos/4041392/pexels-photo-4041392.jpeg?auto=compress&cs=tinysrgb&w=200',
+                  ].map((src, i) => (
+                    <div key={i} className="rounded-xl aspect-square border border-border/40 overflow-hidden bg-muted/30 relative">
+                      <img src={src} alt="" className="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
                     </div>
                   ))}
                 </div>
@@ -579,7 +591,7 @@ export default function LandingPage() {
         <div className="relative max-w-[1100px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-10 sm:gap-12 lg:gap-16 items-center">
             <Reveal>
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/8 border border-white/10 rounded-full text-xs font-medium text-white/60 mb-5 sm:mb-6 backdrop-blur-sm">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 border border-white/20 rounded-full text-xs font-medium text-white/70 mb-5 sm:mb-6 backdrop-blur-sm">
                 <Sparkles className="w-3.5 h-3.5 text-primary" />
                 Sistema multinivel inteligente
               </div>
@@ -587,9 +599,24 @@ export default function LandingPage() {
                 Potencia tu negocio<br />
                 <span className="text-gradient-animated">al máximo nivel</span>
               </h2>
-              <p className="text-sm sm:text-base lg:text-lg text-white/50 leading-relaxed mb-7 sm:mb-8 max-w-lg">
+              <p className="text-sm sm:text-base lg:text-lg text-white/60 leading-relaxed mb-7 sm:mb-8 max-w-lg">
                 Mientras duermes, el sistema calcula y distribuye comisiones a toda tu red. Sin errores, sin retrasos.
               </p>
+              {/* social proof */}
+              <div className="flex items-center gap-3 mb-7 sm:mb-8">
+                <div className="flex -space-x-2">
+                  {[
+                    'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=60',
+                    'https://images.pexels.com/photos/1680172/pexels-photo-1680172.jpeg?auto=compress&cs=tinysrgb&w=60',
+                    'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=60',
+                  ].map((src, i) => (
+                    <img key={i} src={src} alt="" className="w-8 h-8 rounded-full border-2 border-zinc-800 object-cover" />
+                  ))}
+                </div>
+                <div className="text-xs text-white/50">
+                  <span className="text-white font-semibold">12,540+</span> emprendedores ya confían en Cluv 360
+                </div>
+              </div>
               <div className="flex flex-col sm:flex-row gap-3">
                 <Link
                   to={user ? '/dashboard' : '/registro'}
@@ -599,7 +626,7 @@ export default function LandingPage() {
                 </Link>
                 <Link
                   to="/contacto"
-                  className="inline-flex items-center justify-center gap-2 px-6 sm:px-7 py-3.5 bg-white/8 border border-white/15 text-white font-medium rounded-xl hover:bg-white/12 transition-all backdrop-blur-sm text-base"
+                  className="inline-flex items-center justify-center gap-2 px-6 sm:px-7 py-3.5 bg-white/10 border border-white/20 text-white font-medium rounded-xl hover:bg-white/15 transition-all backdrop-blur-sm text-base"
                 >
                   Hablar con ventas
                 </Link>
@@ -609,17 +636,19 @@ export default function LandingPage() {
             <Reveal delay={100}>
               <div className="grid grid-cols-2 gap-3">
                 {[
-                  { icon: DollarSign, title: 'Comisiones en tiempo real', desc: 'Calculadas al instante en cada compra de tu red.', color: 'text-emerald-400' },
-                  { icon: Zap, title: 'Pago automático', desc: 'Transferencias quincenales sin trámite de tu parte.', color: 'text-primary' },
-                  { icon: Globe, title: 'Red internacional', desc: 'Tus afiliados pueden estar en toda Latinoamérica.', color: 'text-blue-400' },
-                  { icon: TrendingUp, title: 'Crecimiento probado', desc: '+340% anual. Números reales, no promesas.', color: 'text-amber-400' },
+                  { icon: DollarSign, title: 'Comisiones en tiempo real', desc: 'Calculadas al instante en cada compra de tu red.', color: 'text-emerald-400', bg: 'bg-emerald-500/15 border-emerald-500/25' },
+                  { icon: Zap, title: 'Pago automático', desc: 'Transferencias quincenales sin trámite de tu parte.', color: 'text-amber-400', bg: 'bg-amber-500/15 border-amber-500/25' },
+                  { icon: Globe, title: 'Red internacional', desc: 'Tus afiliados pueden estar en toda Latinoamérica.', color: 'text-blue-400', bg: 'bg-blue-500/15 border-blue-500/25' },
+                  { icon: TrendingUp, title: 'Crecimiento probado', desc: '+340% anual. Números reales, no promesas.', color: 'text-rose-400', bg: 'bg-rose-500/15 border-rose-500/25' },
                 ].map((item, i) => {
                   const Icon = item.icon;
                   return (
-                    <div key={i} className="bg-white/5 border border-white/8 rounded-2xl p-4 sm:p-5 hover:bg-white/8 transition-colors">
-                      <Icon className={cn('w-5 h-5 sm:w-6 sm:h-6 mb-2.5 sm:mb-3', item.color)} />
-                      <div className="text-xs sm:text-sm font-semibold text-white/90 mb-1 sm:mb-1.5">{item.title}</div>
-                      <div className="text-xs text-white/40 leading-relaxed">{item.desc}</div>
+                    <div key={i} className={cn('border rounded-2xl p-4 sm:p-5 hover:opacity-90 transition-all', item.bg)}>
+                      <div className={cn('w-9 h-9 rounded-xl flex items-center justify-center mb-3', item.bg)}>
+                        <Icon className={cn('w-5 h-5', item.color)} />
+                      </div>
+                      <div className="text-xs sm:text-sm font-semibold text-white mb-1 sm:mb-1.5">{item.title}</div>
+                      <div className="text-xs text-white/55 leading-relaxed">{item.desc}</div>
                     </div>
                   );
                 })}
@@ -630,8 +659,9 @@ export default function LandingPage() {
       </section>
 
       {/* ── HOW IT WORKS ──────────────────────────────────────────────────────*/}
-      <section className="py-16 sm:py-24">
-        <div className="max-w-[1100px] mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="relative py-16 sm:py-24 overflow-hidden">
+        <div className="absolute inset-0 bg-dub-grid opacity-30 mask-fade-center" />
+        <div className="relative max-w-[1100px] mx-auto px-4 sm:px-6 lg:px-8">
           <Reveal className="mb-10 sm:mb-14">
             <span className="text-xs font-semibold text-primary uppercase tracking-widest mb-3 block">Proceso</span>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground tracking-tight">
@@ -639,15 +669,23 @@ export default function LandingPage() {
             </h2>
           </Reveal>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-6 lg:gap-10">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
             {steps.map((step, i) => (
               <Reveal key={step.n} delay={i * 80}>
-                <div className="relative">
-                  <div className="text-5xl sm:text-7xl font-black text-border/25 dark:text-border/20 mb-2 sm:mb-3 select-none leading-none">{step.n}</div>
-                  <div className="mb-3 sm:mb-4"><step.icon className="w-7 h-7 sm:w-8 sm:h-8 text-primary" /></div>
-                  <h3 className="text-lg sm:text-xl font-bold text-foreground mb-2">{step.title}</h3>
-                  <p className="text-muted-foreground/80 leading-relaxed text-sm">{step.desc}</p>
-                  {i < steps.length - 1 && <div className="hidden sm:block absolute top-10 left-[calc(100%+20px)] w-8 border-t-2 border-dashed border-border/40" />}
+                <div className="relative bg-card/60 border border-border/50 rounded-2xl p-6 sm:p-7 card-lift backdrop-blur-sm h-full group">
+                  <div className="flex items-start justify-between mb-5">
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+                      <step.icon className="w-5 h-5 text-primary" />
+                    </div>
+                    <span className="text-4xl sm:text-5xl font-black text-border/20 dark:text-border/15 select-none leading-none">{step.n}</span>
+                  </div>
+                  <h3 className="text-base sm:text-lg font-bold text-foreground mb-2">{step.title}</h3>
+                  <p className="text-muted-foreground/75 leading-relaxed text-sm">{step.desc}</p>
+                  {i < steps.length - 1 && (
+                    <div className="hidden sm:flex absolute top-1/2 -right-3 -translate-y-1/2 z-10 w-6 h-6 rounded-full bg-background border border-border/60 items-center justify-center">
+                      <ArrowRight className="w-3 h-3 text-muted-foreground/50" />
+                    </div>
+                  )}
                 </div>
               </Reveal>
             ))}

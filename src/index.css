@@ -421,10 +421,9 @@ body {
 .animate-marquee-right { animation: marquee-right 40s linear infinite; }
 
 /* Brand carousel — pauses on hover, seamless */
-.animate-marquee-brands { animation: marquee-left 28s linear infinite; }
+.animate-marquee-brands { animation: marquee-left 30s linear infinite; }
+.animate-marquee-brands-slow { animation: marquee-left 44s linear infinite; }
 .animate-marquee-brands-reverse { animation: marquee-right 28s linear infinite; }
-.brands-track:hover .animate-marquee-brands,
-.brands-track:hover .animate-marquee-brands-reverse { animation-play-state: paused; }
 
 /* Card hover lift — gold glow */
 .card-lift {
