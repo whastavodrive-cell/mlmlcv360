@@ -2,21 +2,17 @@ import Navbar from '@/components/landing/Navbar';
 import Footer from '@/components/landing/Footer';
 import { Reveal, MouseGlow } from '@/components/landing/Reveal';
 import { Link } from '@/lib/router';
-import {
-  ArrowRight, Target, Award, HeartHandshake, Users, TrendingUp, Globe, Rocket, Zap,
-  Building2, MapPin, Phone, Mail, Sparkles, Shield, Lock, Cpu, Cloud, Database,
-} from 'lucide-react';
+import { ArrowRight, Target, Award, HeartHandshake, Users, TrendingUp, Globe, Rocket, Zap, Building2, MapPin, Phone, Mail, Sparkles, Shield, Lock, Cpu, Cloud, Database, CircleCheck as CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useConfig } from '@/store/configStore';
 import { useEffect, useRef } from 'react';
 
 const timeline = [
-  { year: '2020', title: 'Fundacion', desc: 'Lima, Peru. Un equipo de 3 personas con una vision.', icon: Rocket, active: true },
-  { year: '2021', title: 'Validacion', desc: '+1,000 afiliados. Primeros pagos de comisiones.', icon: TrendingUp, active: true },
-  { year: '2022', title: 'Expansion regional', desc: 'Presencia en Colombia, Ecuador y Bolivia.', icon: Globe, active: true },
-  { year: '2023', title: 'Tienda MLM', desc: 'Marketplace propio con +200 productos.', icon: Building2, active: true },
-  { year: '2024', title: 'Liderazgo', desc: '+12,000 afiliados. S/2.8M en comisiones.', icon: Award, active: true },
-  { year: '2025', title: 'Escalado', desc: 'Meta: 20 paises y 50,000 afiliados.', icon: Zap, active: false },
+  { year: '2020', title: 'Fundacion', desc: 'Lima, Peru. Un equipo de 3 personas con una vision: democratizar el MLM.', icon: Rocket },
+  { year: '2021', title: 'Validacion', desc: '+1,000 afiliados. Primeros pagos de comisiones automatizadas.', icon: TrendingUp },
+  { year: '2022', title: 'Expansion regional', desc: 'Presencia en Colombia, Ecuador y Bolivia. +5,000 afiliados.', icon: Globe },
+  { year: '2023', title: 'Tienda MLM', desc: 'Marketplace propio con +200 productos y comisiones integradas.', icon: Building2 },
+  { year: '2024', title: 'Liderazgo', desc: '+12,000 afiliados. S/2.8M en comisiones pagadas. 8 paises.', icon: Award },
 ];
 
 const team = [
@@ -24,12 +20,6 @@ const team = [
   { name: 'Ana Rodriguez', role: 'CTO', bio: 'Ex-Amazon, especialista en sistemas escalables.', img: 'https://images.pexels.com/photos/1181690/pexels-photo-1181690.jpeg?auto=compress&cs=tinysrgb&w=400' },
   { name: 'Luis Garcia', role: 'Director Comercial', bio: 'Experto en redes de afiliados, +500 entrenamientos.', img: 'https://images.pexels.com/photos/1043471/pexels-photo-1043471.jpeg?auto=compress&cs=tinysrgb&w=400' },
   { name: 'Maria Torres', role: 'Head of Growth', bio: 'Especialista en adquisicion y retencion de usuarios.', img: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=400' },
-];
-
-const values = [
-  { icon: Target, title: 'Mision', text: 'Democratizar las oportunidades de negocio en Latinoamerica mediante tecnologia MLM de vanguardia que empodera a cualquier persona.', color: 'text-blue-500', bg: 'bg-blue-500/10' },
-  { icon: Award, title: 'Vision', text: 'Ser la plataforma MLM empresarial lider en Latinoamerica para 2028, con presencia en 20 paises y 50,000 afiliados activos.', color: 'text-amber-500', bg: 'bg-amber-500/10' },
-  { icon: HeartHandshake, title: 'Valores', text: 'Transparencia radical. Integridad sin compromisos. Innovacion constante. Exito compartido con cada afiliado.', color: 'text-green-500', bg: 'bg-green-500/10' },
 ];
 
 const infra = [
@@ -95,16 +85,11 @@ export default function NosotrosPage() {
 
       <Navbar />
 
-      {/* ── HERO — dub.co style: left-aligned on visible grid ────────────────── */}
-      <section className="pt-20 pb-24 relative overflow-hidden">
-        <div className="absolute inset-0 -z-10 bg-dub-grid mask-fade-top" />
-        <div className="absolute inset-0 -z-10 overflow-hidden">
-          <div className="absolute top-[-20%] left-1/2 -translate-x-1/2 w-[50%] h-[40%] bg-gradient-to-b from-primary/10 via-primary/3 to-transparent rounded-full blur-[80px]" />
-        </div>
-
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+      {/* ── HERO ────────────────────────────────────────────────────────────── */}
+      <section className="pt-20 pb-20">
+        <div className="px-6 sm:px-8">
           {/* Breadcrumb */}
-          <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-10">
+          <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-10 max-w-2xl mx-auto">
             <Link to="/" className="hover:text-foreground transition-colors">Inicio</Link>
             <span className="text-border">/</span>
             <span className="text-foreground font-medium">Nosotros</span>
@@ -149,12 +134,9 @@ export default function NosotrosPage() {
         <StatsCarousel />
       </div>
 
-      {/* ── VALUES — bento grid ─────────────────────────────────────────────── */}
-      <section className="section-py relative overflow-hidden">
-        <div className="absolute inset-0 -z-10 bg-dub-grid mask-fade-center opacity-40" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] bg-primary/5 rounded-full blur-[100px] -z-10" />
-
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+      {/* ── MISION / VISION / VALORES ───────────────────────────────────────── */}
+      <section className="py-20">
+        <div className="px-6 sm:px-8">
           <Reveal className="text-center mb-14">
             <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary/10 border border-primary/20 rounded-full mb-4">
               <Sparkles className="w-3.5 h-3.5 text-primary" />
@@ -165,8 +147,12 @@ export default function NosotrosPage() {
             </h2>
           </Reveal>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {values.map((v, i) => (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-5xl mx-auto">
+            {[
+              { icon: Target, title: 'Mision', text: 'Democratizar las oportunidades de negocio en Latinoamerica mediante tecnologia MLM de vanguardia que empodera a cualquier persona.', color: 'text-blue-500', bg: 'bg-blue-500/10' },
+              { icon: Award, title: 'Vision', text: 'Ser la plataforma MLM empresarial lider en Latinoamerica para 2028, con presencia en 20 paises y 50,000 afiliados activos.', color: 'text-amber-500', bg: 'bg-amber-500/10' },
+              { icon: HeartHandshake, title: 'Valores', text: 'Transparencia radical. Integridad sin compromisos. Innovacion constante. Exito compartido con cada afiliado.', color: 'text-green-500', bg: 'bg-green-500/10' },
+            ].map((v, i) => (
               <Reveal key={v.title} delay={i * 100}>
                 <div className="bg-card border border-border rounded-xl p-8 h-full card-lift hover:border-foreground/20">
                   <div className={cn('w-12 h-12 rounded-xl flex items-center justify-center mb-5', v.bg)}>
@@ -182,11 +168,8 @@ export default function NosotrosPage() {
       </section>
 
       {/* ── TIMELINE ────────────────────────────────────────────────────────── */}
-      <section className="section-py relative overflow-hidden border-t border-border">
-        <div className="absolute inset-0 -z-10 bg-muted/20" />
-        <div className="absolute bottom-0 right-0 w-[500px] h-[400px] bg-primary/5 rounded-full blur-[100px] -z-10" />
-
-        <div className="max-w-4xl mx-auto px-4 sm:px-6">
+      <section className="py-20 border-t border-border">
+        <div className="px-6 sm:px-8">
           <Reveal className="text-center mb-16">
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground mb-3 tracking-tight">
               Nuestra <span className="text-gradient-animated">historia</span>
@@ -195,31 +178,19 @@ export default function NosotrosPage() {
           </Reveal>
 
           <Reveal>
-            <div className="relative">
-              <div className="absolute left-6 md:left-1/2 top-0 bottom-0 w-px bg-border md:-ml-px" />
+            <div className="relative max-w-3xl mx-auto">
+              <div className="absolute left-6 top-0 bottom-0 w-px bg-border" />
               <div className="space-y-6">
-                {timeline.map((item, i) => (
-                  <div key={item.year} className={cn(
-                    'relative flex items-start gap-6',
-                    i % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'
-                  )}>
-                    <div className={cn(
-                      'w-12 h-12 rounded-xl border-2 flex items-center justify-center shrink-0 z-10 transition-all bg-background',
-                      item.active
-                        ? 'border-foreground text-foreground'
-                        : 'border-dashed border-border bg-muted/50 text-muted-foreground/50'
-                    )}>
-                      <item.icon className="w-5 h-5" />
+                {timeline.map((item) => (
+                  <div key={item.year} className="relative flex items-start gap-6">
+                    <div className="w-12 h-12 rounded-xl border-2 border-foreground flex items-center justify-center shrink-0 z-10 bg-background">
+                      <item.icon className="w-5 h-5 text-foreground" />
                     </div>
-                    <div className={cn(
-                      'flex-1 bg-card border border-border rounded-xl p-6 card-lift hover:border-foreground/20',
-                      i % 2 === 0 ? 'md:text-right' : 'md:text-left'
-                    )}>
+                    <div className="flex-1 bg-card border border-border rounded-xl p-6 card-lift hover:border-foreground/20">
                       <div className="text-xs font-semibold text-primary uppercase tracking-wider mb-2">{item.year}</div>
                       <h3 className="font-bold text-lg text-foreground mb-2">{item.title}</h3>
                       <p className="text-sm text-muted-foreground">{item.desc}</p>
                     </div>
-                    <div className="hidden md:block flex-1" />
                   </div>
                 ))}
               </div>
@@ -228,12 +199,9 @@ export default function NosotrosPage() {
         </div>
       </section>
 
-      {/* ── INFRASTRUCTURE — bento grid ──────────────────────────────────────── */}
-      <section className="section-py relative overflow-hidden">
-        <div className="absolute inset-0 -z-10 bg-dub-grid mask-fade-center opacity-40" />
-        <div className="absolute top-0 left-1/4 w-[400px] h-[300px] bg-blue-500/5 rounded-full blur-[100px] -z-10" />
-
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+      {/* ── INFRASTRUCTURE ──────────────────────────────────────────────────── */}
+      <section className="py-20 border-t border-border">
+        <div className="px-6 sm:px-8">
           <Reveal className="text-center mb-14">
             <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary/10 border border-primary/20 rounded-full mb-4">
               <Cpu className="w-3.5 h-3.5 text-primary" />
@@ -245,7 +213,7 @@ export default function NosotrosPage() {
             <p className="text-muted-foreground max-w-xl mx-auto">Construido sobre las mejores herramientas. Cada componente es production-ready.</p>
           </Reveal>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-5xl mx-auto">
             {infra.map((item, i) => (
               <Reveal key={item.title} delay={i * 80}>
                 <div className="bg-card border border-border rounded-xl p-6 h-full card-lift hover:border-foreground/20">
@@ -262,11 +230,8 @@ export default function NosotrosPage() {
       </section>
 
       {/* ── TEAM ───────────────────────────────────────────────────────────── */}
-      <section className="section-py relative overflow-hidden border-t border-border">
-        <div className="absolute inset-0 -z-10 bg-muted/20" />
-        <div className="absolute top-0 left-1/4 w-[400px] h-[300px] bg-blue-500/5 rounded-full blur-[100px] -z-10" />
-
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+      <section className="py-20 border-t border-border">
+        <div className="px-6 sm:px-8">
           <Reveal className="text-center mb-14">
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground mb-3 tracking-tight">
               El equipo detras de <span className="text-gradient-animated">{companyName}</span>
@@ -274,7 +239,7 @@ export default function NosotrosPage() {
             <p className="text-muted-foreground max-w-md mx-auto">Combinamos experiencia en MLM, tecnologia y crecimiento.</p>
           </Reveal>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-5xl mx-auto">
             {team.map((member, i) => (
               <Reveal key={member.name} delay={i * 100}>
                 <div className="bg-card border border-border rounded-xl overflow-hidden card-lift hover:border-foreground/20">
@@ -294,11 +259,8 @@ export default function NosotrosPage() {
       </section>
 
       {/* ── COMPANY INFO ────────────────────────────────────────────────────── */}
-      <section className="section-py relative overflow-hidden">
-        <div className="absolute inset-0 -z-10 bg-dub-grid mask-fade-center opacity-40" />
-        <div className="absolute bottom-0 right-1/4 w-[400px] h-[300px] bg-primary/5 rounded-full blur-[100px] -z-10" />
-
-        <div className="max-w-4xl mx-auto px-4 sm:px-6">
+      <section className="py-20 border-t border-border">
+        <div className="px-6 sm:px-8 max-w-3xl mx-auto">
           <Reveal className="text-center mb-12">
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground mb-3 tracking-tight">
               Informacion <span className="text-gradient-animated">legal</span>
@@ -343,13 +305,13 @@ export default function NosotrosPage() {
         </div>
       </section>
 
-      {/* ── CTA — dub.co style dark section ───────────────────────────────────── */}
+      {/* ── CTA ──────────────────────────────────────────────────────────────── */}
       <section className="relative py-32 overflow-hidden bg-foreground">
-        <div className="absolute inset-0 bg-dub-grid-dark" />
+        <div className="absolute inset-0 bg-dub-grid-dark opacity-50" />
         <div className="absolute top-[-30%] left-[-10%] w-[60%] h-[70%] bg-gradient-to-br from-primary/20 via-blue-500/10 to-transparent rounded-full blur-[100px]" />
         <div className="absolute top-[10%] right-[-20%] w-[50%] h-[60%] bg-gradient-to-bl from-blue-500/15 via-primary/8 to-transparent rounded-full blur-[100px]" />
 
-        <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 text-center">
+        <div className="relative z-10 max-w-4xl mx-auto px-6 text-center">
           <Reveal>
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/15 rounded-full text-xs font-medium text-white/80 mb-8">
               <Zap className="w-3.5 h-3.5 text-amber-400" />
@@ -368,6 +330,11 @@ export default function NosotrosPage() {
               <Link to="/empresa" className="inline-flex items-center gap-2 px-8 py-4 bg-white/10 backdrop-blur-sm border border-white/20 text-white font-medium rounded-lg hover:bg-white/15 transition-all text-base">
                 Ver infraestructura
               </Link>
+            </div>
+            <div className="flex flex-wrap items-center justify-center gap-8 mt-12 text-sm text-white/40">
+              <span className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-white/60" /> Cuenta gratuita</span>
+              <span className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-white/60" /> Sin permanencia</span>
+              <span className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-white/60" /> Soporte 24/7</span>
             </div>
           </Reveal>
         </div>
