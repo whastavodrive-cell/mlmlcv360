@@ -1,7 +1,7 @@
 import { useSearchParams, useNavigate } from '@/lib/router';
 import Navbar from '@/components/landing/Navbar';
 import Footer from '@/components/landing/Footer';
-import { CircleCheck as CheckCircle, X, ArrowRight, Sparkles } from 'lucide-react';
+import { CircleCheck as CheckCircle, ArrowRight, Sparkles, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useConfig, formatPrice } from '@/store/configStore';
 import { useAuthStore } from '@/store/authStore';
@@ -47,153 +47,136 @@ export default function PlanesPage() {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <section className="py-24">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            {isSelectMode && (
-              <div className="mb-10 bg-primary/10 border border-primary/30 rounded-2xl p-5 flex items-start gap-4 max-w-2xl mx-auto">
-                <Sparkles className="w-6 h-6 text-primary flex-shrink-0 mt-0.5" />
-                <div>
-                  <h2 className="text-base font-bold text-foreground mb-1">Bienvenido a MLM 360</h2>
-                  <p className="text-sm text-muted-foreground">Tu cuenta fue creada. Elige un plan para comenzar a construir tu red.</p>
-                </div>
+
+      <section className="py-16">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          {isSelectMode && (
+            <div className="mb-8 bg-primary/10 border border-primary/30 rounded-xl p-4 flex items-start gap-3">
+              <Sparkles className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+              <div>
+                <div className="font-semibold text-foreground text-sm">Bienvenido a MLM 360</div>
+                <div className="text-xs text-muted-foreground">Tu cuenta fue creada. Elige un plan para comenzar.</div>
               </div>
-            )}
-
-            <div className="text-center mb-16">
-              <h1 className="text-5xl font-bold text-foreground mb-4">Planes MLM 360</h1>
-              <p className="text-xl text-muted-foreground">Elige el plan perfecto para tu etapa de crecimiento.</p>
             </div>
+          )}
 
-            <div className={cn(
-              'grid gap-6 max-w-6xl mx-auto mb-20',
-              sortedPlans.length <= 3 ? 'grid-cols-1 md:grid-cols-3' :
-              sortedPlans.length === 4 ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4' :
-              'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
-            )}>
-              {sortedPlans.map(plan => {
-                const isFree = plan.is_free || Number(plan.price) === 0;
-                const isCurrent = user && (user as any).plan === plan.slug;
-                const isLoading = activating === plan.slug;
+          <div className="text-center mb-12">
+            <span className="text-xs font-bold text-primary uppercase tracking-widest">Planes</span>
+            <h1 className="text-3xl sm:text-4xl font-bold text-foreground mt-2 mb-3">Elige tu plan</h1>
+            <p className="text-muted-foreground text-sm max-w-md mx-auto">Sin costos ocultos. Puedes cambiar de plan en cualquier momento.</p>
+          </div>
 
-                return (
-                  <div key={plan.id} className={cn(
-                    'bg-card border-2 rounded-2xl p-7 relative transition-all flex flex-col',
-                    plan.is_popular ? 'border-primary shadow-xl shadow-primary/10 lg:scale-105' : 'border-border hover:border-primary/30 hover:shadow-lg'
-                  )}>
-                    {plan.badge && (
-                      <div className={cn(
-                        'absolute -top-3.5 left-1/2 -translate-x-1/2 text-xs font-bold px-4 py-1.5 rounded-full whitespace-nowrap',
-                        plan.is_popular ? 'bg-primary text-white' : 'bg-amber-500 text-white'
-                      )}>
-                        {plan.badge}
-                      </div>
-                    )}
-                    {isCurrent && (
-                      <div className="absolute -top-3.5 right-4 text-xs font-bold px-3 py-1.5 rounded-full bg-green-500 text-white">
-                        Plan Actual
-                      </div>
-                    )}
+          {/* ── Plans Grid: Compact cards ─────────────────────────────────────────── */}
+          <div className={cn(
+            'grid gap-4 mb-12',
+            sortedPlans.length <= 3 ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
+          )}>
+            {sortedPlans.map(plan => {
+              const isFree = plan.is_free || Number(plan.price) === 0;
+              const isCurrent = user && (user as any).plan === plan.slug;
+              const isLoading = activating === plan.slug;
 
-                    <h3 className="text-xl font-bold text-foreground mb-1">{plan.name}</h3>
-                    {plan.description && <p className="text-sm text-muted-foreground mb-3">{plan.description}</p>}
-                    <div className="text-3xl font-bold text-foreground mb-4">
-                      {isFree ? 'Gratis' : formatPrice(plan.price, currency, currencySymbol, exchangeRate)}
-                      {!isFree && <span className="text-sm font-normal text-muted-foreground">/mes</span>}
-                    </div>
+              return (
+                <div key={plan.id} className={cn(
+                  'bg-card rounded-xl p-6 flex flex-col relative',
+                  plan.is_popular ? 'border-2 border-primary ring-4 ring-primary/10' : 'border border-border hover:border-primary/30'
+                )}>
+                  {plan.badge && (
+                    <div className={cn(
+                      'absolute -top-2.5 left-4 text-xs font-bold px-3 py-1 rounded-full',
+                      plan.is_popular ? 'bg-primary text-white' : 'bg-amber-500 text-white'
+                    )}>{plan.badge}</div>
+                  )}
+                  {isCurrent && (
+                    <div className="absolute -top-2.5 right-4 text-xs font-bold px-3 py-1 rounded-full bg-green-500 text-white">Actual</div>
+                  )}
 
-                    <div className="flex-1">
-                      {isCurrent ? (
-                        <div className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold mb-5 bg-green-500/10 text-green-600 border border-green-500/30">
-                          <CheckCircle className="w-4 h-4" /> Tu plan actual
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => handleSelectPlan(plan)}
-                          disabled={isLoading}
-                          className={cn(
-                            'w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold mb-5 transition-colors disabled:opacity-60',
-                            plan.is_popular
-                              ? 'bg-primary text-white hover:bg-primary/90'
-                              : 'border border-border hover:bg-muted text-foreground'
-                          )}
-                        >
-                          {isLoading ? (
-                            <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                          ) : (
-                            <>
-                              {user ? (isFree ? 'Activar gratis' : 'Adquirir plan') : 'Comenzar'}
-                              <ArrowRight className="w-4 h-4" />
-                            </>
-                          )}
-                        </button>
-                      )}
-
-                      <ul className="space-y-2">
-                        {plan.features.map((f: string) => (
-                          <li key={f} className="flex items-center gap-2 text-sm text-foreground">
-                            <CheckCircle className="w-3.5 h-3.5 text-green-500 flex-shrink-0" />
-                            {f}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
+                  <div className="mb-4">
+                    <h3 className="font-bold text-foreground text-lg">{plan.name}</h3>
+                    {plan.description && <p className="text-sm text-muted-foreground mt-1">{plan.description}</p>}
                   </div>
-                );
-              })}
-            </div>
 
-            {/* Comparison table */}
-            <div className="bg-card border border-border rounded-2xl overflow-hidden">
-              <div className="px-6 py-4 border-b border-border">
-                <h2 className="text-xl font-bold text-foreground">Comparativa de planes</h2>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-muted/50 border-b border-border">
-                    <tr>
-                      <th className="text-left px-6 py-4 text-sm font-semibold text-muted-foreground">Característica</th>
-                      {sortedPlans.map(p => (
-                        <th key={p.id} className="text-center px-4 py-4 text-sm font-semibold text-foreground whitespace-nowrap">{p.name}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr className="border-b border-border/50">
-                      <td className="px-6 py-3.5 text-sm text-foreground">Precio mensual</td>
-                      {sortedPlans.map(p => (
-                        <td key={p.id} className="px-4 py-3.5 text-center text-sm font-medium text-foreground">
-                          {p.is_free || Number(p.price) === 0 ? 'Gratis' : formatPrice(p.price, currency, currencySymbol, exchangeRate)}
-                        </td>
-                      ))}
-                    </tr>
-                    <tr className="border-b border-border/50 bg-muted/20">
-                      <td className="px-6 py-3.5 text-sm text-foreground">Días de prueba</td>
-                      {sortedPlans.map(p => (
-                        <td key={p.id} className="px-4 py-3.5 text-center text-sm text-foreground">{p.trial_days || 0}</td>
-                      ))}
-                    </tr>
-                    {sortedPlans[0]?.features?.map((feature: string, idx: number) => (
-                      <tr key={idx} className={cn('border-b border-border/50', idx % 2 === 0 ? '' : 'bg-muted/20')}>
-                        <td className="px-6 py-3.5 text-sm text-foreground">{feature}</td>
-                        {sortedPlans.map(p => {
-                          const has = p.features?.includes(feature);
-                          return (
-                            <td key={p.id} className="px-4 py-3.5 text-center">
-                              {has
-                                ? <CheckCircle className="w-5 h-5 text-green-500 mx-auto" />
-                                : <X className="w-4 h-4 text-muted-foreground/40 mx-auto" />
-                              }
-                            </td>
-                          );
-                        })}
-                      </tr>
+                  <div className="mb-4">
+                    <span className="text-3xl font-bold text-foreground">
+                      {isFree ? 'Gratis' : formatPrice(plan.price, currency, currencySymbol, exchangeRate)}
+                    </span>
+                    {!isFree && <span className="text-sm text-muted-foreground font-normal">/mes</span>}
+                    {plan.trial_days > 0 && <span className="text-xs text-green-600 block mt-1">{plan.trial_days} días de prueba</span>}
+                  </div>
+
+                  <ul className="space-y-1.5 mb-6 flex-1">
+                    {(plan.features || []).slice(0, 5).map((f: string) => (
+                      <li key={f} className="flex items-start gap-2 text-sm text-muted-foreground">
+                        <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />{f}
+                      </li>
                     ))}
-                  </tbody>
-                </table>
-              </div>
+                  </ul>
+
+                  {isCurrent ? (
+                    <div className="text-center text-sm font-medium text-green-600 py-2.5 border border-green-500/30 rounded-lg bg-green-500/5">Tu plan actual</div>
+                  ) : (
+                    <button onClick={() => handleSelectPlan(plan)} disabled={isLoading}
+                      className={cn(
+                        'w-full py-2.5 rounded-lg text-sm font-semibold transition-colors flex items-center justify-center gap-2',
+                        plan.is_popular
+                          ? 'bg-primary text-white hover:bg-primary/90'
+                          : 'border border-border hover:bg-muted text-foreground',
+                        isLoading && 'opacity-60'
+                      )}>
+                      {isLoading ? <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" /> : null}
+                      {user ? (isFree ? 'Activar gratis' : 'Adquirir') : 'Comenzar'}
+                      {!isLoading && <ArrowRight className="w-4 h-4" />}
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* ── Comparison Table: Dense, scannable ───────────────────────────────── */}
+          <div className="bg-card border border-border rounded-xl overflow-hidden">
+            <div className="px-5 py-4 border-b border-border">
+              <h2 className="font-semibold text-foreground">Comparativa</h2>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-muted/50 border-b border-border">
+                  <tr>
+                    <th className="text-left px-5 py-3 font-medium text-muted-foreground">Característica</th>
+                    {sortedPlans.map(p => (
+                      <th key={p.id} className="text-center px-4 py-3 font-semibold text-foreground whitespace-nowrap">{p.name}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-b border-border/50">
+                    <td className="px-5 py-3 text-muted-foreground">Precio</td>
+                    {sortedPlans.map(p => (
+                      <td key={p.id} className="text-center px-4 py-3 font-medium">
+                        {p.is_free || Number(p.price) === 0 ? 'Gratis' : formatPrice(p.price, currency, currencySymbol, exchangeRate)}
+                      </td>
+                    ))}
+                  </tr>
+                  {sortedPlans[0]?.features?.map((feature: string, idx: number) => (
+                    <tr key={idx} className={cn('border-b border-border/50', idx % 2 === 1 && 'bg-muted/20')}>
+                      <td className="px-5 py-3 text-muted-foreground">{feature}</td>
+                      {sortedPlans.map(p => {
+                        const has = p.features?.includes(feature);
+                        return (
+                          <td key={p.id} className="text-center px-4 py-3">
+                            {has ? <CheckCircle className="w-4 h-4 text-green-500 mx-auto" /> : <X className="w-3 h-3 text-muted-foreground/40 mx-auto" />}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
-        </section>
+        </div>
+      </section>
+
       <Footer />
     </div>
   );
