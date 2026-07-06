@@ -306,7 +306,7 @@ export default function NosotrosPage() {
       </section>
 
       {/* ── CTA ──────────────────────────────────────────────────────────────── */}
-      <section className="relative py-32 overflow-hidden bg-foreground">
+      <section className="relative py-32 overflow-hidden bg-[#0a0a0a] dark:bg-black">
         <div className="absolute inset-0 bg-dub-grid-dark opacity-50" />
         <div className="absolute top-[-30%] left-[-10%] w-[60%] h-[70%] bg-gradient-to-br from-primary/20 via-blue-500/10 to-transparent rounded-full blur-[100px]" />
         <div className="absolute top-[10%] right-[-20%] w-[50%] h-[60%] bg-gradient-to-bl from-blue-500/15 via-primary/8 to-transparent rounded-full blur-[100px]" />
@@ -324,7 +324,7 @@ export default function NosotrosPage() {
               Unete a emprendedores que ya construyen su futuro con {companyName}.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link to="/registro" className="inline-flex items-center gap-2 px-8 py-4 bg-white text-foreground font-medium rounded-lg hover:bg-white/90 active:scale-[0.98] transition-all shadow-2xl text-base">
+              <Link to="/registro" className="inline-flex items-center gap-2 px-8 py-4 bg-white text-black font-medium rounded-lg hover:bg-white/90 active:scale-[0.98] transition-all shadow-2xl text-base">
                 Crear cuenta gratis <ArrowRight className="w-5 h-5" />
               </Link>
               <Link to="/empresa" className="inline-flex items-center gap-2 px-8 py-4 bg-white/10 backdrop-blur-sm border border-white/20 text-white font-medium rounded-lg hover:bg-white/15 transition-all text-base">

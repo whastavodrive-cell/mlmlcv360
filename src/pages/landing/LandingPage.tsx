@@ -3,7 +3,7 @@ import Navbar from '@/components/landing/Navbar';
 import Footer from '@/components/landing/Footer';
 import { Reveal, MouseGlow } from '@/components/landing/Reveal';
 import { testimonials, faqItems } from '@/lib/mockData';
-import { ArrowRight, CircleCheck as CheckCircle, Star, ChevronDown, Shield, Zap, Globe, Award, DollarSign, TrendingUp, Users, Lock, ShoppingBag, Bell, Network, CreditCard, Sparkles, ChartBar as BarChart3, Wallet } from 'lucide-react';
+import { ArrowRight, Check, Star, ChevronDown, Shield, Zap, Globe, Award, DollarSign, TrendingUp, Users, Lock, ShoppingBag, Bell, Network, CreditCard, Sparkles, ChartBar as BarChart3, Wallet } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuthStore } from '@/store/authStore';
@@ -14,44 +14,15 @@ import type { Product, ProductCategory } from '@/lib/storeTypes';
 import ProductCard from '@/components/store/ProductCard';
 import { Skeleton } from '@/components/ui/skeleton';
 
-// ── Bento feature grid ──────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════════════════════════════════════
+
 const bentoFeatures = [
-  {
-    label: 'Comisiones',
-    title: 'Gana en multiples niveles',
-    desc: '7% comision directa, 4% binaria y 2% unilevel. Todo calculado automaticamente, pagado cada 15 dias.',
-    icon: Wallet,
-    color: 'text-green-500',
-    bg: 'bg-green-500/10',
-    span: 'md:col-span-2',
-  },
-  {
-    label: 'Red',
-    title: 'Visualiza tu red',
-    desc: 'Panel genealogico interactivo con zoom y estadisticas en tiempo real.',
-    icon: Network,
-    color: 'text-blue-500',
-    bg: 'bg-blue-500/10',
-    span: '',
-  },
-  {
-    label: 'Rangos',
-    title: 'Sube de rango',
-    desc: 'Bonos progresivos. Cada nivel desbloquea beneficios exclusivos.',
-    icon: Award,
-    color: 'text-amber-500',
-    bg: 'bg-amber-500/10',
-    span: '',
-  },
-  {
-    label: 'Tienda',
-    title: 'Compra y gana',
-    desc: 'Cada compra genera comisiones automaticas para tu red.',
-    icon: ShoppingBag,
-    color: 'text-primary',
-    bg: 'bg-primary/10',
-    span: 'md:col-span-2',
-  },
+  { label: 'Comisiones', title: 'Gana en multiples niveles', desc: '7% directa, 4% binaria, 2% unilevel. Calculado automaticamente, pagado cada 15 dias.', icon: Wallet, color: 'text-green-500', bg: 'bg-green-500/10', span: 'md:col-span-2' },
+  { label: 'Red', title: 'Visualiza tu red', desc: 'Panel genealogico interactivo con zoom y estadisticas en tiempo real.', icon: Network, color: 'text-blue-500', bg: 'bg-blue-500/10', span: '' },
+  { label: 'Rangos', title: 'Sube de rango', desc: 'Bonos progresivos. Cada nivel desbloquea beneficios exclusivos.', icon: Award, color: 'text-amber-500', bg: 'bg-amber-500/10', span: '' },
+  { label: 'Tienda', title: 'Compra y gana', desc: 'Cada compra genera comisiones automaticas para tu red.', icon: ShoppingBag, color: 'text-primary', bg: 'bg-primary/10', span: 'md:col-span-2' },
 ];
 
 const statsItems = [
@@ -61,7 +32,16 @@ const statsItems = [
   { value: '+340%', label: 'Crecimiento anual', icon: TrendingUp, color: 'text-amber-500', bg: 'bg-amber-500/10' },
 ];
 
-// ── Store Section ─────────────────────────────────────────────────────────────
+const steps = [
+  { n: '1', title: 'Elige tu plan', desc: 'Free, Pro o Elite. Cambia cuando quieras, sin penalizacion.', icon: BarChart3, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+  { n: '2', title: 'Invita con tu codigo', desc: 'Un enlace unico. Tus referidos se suman automaticamente a tu red.', icon: Network, color: 'text-primary', bg: 'bg-primary/10' },
+  { n: '3', title: 'Recibe comisiones', desc: 'Cada 15 dias directo a tu cuenta. Sin tramites, sin demoras.', icon: DollarSign, color: 'text-green-500', bg: 'bg-green-500/10' },
+];
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// STORE SECTION
+// ═══════════════════════════════════════════════════════════════════════════════
+
 function StoreSection() {
   const database = useDatabase();
   const [categories, setCategories] = useState<ProductCategory[]>([]);
@@ -87,8 +67,8 @@ function StoreSection() {
   if (!loading && products.length === 0) return null;
 
   return (
-    <section className="py-20">
-      <div className="px-6 sm:px-8">
+    <section className="py-20 border-t border-border">
+      <div className="max-w-5xl mx-auto px-6 sm:px-8">
         <Reveal className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10">
           <div>
             <div className="flex items-center gap-2 mb-2">
@@ -139,7 +119,10 @@ function StoreSection() {
   );
 }
 
-// ── Dashboard mockup preview ───────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+// DASHBOARD PREVIEW
+// ═══════════════════════════════════════════════════════════════════════════════
+
 function DashboardPreview() {
   return (
     <div className="relative w-full max-w-[640px] mx-auto">
@@ -214,27 +197,15 @@ function DashboardPreview() {
   );
 }
 
-// ── Testimonials ──────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+// TESTIMONIALS
+// ═══════════════════════════════════════════════════════════════════════════════
+
 const extendedTestimonials = [
   ...testimonials,
-  {
-    id: '4', name: 'Sandra Palomino', role: 'Emprendedora, Trujillo',
-    avatar: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=100',
-    content: 'La automatizacion de comisiones me ahorro horas de trabajo manual. Ahora me enfoco en expandir mi red.',
-    rank: 'platinum', earnings: 'S/ 6,100/mes',
-  },
-  {
-    id: '5', name: 'Diego Ramirez', role: 'Profesional independiente, Piura',
-    avatar: 'https://images.pexels.com/photos/1680172/pexels-photo-1680172.jpeg?auto=compress&cs=tinysrgb&w=100',
-    content: 'Escale de Bronce a Platino en 4 meses. El panel de reportes me ayuda a identificar que parte de mi red necesita atencion.',
-    rank: 'platinum', earnings: 'S/ 5,500/mes',
-  },
-  {
-    id: '6', name: 'Luciana Flores', role: 'Comerciante, Ica',
-    avatar: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=100',
-    content: 'El soporte 24/7 es increible. Tuve una duda un domingo y en 15 minutos tenia la respuesta. Eso genera mucha confianza.',
-    rank: 'gold', earnings: 'S/ 3,800/mes',
-  },
+  { id: '4', name: 'Sandra Palomino', role: 'Emprendedora, Trujillo', avatar: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=100', content: 'La automatizacion de comisiones me ahorro horas de trabajo manual. Ahora me enfoco en expandir mi red.', rank: 'platinum', earnings: 'S/ 6,100/mes' },
+  { id: '5', name: 'Diego Ramirez', role: 'Profesional independiente, Piura', avatar: 'https://images.pexels.com/photos/1680172/pexels-photo-1680172.jpeg?auto=compress&cs=tinysrgb&w=100', content: 'Escale de Bronce a Platino en 4 meses. El panel de reportes me ayuda a identificar que parte de mi red necesita atencion.', rank: 'platinum', earnings: 'S/ 5,500/mes' },
+  { id: '6', name: 'Luciana Flores', role: 'Comerciante, Ica', avatar: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=100', content: 'El soporte 24/7 es increible. Tuve una duda un domingo y en 15 minutos tenia la respuesta. Eso genera mucha confianza.', rank: 'gold', earnings: 'S/ 3,800/mes' },
 ];
 
 function TestimonialCard({ t }: { t: typeof testimonials[0] }) {
@@ -296,9 +267,12 @@ function StatsCarousel() {
   );
 }
 
-// ── Main Landing Page ─────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+// MAIN
+// ═══════════════════════════════════════════════════════════════════════════════
+
 export default function LandingPage() {
-  const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [openFaq, setOpenFaq] = useState<number | null>(0);
   const { plans: allPlans, ranks, currency, currencySymbol, exchangeRate } = useConfig();
   const plans = allPlans.filter(p => p.is_active);
   const { user } = useAuthStore();
@@ -323,13 +297,13 @@ export default function LandingPage() {
 
       <Navbar />
 
-      {/* ── HERO ────────────────────────────────────────────────────────────── */}
+      {/* ── HERO ───────────────────────────────────────────────────────────── */}
       <section className="pt-20 pb-24">
-        <div className="px-6 sm:px-8 text-center">
+        <div className="max-w-3xl mx-auto px-6 sm:px-8 text-center">
           <Reveal>
             <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary/10 border border-primary/20 rounded-full text-xs font-medium text-primary mb-6">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>Plata MLM lider en Latinoamerica</span>
+              <span>Plataforma MLM lider en Latinoamerica</span>
               <span className="w-px h-3 bg-primary/20" />
               <span className="text-primary/70">Verificado</span>
             </div>
@@ -352,7 +326,7 @@ export default function LandingPage() {
           <Reveal delay={300}>
             <div className="flex flex-col sm:flex-row gap-3 justify-center mb-10">
               <Link to={user ? '/dashboard' : '/registro'}
-                className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-foreground text-background font-medium rounded-lg hover:bg-foreground/90 active:scale-[0.98] transition-all text-sm">
+                className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-foreground text-background font-medium rounded-lg hover:opacity-90 active:scale-[0.98] transition-all text-sm">
                 {user ? 'Ir a mi Panel' : 'Empezar gratis'} <ArrowRight className="w-4 h-4" />
               </Link>
               <Link to="/planes"
@@ -367,7 +341,7 @@ export default function LandingPage() {
               {[
                 { icon: Lock, text: 'SSL seguro', color: 'text-green-500' },
                 { icon: Shield, text: 'INDECOPI', color: 'text-blue-500' },
-                { icon: CheckCircle, text: 'Sin permanencia', color: 'text-primary' },
+                { icon: Check, text: 'Sin permanencia', color: 'text-primary' },
                 { icon: CreditCard, text: 'Pago cada 15 dias', color: 'text-amber-500' },
               ].map(item => (
                 <span key={item.text} className="flex items-center gap-1.5">
@@ -379,20 +353,21 @@ export default function LandingPage() {
           </Reveal>
         </div>
 
-        {/* Dashboard preview */}
-        <Reveal delay={500} className="mt-16 px-6 sm:px-8">
-          <DashboardPreview />
+        <Reveal delay={500} className="mt-16">
+          <div className="max-w-3xl mx-auto px-6 sm:px-8">
+            <DashboardPreview />
+          </div>
         </Reveal>
       </section>
 
-      {/* ── STATS CAROUSEL ───────────────────────────────────────────────────── */}
+      {/* ── STATS ──────────────────────────────────────────────────────────── */}
       <div className="border-y border-border bg-muted/20">
         <StatsCarousel />
       </div>
 
-      {/* ── BENTO FEATURES ──────────────────────────────────────────────────── */}
+      {/* ── BENTO FEATURES ─────────────────────────────────────────────────── */}
       <section className="py-20">
-        <div className="px-6 sm:px-8">
+        <div className="max-w-5xl mx-auto px-6 sm:px-8">
           <Reveal className="text-center mb-14">
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground mb-4 tracking-tight">
               Diseñado para <span className="text-gradient-animated">escalar</span>
@@ -419,9 +394,9 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── HOW IT WORKS ────────────────────────────────────────────────────── */}
+      {/* ── HOW IT WORKS ───────────────────────────────────────────────────── */}
       <section className="py-20 border-t border-border">
-        <div className="px-6 sm:px-8">
+        <div className="max-w-5xl mx-auto px-6 sm:px-8">
           <Reveal className="text-center mb-16">
             <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-3 tracking-tight">
               De cero a <span className="text-gradient-animated">comisiones</span> en minutos
@@ -430,34 +405,32 @@ export default function LandingPage() {
           </Reveal>
 
           <Reveal>
-            <div className="relative max-w-3xl mx-auto">
-              <div className="hidden md:block absolute top-7 left-[calc(16.67%+1rem)] right-[calc(16.67%+1rem)] h-px bg-border" />
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {[
-                  { n: '1', title: 'Elige tu plan', desc: 'Free Trial, Pro o Elite. Cambia cuando quieras, sin penalizacion.', icon: BarChart3, color: 'text-blue-500', bg: 'bg-blue-500/10 border-blue-500/20' },
-                  { n: '2', title: 'Invita con tu codigo', desc: 'Un enlace unico. Tus referidos se suman automaticamente a tu red.', icon: Network, color: 'text-primary', bg: 'bg-primary/10 border-primary/20' },
-                  { n: '3', title: 'Recibe comisiones', desc: 'Cada 15 dias directo a tu cuenta. Sin tramites, sin demoras.', icon: DollarSign, color: 'text-green-500', bg: 'bg-green-500/10 border-green-500/20' },
-                ].map(step => (
-                  <div key={step.n} className="text-center relative">
-                    <div className={cn('w-14 h-14 rounded-xl border-2 flex items-center justify-center mx-auto mb-4 relative z-10 bg-background', step.bg)}>
-                      <step.icon className={cn('w-6 h-6', step.color)} />
-                    </div>
-                    <div className="text-xs font-semibold text-muted-foreground mb-1.5">PASO {step.n}</div>
-                    <h3 className="font-bold text-foreground mb-2">{step.title}</h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">{step.desc}</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {steps.map((step, i) => (
+                <div key={step.n} className="text-center">
+                  <div className={cn('w-14 h-14 rounded-xl flex items-center justify-center mx-auto mb-4', step.bg)}>
+                    <step.icon className={cn('w-6 h-6', step.color)} />
                   </div>
-                ))}
-              </div>
+                  <div className="text-xs font-semibold text-muted-foreground mb-1.5">PASO {step.n}</div>
+                  <h3 className="font-bold text-foreground mb-2">{step.title}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed max-w-xs mx-auto">{step.desc}</p>
+                  {i < steps.length - 1 && (
+                    <div className="hidden md:block absolute">
+                      <ArrowRight className="w-5 h-5 text-border" />
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           </Reveal>
         </div>
       </section>
 
-      {/* ── RANKS ───────────────────────────────────────────────────────────── */}
+      {/* ── RANKS ──────────────────────────────────────────────────────────── */}
       {ranks.filter(r => r.is_active !== false).length > 0 && (
         <section className="py-20 border-t border-border">
-          <div className="px-6 sm:px-8">
-            <div className="grid lg:grid-cols-2 gap-12 items-center max-w-5xl mx-auto">
+          <div className="max-w-5xl mx-auto px-6 sm:px-8">
+            <div className="grid lg:grid-cols-2 gap-12 items-center">
               <Reveal>
                 <div className="flex items-center gap-2 mb-4">
                   <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
@@ -499,10 +472,10 @@ export default function LandingPage() {
         </section>
       )}
 
-      {/* ── PLANS ───────────────────────────────────────────────────────────── */}
+      {/* ── PLANS ──────────────────────────────────────────────────────────── */}
       {plans.length > 0 && (
         <section className="py-20 border-t border-border" id="planes">
-          <div className="px-6 sm:px-8">
+          <div className="max-w-5xl mx-auto px-6 sm:px-8">
             <Reveal className="text-center mb-14">
               <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-3 tracking-tight">
                 <span className="text-gradient-animated">Elige tu plan</span>
@@ -512,7 +485,7 @@ export default function LandingPage() {
 
             <Reveal delay={100}>
               <div className={cn(
-                'grid gap-4 max-w-5xl mx-auto',
+                'grid gap-4',
                 plans.length <= 3 ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
               )}>
                 {plans.map(plan => {
@@ -522,7 +495,7 @@ export default function LandingPage() {
                     <div key={plan.id} className={cn(
                       'bg-card rounded-xl p-6 flex flex-col relative overflow-hidden transition-all card-lift',
                       plan.is_popular
-                        ? 'border-2 border-foreground shadow-lg'
+                        ? 'border-2 border-foreground'
                         : 'border border-border hover:border-foreground/20'
                     )}>
                       {plan.is_popular && (
@@ -549,7 +522,7 @@ export default function LandingPage() {
                       <ul className="space-y-2.5 mb-6 flex-1">
                         {(plan.features || []).slice(0, 5).map((f: string) => (
                           <li key={f} className="flex items-start gap-2 text-sm text-muted-foreground">
-                            <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
+                            <Check className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
                             <span>{f}</span>
                           </li>
                         ))}
@@ -561,7 +534,7 @@ export default function LandingPage() {
                           className={cn(
                             'text-center py-3 rounded-lg text-sm font-medium transition-all',
                             plan.is_popular
-                              ? 'bg-foreground text-background hover:bg-foreground/90'
+                              ? 'bg-foreground text-background hover:opacity-90'
                               : 'border border-border hover:bg-muted hover:border-foreground/30'
                           )}>
                           {isFree ? 'Comenzar gratis' : 'Activar plan'}
@@ -580,14 +553,12 @@ export default function LandingPage() {
         </section>
       )}
 
-      {/* ── STORE ───────────────────────────────────────────────────────────── */}
-      <div className="border-t border-border">
-        <StoreSection />
-      </div>
+      {/* ── STORE ──────────────────────────────────────────────────────────── */}
+      <StoreSection />
 
-      {/* ── TESTIMONIALS ─────────────────────────────────────────────────────── */}
+      {/* ── TESTIMONIALS ───────────────────────────────────────────────────── */}
       <section className="py-20 border-t border-border">
-        <div className="px-6 sm:px-8 mb-12 text-center">
+        <div className="max-w-5xl mx-auto px-6 sm:px-8 mb-12 text-center">
           <Reveal>
             <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-3 tracking-tight">
               Miles de afiliados ya <span className="text-gradient-animated">ganan</span>
@@ -598,9 +569,9 @@ export default function LandingPage() {
         <TestimonialsCarousel />
       </section>
 
-      {/* ── FAQ ─────────────────────────────────────────────────────────────── */}
+      {/* ── FAQ ────────────────────────────────────────────────────────────── */}
       <section className="py-20 border-t border-border">
-        <div className="px-6 sm:px-8 max-w-3xl mx-auto">
+        <div className="max-w-3xl mx-auto px-6 sm:px-8">
           <Reveal className="text-center mb-14">
             <div className="inline-flex items-center gap-2 mb-4 px-3 py-1 bg-primary/10 border border-primary/20 rounded-full">
               <Sparkles className="w-3.5 h-3.5 text-primary" />
@@ -618,28 +589,20 @@ export default function LandingPage() {
                 <div key={i} className={cn(
                   'bg-card border rounded-xl overflow-hidden transition-all',
                   openFaq === i
-                    ? 'border-foreground/30 shadow-md'
+                    ? 'border-foreground/30'
                     : 'border-border hover:border-foreground/20'
                 )}>
                   <button onClick={() => setOpenFaq(openFaq === i ? null : i)}
                     className="w-full flex items-center justify-between px-5 py-4 text-left gap-4 group">
-                    <div className="flex items-center gap-4">
-                      <div className={cn(
-                        'w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-all text-xs font-bold',
-                        openFaq === i ? 'bg-foreground text-background' : 'bg-muted group-hover:bg-foreground/10'
-                      )}>
-                        {i + 1}
-                      </div>
-                      <span className="text-base font-semibold text-foreground">{faq.question}</span>
-                    </div>
-                    <ChevronDown className={cn('w-4 h-4 text-muted-foreground transition-transform', openFaq === i && 'rotate-180')} />
+                    <span className="text-base font-semibold text-foreground">{faq.question}</span>
+                    <ChevronDown className={cn('w-4 h-4 text-muted-foreground transition-transform shrink-0', openFaq === i && 'rotate-180')} />
                   </button>
                   <div className={cn(
                     'grid transition-all',
                     openFaq === i ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
                   )}>
                     <div className="overflow-hidden">
-                      <div className="px-5 pb-4 pl-[4rem]">
+                      <div className="px-5 pb-4">
                         <p className="text-muted-foreground leading-relaxed text-sm">{faq.answer}</p>
                       </div>
                     </div>
@@ -651,13 +614,13 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── CTA ──────────────────────────────────────────────────────────────── */}
-      <section className="relative py-32 overflow-hidden bg-foreground">
-        <div className="absolute inset-0 bg-dub-grid-dark opacity-50" />
-        <div className="absolute top-[-30%] left-[-10%] w-[60%] h-[70%] bg-gradient-to-br from-primary/20 via-blue-500/10 to-transparent rounded-full blur-[100px]" />
-        <div className="absolute top-[10%] right-[-20%] w-[50%] h-[60%] bg-gradient-to-bl from-blue-500/15 via-primary/8 to-transparent rounded-full blur-[100px]" />
+      {/* ── CTA — dark section with FIXED dark colors (not theme-dependent) ── */}
+      <section className="relative py-32 overflow-hidden bg-[#0a0a0a] dark:bg-black">
+        <div className="absolute inset-0 bg-dub-grid-dark opacity-40" />
+        <div className="absolute top-[-30%] left-[-10%] w-[60%] h-[70%] bg-gradient-to-br from-blue-600/20 via-blue-500/10 to-transparent rounded-full blur-[100px]" />
+        <div className="absolute top-[10%] right-[-20%] w-[50%] h-[60%] bg-gradient-to-bl from-blue-400/15 via-blue-500/8 to-transparent rounded-full blur-[100px]" />
 
-        <div className="relative z-10 max-w-4xl mx-auto px-6 text-center">
+        <div className="relative z-10 max-w-3xl mx-auto px-6 text-center">
           <Reveal>
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/15 rounded-full text-xs font-medium text-white/80 mb-8">
               <Zap className="w-3.5 h-3.5 text-amber-400" />
@@ -672,7 +635,7 @@ export default function LandingPage() {
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link to={user ? '/dashboard' : '/registro'}
-                className="inline-flex items-center gap-2 px-8 py-4 bg-white text-foreground font-medium rounded-lg hover:bg-white/90 active:scale-[0.98] transition-all shadow-2xl text-base">
+                className="inline-flex items-center gap-2 px-8 py-4 bg-white text-black font-medium rounded-lg hover:bg-white/90 active:scale-[0.98] transition-all shadow-2xl text-base">
                 {user ? 'Ir a mi Panel' : 'Crear cuenta gratis'} <ArrowRight className="w-5 h-5" />
               </Link>
               <Link to="/contacto"
@@ -681,10 +644,10 @@ export default function LandingPage() {
               </Link>
             </div>
             <div className="flex flex-wrap items-center justify-center gap-8 mt-12 text-sm text-white/40">
-              <span className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-white/60" /> Cuenta gratuita</span>
-              <span className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-white/60" /> Sin permanencia</span>
-              <span className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-white/60" /> Pago cada 15 dias</span>
-              <span className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-white/60" /> Soporte 24/7</span>
+              <span className="flex items-center gap-2"><Check className="w-4 h-4 text-white/60" /> Cuenta gratuita</span>
+              <span className="flex items-center gap-2"><Check className="w-4 h-4 text-white/60" /> Sin permanencia</span>
+              <span className="flex items-center gap-2"><Check className="w-4 h-4 text-white/60" /> Pago cada 15 dias</span>
+              <span className="flex items-center gap-2"><Check className="w-4 h-4 text-white/60" /> Soporte 24/7</span>
             </div>
           </Reveal>
         </div>
