@@ -1,10 +1,11 @@
 import { Link } from '@/lib/router';
 import Navbar from '@/components/landing/Navbar';
 import Footer from '@/components/landing/Footer';
+import { Reveal, MouseGlow } from '@/components/landing/Reveal';
 import { testimonials, faqItems } from '@/lib/mockData';
-import { ArrowRight, CircleCheck as CheckCircle, Star, ChevronDown, Shield, Zap, Globe, Award, DollarSign, TrendingUp, Users, Lock, ShoppingBag, Bell, ChartBar as BarChart2, Network, CreditCard, Sparkles } from 'lucide-react';
+import { ArrowRight, CircleCheck as CheckCircle, Star, ChevronDown, Shield, Zap, Globe, Award, DollarSign, TrendingUp, Users, Lock, ShoppingBag, Bell, Network, CreditCard, Sparkles, ChartBar as BarChart3, Wallet } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuthStore } from '@/store/authStore';
 import { useConfig, formatPrice } from '@/store/configStore';
 import { useDatabase } from '@/lib/backend';
@@ -24,7 +25,7 @@ const featureBlocks = [
       { value: '4%', label: 'Binaria' },
       { value: '15d', label: 'Ciclo de pago' },
     ],
-    icon: DollarSign,
+    icon: Wallet,
     color: 'text-green-500',
     bg: 'bg-green-500/10',
   },
@@ -56,7 +57,6 @@ const featureBlocks = [
   },
 ];
 
-// ── Stats for carousel ───────────────────────────────────────────────────────
 const statsItems = [
   { value: '12,540+', label: 'Afiliados activos', icon: Users, color: 'text-blue-500', bg: 'bg-blue-500/10' },
   { value: 'S/ 2.8M+', label: 'Comisiones pagadas', icon: DollarSign, color: 'text-green-500', bg: 'bg-green-500/10' },
@@ -89,17 +89,15 @@ function StoreSection() {
   useEffect(() => { load(); }, [load]);
 
   const filtered = activeCat ? products.filter(p => p.category_id === activeCat) : products;
-
   if (!loading && products.length === 0) return null;
 
   return (
     <section className="py-24 relative overflow-hidden">
-      {/* Faded grid background */}
-      <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,rgba(0,0,0,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(0,0,0,0.03)_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:60px_60px]" />
+      <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,hsl(var(--border)/0.3)_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--border)/0.3)_1px,transparent_1px)] bg-[size:60px_60px] [mask-image:radial-gradient(ellipse_80%_60%_at_50%_50%,#000_40%,transparent_100%)]" />
       <div className="absolute top-0 right-0 w-[500px] h-[300px] bg-primary/5 rounded-full blur-[100px] -z-10" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10">
+        <Reveal className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10">
           <div>
             <div className="flex items-center gap-2 mb-2">
               <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
@@ -116,7 +114,7 @@ function StoreSection() {
             Ver tienda completa <ArrowRight className="w-4 h-4" />
             {itemCount > 0 && <span className="bg-primary text-white text-xs font-bold px-2 py-0.5 rounded-full">{itemCount}</span>}
           </Link>
-        </div>
+        </Reveal>
 
         {categories.length > 0 && (
           <div className="flex gap-2 overflow-x-auto pb-4 scrollbar-hide mb-6">
@@ -149,21 +147,15 @@ function StoreSection() {
   );
 }
 
-// ── Dashboard mockup preview (hero right side) ────────────────────────────────
+// ── Dashboard mockup preview ───────────────────────────────────────────────────
 function DashboardPreview() {
   const [origin, setOrigin] = useState('');
-
-  useEffect(() => {
-    setOrigin(window.location.origin);
-  }, []);
-
+  useEffect(() => { setOrigin(window.location.origin); }, []);
   const dashboardUrl = origin ? `${origin}/dashboard` : 'app.mlm360.pe/dashboard';
 
   return (
     <div className="relative w-full max-w-[520px] mx-auto lg:ml-auto">
-      {/* Main card */}
       <div className="bg-card border border-border rounded-2xl shadow-2xl overflow-hidden">
-        {/* Mini top bar */}
         <div className="bg-muted/60 border-b border-border px-4 py-2.5 flex items-center gap-2">
           <div className="w-2.5 h-2.5 rounded-full bg-red-400" />
           <div className="w-2.5 h-2.5 rounded-full bg-yellow-400" />
@@ -172,9 +164,7 @@ function DashboardPreview() {
             <div className="bg-muted rounded-md px-3 py-1 text-[10px] text-muted-foreground text-center truncate">{dashboardUrl}</div>
           </div>
         </div>
-
         <div className="p-5">
-          {/* Stats row */}
           <div className="grid grid-cols-3 gap-3 mb-4">
             {[
               { label: 'Comisiones', value: 'S/ 3,240', trend: '+12%', color: 'text-green-500' },
@@ -188,21 +178,14 @@ function DashboardPreview() {
               </div>
             ))}
           </div>
-
-          {/* Chart placeholder */}
           <div className="bg-muted/40 rounded-xl p-3 mb-4">
             <div className="flex items-end gap-1 h-12">
               {[30, 50, 40, 70, 55, 80, 65, 90, 75, 95, 85, 100].map((h, i) => (
-                <div key={i} className={cn(
-                  'flex-1 rounded-sm transition-all',
-                  i === 11 ? 'bg-primary' : 'bg-primary/20'
-                )} style={{ height: `${h}%` }} />
+                <div key={i} className={cn('flex-1 rounded-sm transition-all', i === 11 ? 'bg-primary' : 'bg-primary/20')} style={{ height: `${h}%` }} />
               ))}
             </div>
             <div className="text-[10px] text-muted-foreground mt-2">Comisiones — últimas 12 semanas</div>
           </div>
-
-          {/* Recent activity */}
           <div className="space-y-2">
             {[
               { icon: DollarSign, text: 'Comisión binaria de Juan P.', val: '+S/120', color: 'text-green-500 bg-green-500/10' },
@@ -219,8 +202,6 @@ function DashboardPreview() {
           </div>
         </div>
       </div>
-
-      {/* Floating pills */}
       <div className="absolute -top-4 -right-4 bg-card border border-green-500/30 rounded-xl px-3 py-2 shadow-lg animate-bounce dark:shadow-green-500/10" style={{ animationDuration: '3s' }}>
         <div className="flex items-center gap-2">
           <Bell className="w-3.5 h-3.5 text-green-500" />
@@ -230,13 +211,12 @@ function DashboardPreview() {
           </div>
         </div>
       </div>
-
       <div className="absolute -bottom-4 -left-4 bg-card border border-amber-500/30 rounded-xl px-3 py-2 shadow-lg animate-bounce dark:shadow-amber-500/10" style={{ animationDuration: '4s', animationDelay: '1s' }}>
         <div className="flex items-center gap-2">
           <Award className="w-3.5 h-3.5 text-amber-500" />
           <div>
             <div className="text-[10px] font-bold text-foreground">Nuevo rango</div>
-            <div className="text-[10px] text-amber-500 font-bold">💎 Diamante</div>
+            <div className="text-[10px] text-amber-500 font-bold">Diamante</div>
           </div>
         </div>
       </div>
@@ -244,35 +224,26 @@ function DashboardPreview() {
   );
 }
 
-// ── Testimonials double infinite carousel ─────────────────────────────────────
+// ── Testimonials carousel ──────────────────────────────────────────────────────
 const extendedTestimonials = [
   ...testimonials,
   {
-    id: '4',
-    name: 'Sandra Palomino',
-    role: 'Emprendedora, Trujillo',
+    id: '4', name: 'Sandra Palomino', role: 'Emprendedora, Trujillo',
     avatar: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=100',
     content: 'La automatización de comisiones me ahorró horas de trabajo manual. Ahora me enfoco en expandir mi red.',
-    rank: 'platinum',
-    earnings: 'S/ 6,100/mes',
+    rank: 'platinum', earnings: 'S/ 6,100/mes',
   },
   {
-    id: '5',
-    name: 'Diego Ramírez',
-    role: 'Profesional independiente, Piura',
+    id: '5', name: 'Diego Ramírez', role: 'Profesional independiente, Piura',
     avatar: 'https://images.pexels.com/photos/1680172/pexels-photo-1680172.jpeg?auto=compress&cs=tinysrgb&w=100',
     content: 'Escalé de Bronce a Platino en 4 meses. El panel de reportes me ayuda a identificar qué parte de mi red necesita atención.',
-    rank: 'platinum',
-    earnings: 'S/ 5,500/mes',
+    rank: 'platinum', earnings: 'S/ 5,500/mes',
   },
   {
-    id: '6',
-    name: 'Luciana Flores',
-    role: 'Comerciante, Ica',
+    id: '6', name: 'Luciana Flores', role: 'Comerciante, Ica',
     avatar: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=100',
     content: 'El soporte 24/7 es increíble. Tuve una duda un domingo y en 15 minutos tenía la respuesta. Eso genera mucha confianza.',
-    rank: 'gold',
-    earnings: 'S/ 3,800/mes',
+    rank: 'gold', earnings: 'S/ 3,800/mes',
   },
 ];
 
@@ -298,7 +269,6 @@ function TestimonialCard({ t }: { t: typeof testimonials[0] }) {
 function TestimonialsCarousel() {
   const row1 = [...extendedTestimonials, ...extendedTestimonials];
   const row2 = [...extendedTestimonials, ...extendedTestimonials].reverse();
-
   return (
     <div className="relative overflow-hidden">
       <div className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
@@ -313,10 +283,8 @@ function TestimonialsCarousel() {
   );
 }
 
-// ── Stats Carousel ───────────────────────────────────────────────────────────
 function StatsCarousel() {
   const items = [...statsItems, ...statsItems];
-
   return (
     <div className="relative overflow-hidden py-6">
       <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
@@ -344,61 +312,83 @@ export default function LandingPage() {
   const { plans: allPlans, ranks, currency, currencySymbol, exchangeRate } = useConfig();
   const plans = allPlans.filter(p => p.is_active);
   const { user } = useAuthStore();
+  const glowRef = useRef<HTMLDivElement>(null);
+
+  // Mouse-follow glow
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      const glow = glowRef.current;
+      if (!glow) return;
+      glow.style.left = `${e.clientX}px`;
+      glow.style.top = `${e.clientY}px`;
+      glow.classList.add('active');
+    };
+    window.addEventListener('mousemove', handler);
+    return () => window.removeEventListener('mousemove', handler);
+  }, []);
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
-      {/* Carousel keyframes injected into <style> */}
       <style>{`
-        @keyframes marquee-left {
-          0% { transform: translateX(0); }
-          100% { transform: translateX(-50%); }
-        }
-        @keyframes marquee-right {
-          0% { transform: translateX(-50%); }
-          100% { transform: translateX(0); }
-        }
+        @keyframes marquee-left { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+        @keyframes marquee-right { 0% { transform: translateX(-50%); } 100% { transform: translateX(0); } }
       `}</style>
+      <MouseGlow />
+      <div id="mouse-glow" ref={glowRef} className="mouse-glow" />
 
       <Navbar />
 
       {/* ── HERO ────────────────────────────────────────────────────────────── */}
-      <section className="relative pt-16 pb-28 overflow-hidden">
-        {/* Aurora effect background */}
+      <section className="relative pt-20 pb-28 overflow-hidden">
+        {/* Faded grid background — dub.co style */}
+        <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,hsl(var(--border)/0.4)_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--border)/0.4)_1px,transparent_1px)] bg-[size:64px_64px] [mask-image:radial-gradient(ellipse_70%_60%_at_50%_0%,#000_50%,transparent_100%)]" />
+
+        {/* Aurora glow */}
         <div className="absolute inset-0 -z-10 overflow-hidden">
-          <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[60%] bg-gradient-to-br from-primary/15 via-blue-500/10 to-transparent rounded-full blur-[80px] animate-pulse" style={{ animationDuration: '8s' }} />
-          <div className="absolute top-[20%] right-[-10%] w-[40%] h-[50%] bg-gradient-to-bl from-blue-500/10 via-primary/8 to-transparent rounded-full blur-[80px] animate-pulse" style={{ animationDuration: '10s', animationDelay: '2s' }} />
-          <div className="absolute bottom-[-20%] left-[20%] w-[60%] h-[40%] bg-gradient-to-t from-primary/5 to-transparent rounded-full blur-[100px]" />
+          <div className="absolute top-[-20%] left-1/2 -translate-x-1/2 w-[60%] h-[50%] bg-gradient-to-b from-primary/15 via-primary/5 to-transparent rounded-full blur-[80px]" />
         </div>
 
-        {/* Faded grid */}
-        <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,rgba(0,0,0,0.04)_1px,transparent_1px),linear-gradient(to_bottom,rgba(0,0,0,0.04)_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:80px_80px]" />
-
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-14 items-center">
-            {/* Left: copy */}
-            <div>
-              <h1 className="text-4xl sm:text-5xl lg:text-[3.5rem] font-bold text-foreground leading-[1.05] tracking-tight mb-7">
+          {/* Centered hero — dub.co style */}
+          <div className="max-w-3xl mx-auto text-center">
+            <Reveal>
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-primary/10 border border-primary/20 rounded-full text-xs font-semibold text-primary mb-6">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Plata MLM líder en Latinoamérica</span>
+                <span className="w-px h-3 bg-primary/20" />
+                <span className="text-primary/70">Verificado</span>
+              </div>
+            </Reveal>
+
+            <Reveal delay={100}>
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground leading-[1.05] tracking-tight mb-6">
                 Construye tu red.<br />
-                Cobra comisiones<br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-blue-400 to-primary bg-[length:200%_auto] animate-[gradient_4s_linear_infinite]">automáticamente.</span>
+                Cobra comisiones{' '}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-blue-500 to-primary bg-[length:200%_auto] animate-[gradient_4s_linear_infinite]">automáticamente.</span>
               </h1>
+            </Reveal>
 
-              <p className="text-base sm:text-lg text-muted-foreground max-w-lg mb-9 leading-relaxed">
-                MLM 360 es la plataforma multinivel que calcula, paga y visualiza tus comisiones en tiempo real. 7% directa, 4% binaria, pago cada 15 días.
+            <Reveal delay={200}>
+              <p className="text-base sm:text-lg text-muted-foreground max-w-xl mx-auto mb-9 leading-relaxed">
+                MLM 360 calcula, paga y visualiza tus comisiones en tiempo real. 7% directa, 4% binaria, pago cada 15 días.
               </p>
+            </Reveal>
 
-              <div className="flex flex-col sm:flex-row gap-3 mb-10">
+            <Reveal delay={300}>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center mb-10">
                 <Link to={user ? '/dashboard' : '/registro'}
-                  className="inline-flex items-center justify-center gap-2 px-7 py-4 bg-primary text-white font-bold rounded-xl hover:bg-primary/90 active:scale-[0.98] transition-all shadow-lg shadow-primary/25 text-sm">
+                  className="inline-flex items-center justify-center gap-2 px-7 py-3.5 bg-primary text-white font-bold rounded-xl hover:bg-primary/90 active:scale-[0.98] transition-all shadow-lg shadow-primary/25 text-sm">
                   {user ? 'Ir a mi Panel' : 'Empezar gratis'} <ArrowRight className="w-4 h-4" />
                 </Link>
                 <Link to="/planes"
-                  className="inline-flex items-center justify-center gap-2 px-7 py-4 bg-muted border border-border text-foreground font-medium rounded-xl hover:border-primary/40 transition-all text-sm">
+                  className="inline-flex items-center justify-center gap-2 px-7 py-3.5 bg-muted border border-border text-foreground font-medium rounded-xl hover:border-primary/40 transition-all text-sm">
                   Ver precios
                 </Link>
               </div>
+            </Reveal>
 
-              <div className="flex flex-wrap items-center gap-5 text-xs text-muted-foreground">
+            <Reveal delay={400}>
+              <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs text-muted-foreground">
                 {[
                   { icon: Lock, text: 'SSL seguro', color: 'text-green-500' },
                   { icon: Shield, text: 'INDECOPI', color: 'text-blue-500' },
@@ -411,11 +401,13 @@ export default function LandingPage() {
                   </span>
                 ))}
               </div>
-            </div>
-
-            {/* Right: dashboard preview */}
-            <DashboardPreview />
+            </Reveal>
           </div>
+
+          {/* Dashboard preview below — centered */}
+          <Reveal delay={500} className="mt-16">
+            <DashboardPreview />
+          </Reveal>
         </div>
       </section>
 
@@ -426,47 +418,48 @@ export default function LandingPage() {
 
       {/* ── FEATURE BLOCKS ──────────────────────────────────────────────────── */}
       <section className="py-28 relative overflow-hidden">
-        {/* Background effects */}
-        <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,rgba(0,0,0,0.02)_1px,transparent_1px),linear-gradient(to_bottom,rgba(0,0,0,0.02)_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,rgba(255,255,255,0.015)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.015)_1px,transparent_1px)] bg-[size:60px_60px]" />
+        <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,hsl(var(--border)/0.25)_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--border)/0.25)_1px,transparent_1px)] bg-[size:60px_60px] [mask-image:radial-gradient(ellipse_80%_60%_at_50%_50%,#000_40%,transparent_100%)]" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-primary/5 rounded-full blur-[100px] -z-10" />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
+          <Reveal className="text-center mb-16">
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground mb-4">
               Diseñado para <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-500">escalar</span>
             </h2>
             <p className="text-muted-foreground max-w-xl mx-auto">Cada funcionalidad resuelve un problema real del negocio multinivel.</p>
-          </div>
+          </Reveal>
 
           <div className="space-y-6">
             {featureBlocks.map((block, i) => (
-              <div key={block.label} className={cn(
-                'bg-card border border-border rounded-2xl p-8 lg:p-10 grid lg:grid-cols-2 gap-8 items-center hover:border-primary/20 transition-all',
-                i % 2 === 1 && 'lg:[&>*:first-child]:order-2'
-              )}>
-                <div>
-                  <div className="flex items-center gap-2 mb-4">
-                    <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center', block.bg)}>
-                      <block.icon className={cn('w-4 h-4', block.color)} />
+              <Reveal key={block.label} delay={i * 100}>
+                <div className={cn(
+                  'bg-card border border-border rounded-2xl p-8 lg:p-10 grid lg:grid-cols-2 gap-8 items-center hover:border-primary/20 transition-all',
+                  i % 2 === 1 && 'lg:[&>*:first-child]:order-2'
+                )}>
+                  <div>
+                    <div className="flex items-center gap-2 mb-4">
+                      <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center', block.bg)}>
+                        <block.icon className={cn('w-4 h-4', block.color)} />
+                      </div>
+                      <span className={cn('text-xs font-bold uppercase tracking-widest', block.color)}>{block.label}</span>
                     </div>
-                    <span className={cn('text-xs font-bold uppercase tracking-widest', block.color)}>{block.label}</span>
+                    <h3 className="text-xl sm:text-2xl font-bold text-foreground mb-3">{block.title}</h3>
+                    <p className="text-muted-foreground leading-relaxed mb-6">{block.desc}</p>
+                    <Link to={user ? '/dashboard' : '/registro'}
+                      className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:gap-3 transition-all">
+                      {user ? 'Ver en mi panel' : 'Comenzar ahora'} <ArrowRight className="w-4 h-4" />
+                    </Link>
                   </div>
-                  <h3 className="text-xl sm:text-2xl font-bold text-foreground mb-3">{block.title}</h3>
-                  <p className="text-muted-foreground leading-relaxed mb-6">{block.desc}</p>
-                  <Link to={user ? '/dashboard' : '/registro'}
-                    className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:gap-3 transition-all">
-                    {user ? 'Ver en mi panel' : 'Comenzar ahora'} <ArrowRight className="w-4 h-4" />
-                  </Link>
+                  <div className="grid grid-cols-3 gap-4">
+                    {block.stats.map(stat => (
+                      <div key={stat.label} className="bg-muted/60 rounded-xl p-4 text-center">
+                        <div className={cn('text-2xl font-bold mb-1', block.color)}>{stat.value}</div>
+                        <div className="text-xs text-muted-foreground leading-tight">{stat.label}</div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <div className="grid grid-cols-3 gap-4">
-                  {block.stats.map(stat => (
-                    <div key={stat.label} className="bg-muted/60 rounded-xl p-4 text-center">
-                      <div className={cn('text-2xl font-bold mb-1', block.color)}>{stat.value}</div>
-                      <div className="text-xs text-muted-foreground leading-tight">{stat.label}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              </Reveal>
             ))}
           </div>
         </div>
@@ -478,44 +471,46 @@ export default function LandingPage() {
         <div className="absolute bottom-0 left-0 w-[400px] h-[300px] bg-blue-500/5 rounded-full blur-[100px] -z-10" />
 
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
+          <Reveal className="text-center mb-16">
             <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-3">
               De cero a <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-500 to-emerald-500">comisiones</span> en minutos
             </h2>
             <p className="text-muted-foreground">Sin curva de aprendizaje. Sin configuraciones complicadas.</p>
-          </div>
+          </Reveal>
 
-          <div className="relative">
-            <div className="hidden md:block absolute top-7 left-[calc(16.67%+1rem)] right-[calc(16.67%+1rem)] h-px bg-border" />
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {[
-                { n: '1', title: 'Elige tu plan', desc: 'Free Trial, Pro o Elite. Cambia cuando quieras, sin penalización.', icon: BarChart2, color: 'text-blue-500', bg: 'bg-blue-500/10 border-blue-500/20' },
-                { n: '2', title: 'Invita con tu código', desc: 'Un enlace único. Tus referidos se suman automáticamente a tu red.', icon: Network, color: 'text-primary', bg: 'bg-primary/10 border-primary/20' },
-                { n: '3', title: 'Recibe comisiones', desc: 'Cada 15 días directo a tu cuenta. Sin trámites, sin demoras.', icon: DollarSign, color: 'text-green-500', bg: 'bg-green-500/10 border-green-500/20' },
-              ].map(step => (
-                <div key={step.n} className="text-center relative">
-                  <div className={cn('w-14 h-14 rounded-2xl border-2 flex items-center justify-center mx-auto mb-4 relative z-10', step.bg, 'bg-background')}>
-                    <step.icon className={cn('w-6 h-6', step.color)} />
+          <Reveal>
+            <div className="relative">
+              <div className="hidden md:block absolute top-7 left-[calc(16.67%+1rem)] right-[calc(16.67%+1rem)] h-px bg-border" />
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                {[
+                  { n: '1', title: 'Elige tu plan', desc: 'Free Trial, Pro o Elite. Cambia cuando quieras, sin penalización.', icon: BarChart3, color: 'text-blue-500', bg: 'bg-blue-500/10 border-blue-500/20' },
+                  { n: '2', title: 'Invita con tu código', desc: 'Un enlace único. Tus referidos se suman automáticamente a tu red.', icon: Network, color: 'text-primary', bg: 'bg-primary/10 border-primary/20' },
+                  { n: '3', title: 'Recibe comisiones', desc: 'Cada 15 días directo a tu cuenta. Sin trámites, sin demoras.', icon: DollarSign, color: 'text-green-500', bg: 'bg-green-500/10 border-green-500/20' },
+                ].map(step => (
+                  <div key={step.n} className="text-center relative">
+                    <div className={cn('w-14 h-14 rounded-2xl border-2 flex items-center justify-center mx-auto mb-4 relative z-10', step.bg, 'bg-background')}>
+                      <step.icon className={cn('w-6 h-6', step.color)} />
+                    </div>
+                    <div className="text-xs font-bold text-muted-foreground mb-1.5">PASO {step.n}</div>
+                    <h3 className="font-bold text-foreground mb-2">{step.title}</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{step.desc}</p>
                   </div>
-                  <div className="text-xs font-bold text-muted-foreground mb-1.5">PASO {step.n}</div>
-                  <h3 className="font-bold text-foreground mb-2">{step.title}</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{step.desc}</p>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
+          </Reveal>
         </div>
       </section>
 
       {/* ── RANKS ───────────────────────────────────────────────────────────── */}
       {ranks.filter(r => r.is_active !== false).length > 0 && (
         <section className="py-28 relative overflow-hidden">
-          <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,rgba(0,0,0,0.02)_1px,transparent_1px),linear-gradient(to_bottom,rgba(0,0,0,0.02)_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,rgba(255,255,255,0.015)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.015)_1px,transparent_1px)] bg-[size:60px_60px]" />
+          <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,hsl(var(--border)/0.25)_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--border)/0.25)_1px,transparent_1px)] bg-[size:60px_60px] [mask-image:radial-gradient(ellipse_80%_60%_at_50%_50%,#000_40%,transparent_100%)]" />
           <div className="absolute top-0 right-0 w-[500px] h-[400px] bg-amber-500/5 rounded-full blur-[100px] -z-10" />
 
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid lg:grid-cols-2 gap-12 items-center">
-              <div>
+              <Reveal>
                 <div className="flex items-center gap-2 mb-4">
                   <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
                     <Award className="w-4 h-4 text-amber-500" />
@@ -532,23 +527,25 @@ export default function LandingPage() {
                   className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:gap-3 transition-all">
                   {user ? 'Ver mis rangos' : 'Ver todos los rangos'} <ArrowRight className="w-4 h-4" />
                 </Link>
-              </div>
+              </Reveal>
 
-              <div className="grid grid-cols-2 gap-4">
-                {ranks.filter(r => r.is_active !== false).map(r => (
-                  <div key={r.id} className={cn(
-                    'bg-card rounded-2xl p-6 border transition-all hover:scale-[1.02] hover:shadow-lg',
-                    r.border_color || 'border-border'
-                  )}>
-                    <div className="text-4xl mb-4">{r.icon}</div>
-                    <div className={cn('font-bold text-lg mb-1', r.color || 'text-foreground')}>{r.name}</div>
-                    <div className="text-xs text-muted-foreground mb-2">Bono de rango</div>
-                    <div className="text-xl font-bold text-foreground">
-                      {formatPrice(r.bonus, currency, currencySymbol, exchangeRate)}
+              <Reveal delay={150}>
+                <div className="grid grid-cols-2 gap-4">
+                  {ranks.filter(r => r.is_active !== false).map(r => (
+                    <div key={r.id} className={cn(
+                      'bg-card rounded-2xl p-6 border transition-all hover:scale-[1.02] hover:shadow-lg',
+                      r.border_color || 'border-border'
+                    )}>
+                      <div className="text-4xl mb-4">{r.icon}</div>
+                      <div className={cn('font-bold text-lg mb-1', r.color || 'text-foreground')}>{r.name}</div>
+                      <div className="text-xs text-muted-foreground mb-2">Bono de rango</div>
+                      <div className="text-xl font-bold text-foreground">
+                        {formatPrice(r.bonus, currency, currencySymbol, exchangeRate)}
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              </Reveal>
             </div>
           </div>
         </section>
@@ -561,77 +558,75 @@ export default function LandingPage() {
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[400px] bg-primary/5 rounded-full blur-[120px] -z-10" />
 
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-14">
+            <Reveal className="text-center mb-14">
               <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-3">
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-500">Elige tu plan</span>
               </h2>
               <p className="text-muted-foreground">Comienza gratis, escala cuando crezcas.</p>
-            </div>
+            </Reveal>
 
-            <div className={cn(
-              'grid gap-5',
-              plans.length <= 3 ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
-            )}>
-              {plans.map(plan => {
-                const isFree = plan.is_free || plan.price === 0;
-                const isCurrent = user && (user as any).plan === plan.slug;
-                return (
-                  <div key={plan.id} className={cn(
-                    'bg-card rounded-2xl p-6 flex flex-col relative overflow-hidden transition-all hover:translate-y-[-4px] hover:shadow-xl',
-                    plan.is_popular
-                      ? 'border-2 border-primary shadow-xl shadow-primary/10'
-                      : 'border border-border hover:border-primary/30'
-                  )}>
-                    {plan.is_popular && (
-                      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-blue-500 to-primary" />
-                    )}
-                    <div className="flex items-start justify-between mb-4">
-                      <h3 className="font-bold text-foreground text-lg">{plan.name}</h3>
-                      <div className="flex gap-1.5">
-                        {plan.badge && (
-                          <span className="text-[10px] font-bold text-white bg-primary px-2 py-0.5 rounded-full">{plan.badge}</span>
-                        )}
-                        {isCurrent && (
-                          <span className="text-[10px] font-bold text-green-600 bg-green-500/10 border border-green-500/30 px-2 py-0.5 rounded-full">Tu plan</span>
-                        )}
+            <Reveal delay={100}>
+              <div className={cn(
+                'grid gap-5',
+                plans.length <= 3 ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
+              )}>
+                {plans.map(plan => {
+                  const isFree = plan.is_free || plan.price === 0;
+                  const isCurrent = user && (user as any).plan === plan.slug;
+                  return (
+                    <div key={plan.id} className={cn(
+                      'bg-card rounded-2xl p-6 flex flex-col relative overflow-hidden transition-all hover:translate-y-[-4px] hover:shadow-xl',
+                      plan.is_popular
+                        ? 'border-2 border-primary shadow-xl shadow-primary/10'
+                        : 'border border-border hover:border-primary/30'
+                    )}>
+                      {plan.is_popular && (
+                        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-blue-500 to-primary" />
+                      )}
+                      <div className="flex items-start justify-between mb-4">
+                        <h3 className="font-bold text-foreground text-lg">{plan.name}</h3>
+                        <div className="flex gap-1.5">
+                          {plan.badge && (
+                            <span className="text-[10px] font-bold text-white bg-primary px-2 py-0.5 rounded-full">{plan.badge}</span>
+                          )}
+                          {isCurrent && (
+                            <span className="text-[10px] font-bold text-green-600 bg-green-500/10 border border-green-500/30 px-2 py-0.5 rounded-full">Tu plan</span>
+                          )}
+                        </div>
                       </div>
+                      <p className="text-sm text-muted-foreground mb-5">{plan.description}</p>
+                      <div className="mb-6">
+                        <span className="text-3xl font-bold text-foreground">
+                          {isFree ? 'Gratis' : formatPrice(plan.price, currency, currencySymbol, exchangeRate)}
+                        </span>
+                        {!isFree && <span className="text-sm font-normal text-muted-foreground">/mes</span>}
+                      </div>
+                      <ul className="space-y-2.5 mb-6 flex-1">
+                        {(plan.features || []).slice(0, 5).map((f: string) => (
+                          <li key={f} className="flex items-start gap-2 text-sm text-muted-foreground">
+                            <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
+                            <span>{f}</span>
+                          </li>
+                        ))}
+                      </ul>
+                      {isCurrent ? (
+                        <div className="text-center text-sm font-semibold text-green-600 py-3 bg-green-500/5 rounded-xl">Tu plan actual</div>
+                      ) : (
+                        <Link to={user ? '/dashboard/mi-plan' : `/registro?plan=${plan.slug}`}
+                          className={cn(
+                            'text-center py-3 rounded-xl text-sm font-bold transition-all',
+                            plan.is_popular
+                              ? 'bg-primary text-white hover:bg-primary/90 shadow-md shadow-primary/20'
+                              : 'border border-border hover:bg-muted hover:border-primary/40'
+                          )}>
+                          {isFree ? 'Comenzar gratis' : 'Activar plan'}
+                        </Link>
+                      )}
                     </div>
-
-                    <p className="text-sm text-muted-foreground mb-5">{plan.description}</p>
-
-                    <div className="mb-6">
-                      <span className="text-3xl font-bold text-foreground">
-                        {isFree ? 'Gratis' : formatPrice(plan.price, currency, currencySymbol, exchangeRate)}
-                      </span>
-                      {!isFree && <span className="text-sm font-normal text-muted-foreground">/mes</span>}
-                    </div>
-
-                    <ul className="space-y-2.5 mb-6 flex-1">
-                      {(plan.features || []).slice(0, 5).map((f: string) => (
-                        <li key={f} className="flex items-start gap-2 text-sm text-muted-foreground">
-                          <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
-                          <span>{f}</span>
-                        </li>
-                      ))}
-                    </ul>
-
-                    {isCurrent ? (
-                      <div className="text-center text-sm font-semibold text-green-600 py-3 bg-green-500/5 rounded-xl">Tu plan actual</div>
-                    ) : (
-                      <Link to={user ? '/dashboard/mi-plan' : `/registro?plan=${plan.slug}`}
-                        className={cn(
-                          'text-center py-3 rounded-xl text-sm font-bold transition-all',
-                          plan.is_popular
-                            ? 'bg-primary text-white hover:bg-primary/90 shadow-md shadow-primary/20'
-                            : 'border border-border hover:bg-muted hover:border-primary/40'
-                        )}>
-                        {isFree ? 'Comenzar gratis' : 'Activar plan'}
-                      </Link>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            </Reveal>
 
             <p className="text-center text-xs text-muted-foreground mt-6">
               <Link to="/planes" className="text-primary font-medium hover:underline">Ver comparación completa de planes →</Link>
@@ -649,21 +644,23 @@ export default function LandingPage() {
         <div className="absolute top-0 left-1/4 w-[400px] h-[300px] bg-primary/5 rounded-full blur-[100px] -z-10" />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-12 text-center">
-          <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-3">
-            Miles de afiliados ya <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-500">ganan</span>
-          </h2>
-          <p className="text-muted-foreground">Historias reales de emprendedores latinoamericanos.</p>
+          <Reveal>
+            <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-3">
+              Miles de afiliados ya <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-500">ganan</span>
+            </h2>
+            <p className="text-muted-foreground">Historias reales de emprendedores latinoamericanos.</p>
+          </Reveal>
         </div>
         <TestimonialsCarousel />
       </section>
 
       {/* ── FAQ ─────────────────────────────────────────────────────────────── */}
       <section className="py-28 relative overflow-hidden">
-        <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,rgba(0,0,0,0.02)_1px,transparent_1px),linear-gradient(to_bottom,rgba(0,0,0,0.02)_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,rgba(255,255,255,0.015)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.015)_1px,transparent_1px)] bg-[size:60px_60px]" />
+        <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,hsl(var(--border)/0.25)_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--border)/0.25)_1px,transparent_1px)] bg-[size:60px_60px] [mask-image:radial-gradient(ellipse_80%_60%_at_50%_50%,#000_40%,transparent_100%)]" />
         <div className="absolute top-1/2 right-0 w-[400px] h-[300px] bg-blue-500/5 rounded-full blur-[100px] -z-10" />
 
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-14">
+          <Reveal className="text-center mb-14">
             <div className="inline-flex items-center gap-2 mb-4 px-3 py-1.5 bg-primary/10 border border-primary/20 rounded-full">
               <Sparkles className="w-3.5 h-3.5 text-primary" />
               <span className="text-xs font-bold text-primary">FAQ</span>
@@ -672,95 +669,91 @@ export default function LandingPage() {
               Preguntas <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-500">frecuentes</span>
             </h2>
             <p className="text-muted-foreground text-sm">Todo lo que necesitas saber antes de empezar.</p>
-          </div>
+          </Reveal>
 
-          <div className="grid gap-3">
-            {faqItems.map((faq, i) => (
-              <div key={i} className={cn(
-                'bg-card border rounded-2xl overflow-hidden transition-all',
-                openFaq === i
-                  ? 'border-primary/40 shadow-lg shadow-primary/5 ring-1 ring-primary/10'
-                  : 'border-border hover:border-primary/30'
-              )}>
-                <button onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                  className="w-full flex items-center justify-between px-6 py-5 text-left gap-4 group">
-                  <div className="flex items-center gap-4">
-                    <div className={cn(
-                      'w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-all',
-                      openFaq === i ? 'bg-primary text-white' : 'bg-muted group-hover:bg-primary/10'
-                    )}>
-                      <span className="text-sm font-bold">{i + 1}</span>
-                    </div>
-                    <span className="text-base font-semibold text-foreground">{faq.question}</span>
-                  </div>
-                  <div className={cn(
-                    'w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-all',
-                    openFaq === i ? 'bg-primary/10 rotate-180' : 'bg-muted group-hover:bg-primary/5'
-                  )}>
-                    <ChevronDown className={cn('w-4 h-4 text-muted-foreground transition-transform', openFaq === i && 'rotate-180 text-primary')} />
-                  </div>
-                </button>
-                <div className={cn(
-                  'grid transition-all',
-                  openFaq === i ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+          <Reveal delay={100}>
+            <div className="grid gap-3">
+              {faqItems.map((faq, i) => (
+                <div key={i} className={cn(
+                  'bg-card border rounded-2xl overflow-hidden transition-all',
+                  openFaq === i
+                    ? 'border-primary/40 shadow-lg shadow-primary/5 ring-1 ring-primary/10'
+                    : 'border-border hover:border-primary/30'
                 )}>
-                  <div className="overflow-hidden">
-                    <div className="px-6 pb-5 pl-[4.5rem]">
-                      <p className="text-muted-foreground leading-relaxed">{faq.answer}</p>
+                  <button onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                    className="w-full flex items-center justify-between px-6 py-5 text-left gap-4 group">
+                    <div className="flex items-center gap-4">
+                      <div className={cn(
+                        'w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-all',
+                        openFaq === i ? 'bg-primary text-white' : 'bg-muted group-hover:bg-primary/10'
+                      )}>
+                        <span className="text-sm font-bold">{i + 1}</span>
+                      </div>
+                      <span className="text-base font-semibold text-foreground">{faq.question}</span>
+                    </div>
+                    <div className={cn(
+                      'w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-all',
+                      openFaq === i ? 'bg-primary/10 rotate-180' : 'bg-muted group-hover:bg-primary/5'
+                    )}>
+                      <ChevronDown className={cn('w-4 h-4 text-muted-foreground transition-transform', openFaq === i && 'rotate-180 text-primary')} />
+                    </div>
+                  </button>
+                  <div className={cn(
+                    'grid transition-all',
+                    openFaq === i ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+                  )}>
+                    <div className="overflow-hidden">
+                      <div className="px-6 pb-5 pl-[4.5rem]">
+                        <p className="text-muted-foreground leading-relaxed">{faq.answer}</p>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          </Reveal>
         </div>
       </section>
 
-      {/* ── CTA: Full width section ──────────────────────────────────────────── */}
+      {/* ── CTA ──────────────────────────────────────────────────────────────── */}
       <section className="relative py-32 overflow-hidden">
-        {/* Aurora background */}
         <div className="absolute inset-0 bg-foreground">
-          {/* Multiple aurora gradients */}
           <div className="absolute top-[-30%] left-[-10%] w-[60%] h-[70%] bg-gradient-to-br from-primary/25 via-blue-500/15 to-transparent rounded-full blur-[100px] animate-pulse" style={{ animationDuration: '6s' }} />
           <div className="absolute top-[10%] right-[-20%] w-[50%] h-[60%] bg-gradient-to-bl from-blue-500/20 via-primary/10 to-transparent rounded-full blur-[100px] animate-pulse" style={{ animationDuration: '8s', animationDelay: '1s' }} />
-          <div className="absolute bottom-[-20%] left-[30%] w-[40%] h-[50%] bg-gradient-to-t from-primary/15 to-transparent rounded-full blur-[80px]" />
+          <div className="absolute bottom-[-20%] left-[30%] w-[40%] h-[50%] bg-gradient-to-t from-primary/15 to-transparent blur-[80px]" />
         </div>
-
-        {/* Grid texture */}
         <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-[size:50px_50px]" />
 
         <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/15 rounded-full text-xs font-bold text-white/80 mb-8">
-            <Zap className="w-3.5 h-3.5 text-amber-400" />
-            <span>Sin tarjeta de crédito requerida</span>
-          </div>
-
-          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6 leading-[1.1]">
-            Tu red no espera.<br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-white/90 to-white/70">Empieza hoy.</span>
-          </h2>
-
-          <p className="text-xl text-white/50 max-w-lg mx-auto mb-10 leading-relaxed">
-            Únete a emprendedores que ya construyen libertad financiera.
-          </p>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link to={user ? '/dashboard' : '/registro'}
-              className="inline-flex items-center gap-2 px-8 py-4 bg-white text-foreground font-bold rounded-xl hover:bg-white/90 active:scale-[0.98] transition-all shadow-2xl text-base">
-              {user ? 'Ir a mi Panel' : 'Crear cuenta gratis'} <ArrowRight className="w-5 h-5" />
-            </Link>
-            <Link to="/contacto"
-              className="inline-flex items-center gap-2 px-8 py-4 bg-white/10 backdrop-blur-sm border border-white/20 text-white font-semibold rounded-xl hover:bg-white/15 transition-all text-base">
-              Hablar con ventas
-            </Link>
-          </div>
-
-          <div className="flex flex-wrap items-center justify-center gap-8 mt-12 text-sm text-white/40">
-            <span className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-white/60" /> Cuenta gratuita</span>
-            <span className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-white/60" /> Sin permanencia</span>
-            <span className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-white/60" /> Pago cada 15 días</span>
-            <span className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-white/60" /> Soporte 24/7</span>
-          </div>
+          <Reveal>
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/15 rounded-full text-xs font-bold text-white/80 mb-8">
+              <Zap className="w-3.5 h-3.5 text-amber-400" />
+              <span>Sin tarjeta de crédito requerida</span>
+            </div>
+            <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6 leading-[1.1]">
+              Tu red no espera.<br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-white/90 to-white/70">Empieza hoy.</span>
+            </h2>
+            <p className="text-xl text-white/50 max-w-lg mx-auto mb-10 leading-relaxed">
+              Únete a emprendedores que ya construyen libertad financiera.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <Link to={user ? '/dashboard' : '/registro'}
+                className="inline-flex items-center gap-2 px-8 py-4 bg-white text-foreground font-bold rounded-xl hover:bg-white/90 active:scale-[0.98] transition-all shadow-2xl text-base">
+                {user ? 'Ir a mi Panel' : 'Crear cuenta gratis'} <ArrowRight className="w-5 h-5" />
+              </Link>
+              <Link to="/contacto"
+                className="inline-flex items-center gap-2 px-8 py-4 bg-white/10 backdrop-blur-sm border border-white/20 text-white font-semibold rounded-xl hover:bg-white/15 transition-all text-base">
+                Hablar con ventas
+              </Link>
+            </div>
+            <div className="flex flex-wrap items-center justify-center gap-8 mt-12 text-sm text-white/40">
+              <span className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-white/60" /> Cuenta gratuita</span>
+              <span className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-white/60" /> Sin permanencia</span>
+              <span className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-white/60" /> Pago cada 15 días</span>
+              <span className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-white/60" /> Soporte 24/7</span>
+            </div>
+          </Reveal>
         </div>
       </section>
 
