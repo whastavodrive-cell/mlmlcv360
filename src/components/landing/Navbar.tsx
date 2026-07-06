@@ -41,7 +41,7 @@ const navLinks = [
   { href: '/planes', label: 'Planes' },
   { href: '/tienda', label: 'Tienda' },
   { href: '/empresa', label: 'Empresa' },
-  { href: '/blog', label: 'Blog' },
+  { href: '/blog', label: 'Novedades' },
   { href: '/contacto', label: 'Contacto' },
 ];
 

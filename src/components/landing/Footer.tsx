@@ -55,7 +55,7 @@ export default function Footer() {
                     { href: '/tienda', label: 'Tienda' },
                     { href: '/nosotros', label: 'Nosotros' },
                     { href: '/empresa', label: 'Empresa' },
-                    { href: '/blog', label: 'Blog' },
+                    { href: '/blog', label: 'Novedades' },
                     { href: '/contacto', label: 'Contacto' },
                   ].map(l => (
                     <li key={l.href}>
