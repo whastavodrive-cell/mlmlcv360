@@ -14,6 +14,7 @@ import EmpresaPage from '@/pages/landing/EmpresaPage';
 import ContactoPage from '@/pages/landing/ContactoPage';
 import PlanesPage from '@/pages/landing/PlanesPage';
 import BlogPage from '@/pages/landing/BlogPage';
+import BlogDetailPage from '@/pages/landing/BlogDetailPage';
 import PagoPage from '@/pages/landing/PagoPage';
 import PedidosPage from '@/pages/landing/PedidosPage';
 import LoginPage from '@/pages/auth/LoginPage';
@@ -130,6 +131,7 @@ function AppRoutes() {
         <Route path="/contacto" element={<ContactoPage />} />
         <Route path="/planes" element={<PlanesPage />} />
         <Route path="/blog" element={<BlogPage />} />
+        <Route path="/blog/:slug" element={<BlogDetailPage />} />
         <Route path="/pago" element={<PagoPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/registro" element={<RegisterPage />} />
