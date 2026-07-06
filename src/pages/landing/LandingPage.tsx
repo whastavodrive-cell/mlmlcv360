@@ -2,7 +2,7 @@ import { Link } from '@/lib/router';
 import Navbar from '@/components/landing/Navbar';
 import Footer from '@/components/landing/Footer';
 import { testimonials, faqItems } from '@/lib/mockData';
-import { ArrowRight, CircleCheck as CheckCircle, Star, ChevronDown, Shield, Zap, Globe, Award, DollarSign, TrendingUp, Users, Lock, ShoppingBag, Bell, ChartBar as BarChart2, Network, CreditCard } from 'lucide-react';
+import { ArrowRight, CircleCheck as CheckCircle, Star, ChevronDown, Shield, Zap, Globe, Award, DollarSign, TrendingUp, Users, Lock, ShoppingBag, Bell, ChartBar as BarChart2, Network, CreditCard, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState, useEffect, useCallback } from 'react';
 import { useAuthStore } from '@/store/authStore';
@@ -56,6 +56,16 @@ const featureBlocks = [
   },
 ];
 
+// ── Stats for carousel ───────────────────────────────────────────────────────
+const statsItems = [
+  { value: '12,540+', label: 'Afiliados activos', icon: Users, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+  { value: 'S/ 2.8M+', label: 'Comisiones pagadas', icon: DollarSign, color: 'text-green-500', bg: 'bg-green-500/10' },
+  { value: '8 países', label: 'Presencia regional', icon: Globe, color: 'text-primary', bg: 'bg-primary/10' },
+  { value: '+340%', label: 'Crecimiento anual', icon: TrendingUp, color: 'text-amber-500', bg: 'bg-amber-500/10' },
+  { value: '99.9%', label: 'Uptime garantizado', icon: Shield, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+  { value: '<50ms', label: 'Latencia promedio', icon: Zap, color: 'text-purple-500', bg: 'bg-purple-500/10' },
+];
+
 // ── Store Section ─────────────────────────────────────────────────────────────
 function StoreSection() {
   const database = useDatabase();
@@ -83,7 +93,11 @@ function StoreSection() {
   if (!loading && products.length === 0) return null;
 
   return (
-    <section className="py-24 bg-muted/30">
+    <section className="py-24 relative overflow-hidden">
+      {/* Faded grid background */}
+      <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,rgba(0,0,0,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(0,0,0,0.03)_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:60px_60px]" />
+      <div className="absolute top-0 right-0 w-[500px] h-[300px] bg-primary/5 rounded-full blur-[100px] -z-10" />
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10">
           <div>
@@ -93,7 +107,9 @@ function StoreSection() {
               </div>
               <span className="text-xs font-bold text-primary uppercase tracking-widest">Tienda</span>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-foreground">Compra y gana comisiones</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold text-foreground">
+              Compra y gana <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-500">comisiones</span>
+            </h2>
             <p className="text-muted-foreground text-sm mt-1.5">Cada compra genera comisiones automáticas para tu red.</p>
           </div>
           <Link to="/tienda" className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:gap-3 transition-all shrink-0">
@@ -135,6 +151,14 @@ function StoreSection() {
 
 // ── Dashboard mockup preview (hero right side) ────────────────────────────────
 function DashboardPreview() {
+  const [origin, setOrigin] = useState('');
+
+  useEffect(() => {
+    setOrigin(window.location.origin);
+  }, []);
+
+  const dashboardUrl = origin ? `${origin}/dashboard` : 'app.mlm360.pe/dashboard';
+
   return (
     <div className="relative w-full max-w-[520px] mx-auto lg:ml-auto">
       {/* Main card */}
@@ -145,7 +169,7 @@ function DashboardPreview() {
           <div className="w-2.5 h-2.5 rounded-full bg-yellow-400" />
           <div className="w-2.5 h-2.5 rounded-full bg-green-400" />
           <div className="flex-1 mx-4">
-            <div className="bg-muted rounded-md px-3 py-1 text-[10px] text-muted-foreground text-center">app.mlm360.pe/dashboard</div>
+            <div className="bg-muted rounded-md px-3 py-1 text-[10px] text-muted-foreground text-center truncate">{dashboardUrl}</div>
           </div>
         </div>
 
@@ -197,7 +221,7 @@ function DashboardPreview() {
       </div>
 
       {/* Floating pills */}
-      <div className="absolute -top-4 -right-4 bg-card border border-green-500/30 rounded-xl px-3 py-2 shadow-lg animate-bounce" style={{ animationDuration: '3s' }}>
+      <div className="absolute -top-4 -right-4 bg-card border border-green-500/30 rounded-xl px-3 py-2 shadow-lg animate-bounce dark:shadow-green-500/10" style={{ animationDuration: '3s' }}>
         <div className="flex items-center gap-2">
           <Bell className="w-3.5 h-3.5 text-green-500" />
           <div>
@@ -207,7 +231,7 @@ function DashboardPreview() {
         </div>
       </div>
 
-      <div className="absolute -bottom-4 -left-4 bg-card border border-amber-500/30 rounded-xl px-3 py-2 shadow-lg animate-bounce" style={{ animationDuration: '4s', animationDelay: '1s' }}>
+      <div className="absolute -bottom-4 -left-4 bg-card border border-amber-500/30 rounded-xl px-3 py-2 shadow-lg animate-bounce dark:shadow-amber-500/10" style={{ animationDuration: '4s', animationDelay: '1s' }}>
         <div className="flex items-center gap-2">
           <Award className="w-3.5 h-3.5 text-amber-500" />
           <div>
@@ -277,19 +301,38 @@ function TestimonialsCarousel() {
 
   return (
     <div className="relative overflow-hidden">
-      {/* Left fade */}
       <div className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
-      {/* Right fade */}
       <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
-
-      {/* Row 1: left scroll */}
       <div className="flex mb-4" style={{ animation: 'marquee-left 40s linear infinite' }}>
         {row1.map((t, i) => <TestimonialCard key={`r1-${i}`} t={t} />)}
       </div>
-
-      {/* Row 2: right scroll */}
       <div className="flex" style={{ animation: 'marquee-right 40s linear infinite' }}>
         {row2.map((t, i) => <TestimonialCard key={`r2-${i}`} t={t} />)}
+      </div>
+    </div>
+  );
+}
+
+// ── Stats Carousel ───────────────────────────────────────────────────────────
+function StatsCarousel() {
+  const items = [...statsItems, ...statsItems];
+
+  return (
+    <div className="relative overflow-hidden py-6">
+      <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
+      <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
+      <div className="flex" style={{ animation: 'marquee-left 30s linear infinite' }}>
+        {items.map((s, i) => (
+          <div key={i} className="flex items-center gap-3 px-6 shrink-0">
+            <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center', s.bg)}>
+              <s.icon className={cn('w-5 h-5', s.color)} />
+            </div>
+            <div>
+              <div className="text-xl font-bold text-foreground leading-tight">{s.value}</div>
+              <div className="text-xs text-muted-foreground">{s.label}</div>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -319,39 +362,38 @@ export default function LandingPage() {
       <Navbar />
 
       {/* ── HERO ────────────────────────────────────────────────────────────── */}
-      <section className="relative pt-12 pb-24 overflow-hidden">
-        {/* Background glows */}
-        <div className="absolute inset-0 -z-10">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-primary/4 rounded-full blur-[120px]" />
-          <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-blue-500/5 rounded-full blur-[100px]" />
+      <section className="relative pt-16 pb-28 overflow-hidden">
+        {/* Aurora effect background */}
+        <div className="absolute inset-0 -z-10 overflow-hidden">
+          <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[60%] bg-gradient-to-br from-primary/15 via-blue-500/10 to-transparent rounded-full blur-[80px] animate-pulse" style={{ animationDuration: '8s' }} />
+          <div className="absolute top-[20%] right-[-10%] w-[40%] h-[50%] bg-gradient-to-bl from-blue-500/10 via-primary/8 to-transparent rounded-full blur-[80px] animate-pulse" style={{ animationDuration: '10s', animationDelay: '2s' }} />
+          <div className="absolute bottom-[-20%] left-[20%] w-[60%] h-[40%] bg-gradient-to-t from-primary/5 to-transparent rounded-full blur-[100px]" />
         </div>
 
+        {/* Faded grid */}
+        <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,rgba(0,0,0,0.04)_1px,transparent_1px),linear-gradient(to_bottom,rgba(0,0,0,0.04)_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:80px_80px]" />
+
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
+          <div className="grid lg:grid-cols-2 gap-14 items-center">
             {/* Left: copy */}
             <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-green-500/10 border border-green-500/20 rounded-full text-xs font-bold text-green-600 mb-6">
-                <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                <span>+12,540 afiliados activos en Latinoamérica</span>
-              </div>
-
-              <h1 className="text-4xl sm:text-5xl lg:text-[3.25rem] font-bold text-foreground leading-[1.1] tracking-tight mb-6">
+              <h1 className="text-4xl sm:text-5xl lg:text-[3.5rem] font-bold text-foreground leading-[1.05] tracking-tight mb-7">
                 Construye tu red.<br />
                 Cobra comisiones<br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-blue-500 to-primary bg-[length:200%_auto] animate-[gradient_4s_linear_infinite]">automáticamente.</span>
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-blue-400 to-primary bg-[length:200%_auto] animate-[gradient_4s_linear_infinite]">automáticamente.</span>
               </h1>
 
-              <p className="text-base sm:text-lg text-muted-foreground max-w-lg mb-8 leading-relaxed">
+              <p className="text-base sm:text-lg text-muted-foreground max-w-lg mb-9 leading-relaxed">
                 MLM 360 es la plataforma multinivel que calcula, paga y visualiza tus comisiones en tiempo real. 7% directa, 4% binaria, pago cada 15 días.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-3 mb-10">
                 <Link to={user ? '/dashboard' : '/registro'}
-                  className="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-primary text-white font-bold rounded-xl hover:bg-primary/90 active:scale-[0.98] transition-all shadow-lg shadow-primary/25 text-sm">
+                  className="inline-flex items-center justify-center gap-2 px-7 py-4 bg-primary text-white font-bold rounded-xl hover:bg-primary/90 active:scale-[0.98] transition-all shadow-lg shadow-primary/25 text-sm">
                   {user ? 'Ir a mi Panel' : 'Empezar gratis'} <ArrowRight className="w-4 h-4" />
                 </Link>
                 <Link to="/planes"
-                  className="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-muted border border-border text-foreground font-medium rounded-xl hover:border-primary/40 transition-all text-sm">
+                  className="inline-flex items-center justify-center gap-2 px-7 py-4 bg-muted border border-border text-foreground font-medium rounded-xl hover:border-primary/40 transition-all text-sm">
                   Ver precios
                 </Link>
               </div>
@@ -374,35 +416,24 @@ export default function LandingPage() {
             {/* Right: dashboard preview */}
             <DashboardPreview />
           </div>
-
-          {/* Stats bar */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-20 pt-10 border-t border-border">
-            {[
-              { value: '12,540+', label: 'Afiliados activos', icon: Users, color: 'text-blue-500' },
-              { value: 'S/ 2.8M+', label: 'Comisiones pagadas', icon: DollarSign, color: 'text-green-500' },
-              { value: '8 países', label: 'Presencia regional', icon: Globe, color: 'text-primary' },
-              { value: '+340%', label: 'Crecimiento anual', icon: TrendingUp, color: 'text-amber-500' },
-            ].map(s => (
-              <div key={s.label} className="flex items-start gap-3">
-                <div className="w-9 h-9 rounded-xl bg-muted flex items-center justify-center shrink-0">
-                  <s.icon className={cn('w-4 h-4', s.color)} />
-                </div>
-                <div>
-                  <div className="text-xl font-bold text-foreground leading-tight">{s.value}</div>
-                  <div className="text-xs text-muted-foreground mt-0.5">{s.label}</div>
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
       </section>
 
+      {/* ── STATS CAROUSEL ───────────────────────────────────────────────────── */}
+      <div className="border-y border-border bg-muted/30">
+        <StatsCarousel />
+      </div>
+
       {/* ── FEATURE BLOCKS ──────────────────────────────────────────────────── */}
-      <section className="py-24 bg-muted/20">
+      <section className="py-28 relative overflow-hidden">
+        {/* Background effects */}
+        <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,rgba(0,0,0,0.02)_1px,transparent_1px),linear-gradient(to_bottom,rgba(0,0,0,0.02)_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,rgba(255,255,255,0.015)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.015)_1px,transparent_1px)] bg-[size:60px_60px]" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-primary/5 rounded-full blur-[100px] -z-10" />
+
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground mb-4">
-              Un sistema diseñado para <span className="text-primary">escalar</span>
+              Diseñado para <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-500">escalar</span>
             </h2>
             <p className="text-muted-foreground max-w-xl mx-auto">Cada funcionalidad resuelve un problema real del negocio multinivel.</p>
           </div>
@@ -442,15 +473,19 @@ export default function LandingPage() {
       </section>
 
       {/* ── HOW IT WORKS ────────────────────────────────────────────────────── */}
-      <section className="py-24">
+      <section className="py-28 relative overflow-hidden">
+        <div className="absolute inset-0 -z-10 bg-muted/20" />
+        <div className="absolute bottom-0 left-0 w-[400px] h-[300px] bg-blue-500/5 rounded-full blur-[100px] -z-10" />
+
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-14">
-            <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-3">De cero a comisiones en minutos</h2>
+          <div className="text-center mb-16">
+            <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-3">
+              De cero a <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-500 to-emerald-500">comisiones</span> en minutos
+            </h2>
             <p className="text-muted-foreground">Sin curva de aprendizaje. Sin configuraciones complicadas.</p>
           </div>
 
           <div className="relative">
-            {/* Connector line */}
             <div className="hidden md:block absolute top-7 left-[calc(16.67%+1rem)] right-[calc(16.67%+1rem)] h-px bg-border" />
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {[
@@ -474,7 +509,10 @@ export default function LandingPage() {
 
       {/* ── RANKS ───────────────────────────────────────────────────────────── */}
       {ranks.filter(r => r.is_active !== false).length > 0 && (
-        <section className="py-24 bg-muted/20">
+        <section className="py-28 relative overflow-hidden">
+          <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,rgba(0,0,0,0.02)_1px,transparent_1px),linear-gradient(to_bottom,rgba(0,0,0,0.02)_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,rgba(255,255,255,0.015)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.015)_1px,transparent_1px)] bg-[size:60px_60px]" />
+          <div className="absolute top-0 right-0 w-[500px] h-[400px] bg-amber-500/5 rounded-full blur-[100px] -z-10" />
+
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid lg:grid-cols-2 gap-12 items-center">
               <div>
@@ -484,7 +522,9 @@ export default function LandingPage() {
                   </div>
                   <span className="text-xs font-bold text-amber-500 uppercase tracking-widest">Rangos</span>
                 </div>
-                <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-4">Cada nivel, más beneficios</h2>
+                <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-4">
+                  Cada nivel, <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-orange-500">más beneficios</span>
+                </h2>
                 <p className="text-muted-foreground leading-relaxed mb-6">
                   El sistema de rangos premia tu crecimiento con bonos en efectivo progresivos. Desde el bono de bienvenida Bronce hasta el máximo Corona.
                 </p>
@@ -494,16 +534,16 @@ export default function LandingPage() {
                 </Link>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-4">
                 {ranks.filter(r => r.is_active !== false).map(r => (
                   <div key={r.id} className={cn(
-                    'bg-card rounded-2xl p-5 border transition-all hover:scale-[1.02]',
+                    'bg-card rounded-2xl p-6 border transition-all hover:scale-[1.02] hover:shadow-lg',
                     r.border_color || 'border-border'
                   )}>
-                    <div className="text-3xl mb-3">{r.icon}</div>
-                    <div className={cn('font-bold text-base mb-1', r.color || 'text-foreground')}>{r.name}</div>
-                    <div className="text-xs text-muted-foreground">Bono de rango</div>
-                    <div className="text-lg font-bold text-foreground mt-1">
+                    <div className="text-4xl mb-4">{r.icon}</div>
+                    <div className={cn('font-bold text-lg mb-1', r.color || 'text-foreground')}>{r.name}</div>
+                    <div className="text-xs text-muted-foreground mb-2">Bono de rango</div>
+                    <div className="text-xl font-bold text-foreground">
                       {formatPrice(r.bonus, currency, currencySymbol, exchangeRate)}
                     </div>
                   </div>
@@ -516,15 +556,20 @@ export default function LandingPage() {
 
       {/* ── PLANS ───────────────────────────────────────────────────────────── */}
       {plans.length > 0 && (
-        <section className="py-24" id="planes">
+        <section className="py-28 relative overflow-hidden" id="planes">
+          <div className="absolute inset-0 -z-10 bg-muted/20" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[400px] bg-primary/5 rounded-full blur-[120px] -z-10" />
+
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-14">
-              <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-3">Elige tu plan</h2>
+              <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-3">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-500">Elige tu plan</span>
+              </h2>
               <p className="text-muted-foreground">Comienza gratis, escala cuando crezcas.</p>
             </div>
 
             <div className={cn(
-              'grid gap-4',
+              'grid gap-5',
               plans.length <= 3 ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
             )}>
               {plans.map(plan => {
@@ -532,22 +577,24 @@ export default function LandingPage() {
                 const isCurrent = user && (user as any).plan === plan.slug;
                 return (
                   <div key={plan.id} className={cn(
-                    'bg-card rounded-2xl p-6 flex flex-col relative overflow-hidden transition-all hover:translate-y-[-2px]',
+                    'bg-card rounded-2xl p-6 flex flex-col relative overflow-hidden transition-all hover:translate-y-[-4px] hover:shadow-xl',
                     plan.is_popular
                       ? 'border-2 border-primary shadow-xl shadow-primary/10'
                       : 'border border-border hover:border-primary/30'
                   )}>
                     {plan.is_popular && (
-                      <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-primary via-blue-500 to-primary" />
+                      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-blue-500 to-primary" />
                     )}
                     <div className="flex items-start justify-between mb-4">
                       <h3 className="font-bold text-foreground text-lg">{plan.name}</h3>
-                      {plan.badge && (
-                        <span className="text-[10px] font-bold text-white bg-primary px-2 py-0.5 rounded-full ml-2">{plan.badge}</span>
-                      )}
-                      {isCurrent && (
-                        <span className="text-[10px] font-bold text-green-600 bg-green-500/10 border border-green-500/30 px-2 py-0.5 rounded-full ml-2">Tu plan</span>
-                      )}
+                      <div className="flex gap-1.5">
+                        {plan.badge && (
+                          <span className="text-[10px] font-bold text-white bg-primary px-2 py-0.5 rounded-full">{plan.badge}</span>
+                        )}
+                        {isCurrent && (
+                          <span className="text-[10px] font-bold text-green-600 bg-green-500/10 border border-green-500/30 px-2 py-0.5 rounded-full">Tu plan</span>
+                        )}
+                      </div>
                     </div>
 
                     <p className="text-sm text-muted-foreground mb-5">{plan.description}</p>
@@ -596,11 +643,14 @@ export default function LandingPage() {
       {/* ── STORE ───────────────────────────────────────────────────────────── */}
       <StoreSection />
 
-      {/* ── TESTIMONIALS: Double infinite carousel ──────────────────────────── */}
-      <section className="py-24">
+      {/* ── TESTIMONIALS ─────────────────────────────────────────────────────── */}
+      <section className="py-28 relative overflow-hidden">
+        <div className="absolute inset-0 -z-10 bg-muted/20" />
+        <div className="absolute top-0 left-1/4 w-[400px] h-[300px] bg-primary/5 rounded-full blur-[100px] -z-10" />
+
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-12 text-center">
           <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-3">
-            Miles de afiliados ya <span className="text-primary">ganan con MLM 360</span>
+            Miles de afiliados ya <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-500">ganan</span>
           </h2>
           <p className="text-muted-foreground">Historias reales de emprendedores latinoamericanos.</p>
         </div>
@@ -608,30 +658,56 @@ export default function LandingPage() {
       </section>
 
       {/* ── FAQ ─────────────────────────────────────────────────────────────── */}
-      <section className="py-24 bg-muted/20">
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-3">Preguntas frecuentes</h2>
+      <section className="py-28 relative overflow-hidden">
+        <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,rgba(0,0,0,0.02)_1px,transparent_1px),linear-gradient(to_bottom,rgba(0,0,0,0.02)_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,rgba(255,255,255,0.015)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.015)_1px,transparent_1px)] bg-[size:60px_60px]" />
+        <div className="absolute top-1/2 right-0 w-[400px] h-[300px] bg-blue-500/5 rounded-full blur-[100px] -z-10" />
+
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-14">
+            <div className="inline-flex items-center gap-2 mb-4 px-3 py-1.5 bg-primary/10 border border-primary/20 rounded-full">
+              <Sparkles className="w-3.5 h-3.5 text-primary" />
+              <span className="text-xs font-bold text-primary">FAQ</span>
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-3">
+              Preguntas <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-500">frecuentes</span>
+            </h2>
             <p className="text-muted-foreground text-sm">Todo lo que necesitas saber antes de empezar.</p>
           </div>
 
-          <div className="space-y-2">
+          <div className="grid gap-3">
             {faqItems.map((faq, i) => (
               <div key={i} className={cn(
-                'bg-card border rounded-xl overflow-hidden transition-all',
-                openFaq === i ? 'border-primary/40 shadow-sm shadow-primary/5' : 'border-border hover:border-border/80'
+                'bg-card border rounded-2xl overflow-hidden transition-all',
+                openFaq === i
+                  ? 'border-primary/40 shadow-lg shadow-primary/5 ring-1 ring-primary/10'
+                  : 'border-border hover:border-primary/30'
               )}>
                 <button onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                  className="w-full flex items-center justify-between px-5 py-4 text-left gap-4">
-                  <span className="text-sm font-semibold text-foreground">{faq.question}</span>
-                  <ChevronDown className={cn('w-4 h-4 text-muted-foreground transition-transform shrink-0', openFaq === i && 'rotate-180')} />
+                  className="w-full flex items-center justify-between px-6 py-5 text-left gap-4 group">
+                  <div className="flex items-center gap-4">
+                    <div className={cn(
+                      'w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-all',
+                      openFaq === i ? 'bg-primary text-white' : 'bg-muted group-hover:bg-primary/10'
+                    )}>
+                      <span className="text-sm font-bold">{i + 1}</span>
+                    </div>
+                    <span className="text-base font-semibold text-foreground">{faq.question}</span>
+                  </div>
+                  <div className={cn(
+                    'w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-all',
+                    openFaq === i ? 'bg-primary/10 rotate-180' : 'bg-muted group-hover:bg-primary/5'
+                  )}>
+                    <ChevronDown className={cn('w-4 h-4 text-muted-foreground transition-transform', openFaq === i && 'rotate-180 text-primary')} />
+                  </div>
                 </button>
                 <div className={cn(
-                  'overflow-hidden transition-all',
-                  openFaq === i ? 'max-h-48' : 'max-h-0'
+                  'grid transition-all',
+                  openFaq === i ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
                 )}>
-                  <div className="px-5 pb-4">
-                    <p className="text-sm text-muted-foreground leading-relaxed">{faq.answer}</p>
+                  <div className="overflow-hidden">
+                    <div className="px-6 pb-5 pl-[4.5rem]">
+                      <p className="text-muted-foreground leading-relaxed">{faq.answer}</p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -640,46 +716,50 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── CTA ─────────────────────────────────────────────────────────────── */}
-      <section className="py-24">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="relative rounded-3xl overflow-hidden bg-foreground">
-            {/* Texture grid */}
-            <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:40px_40px]" />
-            {/* Glow */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[200px] bg-primary/20 rounded-full blur-[80px]" />
+      {/* ── CTA: Full width section ──────────────────────────────────────────── */}
+      <section className="relative py-32 overflow-hidden">
+        {/* Aurora background */}
+        <div className="absolute inset-0 bg-foreground">
+          {/* Multiple aurora gradients */}
+          <div className="absolute top-[-30%] left-[-10%] w-[60%] h-[70%] bg-gradient-to-br from-primary/25 via-blue-500/15 to-transparent rounded-full blur-[100px] animate-pulse" style={{ animationDuration: '6s' }} />
+          <div className="absolute top-[10%] right-[-20%] w-[50%] h-[60%] bg-gradient-to-bl from-blue-500/20 via-primary/10 to-transparent rounded-full blur-[100px] animate-pulse" style={{ animationDuration: '8s', animationDelay: '1s' }} />
+          <div className="absolute bottom-[-20%] left-[30%] w-[40%] h-[50%] bg-gradient-to-t from-primary/15 to-transparent rounded-full blur-[80px]" />
+        </div>
 
-            <div className="relative px-8 py-16 text-center">
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/10 border border-white/20 rounded-full text-xs font-bold text-white/80 mb-6">
-                <Zap className="w-3 h-3 text-amber-400" />
-                <span>Sin tarjeta de crédito requerida</span>
-              </div>
+        {/* Grid texture */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-[size:50px_50px]" />
 
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-5 leading-tight">
-                Tu red no espera.<br />Empieza hoy.
-              </h2>
+        <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/15 rounded-full text-xs font-bold text-white/80 mb-8">
+            <Zap className="w-3.5 h-3.5 text-amber-400" />
+            <span>Sin tarjeta de crédito requerida</span>
+          </div>
 
-              <p className="text-white/60 max-w-md mx-auto mb-8 text-base">
-                Únete a +12,540 emprendedores que ya construyen libertad financiera con MLM 360.
-              </p>
+          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6 leading-[1.1]">
+            Tu red no espera.<br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-white/90 to-white/70">Empieza hoy.</span>
+          </h2>
 
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-                <Link to={user ? '/dashboard' : '/registro'}
-                  className="inline-flex items-center gap-2 px-7 py-3.5 bg-white text-foreground font-bold rounded-xl hover:bg-white/90 active:scale-[0.98] transition-all shadow-lg text-sm">
-                  {user ? 'Ir a mi Panel' : 'Crear cuenta gratis'} <ArrowRight className="w-4 h-4" />
-                </Link>
-                <Link to="/contacto"
-                  className="inline-flex items-center gap-2 px-7 py-3.5 bg-white/10 border border-white/20 text-white font-medium rounded-xl hover:bg-white/15 transition-all text-sm">
-                  Hablar con ventas
-                </Link>
-              </div>
+          <p className="text-xl text-white/50 max-w-lg mx-auto mb-10 leading-relaxed">
+            Únete a emprendedores que ya construyen libertad financiera.
+          </p>
 
-              <div className="flex flex-wrap items-center justify-center gap-6 mt-10 text-xs text-white/40">
-                <span className="flex items-center gap-1.5"><CheckCircle className="w-3.5 h-3.5 text-white/60" /> Cuenta gratuita disponible</span>
-                <span className="flex items-center gap-1.5"><CheckCircle className="w-3.5 h-3.5 text-white/60" /> Sin permanencia mínima</span>
-                <span className="flex items-center gap-1.5"><CheckCircle className="w-3.5 h-3.5 text-white/60" /> Pago cada 15 días</span>
-              </div>
-            </div>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Link to={user ? '/dashboard' : '/registro'}
+              className="inline-flex items-center gap-2 px-8 py-4 bg-white text-foreground font-bold rounded-xl hover:bg-white/90 active:scale-[0.98] transition-all shadow-2xl text-base">
+              {user ? 'Ir a mi Panel' : 'Crear cuenta gratis'} <ArrowRight className="w-5 h-5" />
+            </Link>
+            <Link to="/contacto"
+              className="inline-flex items-center gap-2 px-8 py-4 bg-white/10 backdrop-blur-sm border border-white/20 text-white font-semibold rounded-xl hover:bg-white/15 transition-all text-base">
+              Hablar con ventas
+            </Link>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-center gap-8 mt-12 text-sm text-white/40">
+            <span className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-white/60" /> Cuenta gratuita</span>
+            <span className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-white/60" /> Sin permanencia</span>
+            <span className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-white/60" /> Pago cada 15 días</span>
+            <span className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-white/60" /> Soporte 24/7</span>
           </div>
         </div>
       </section>
