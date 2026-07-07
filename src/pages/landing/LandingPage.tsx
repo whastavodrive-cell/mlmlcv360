@@ -4,7 +4,7 @@ import Footer from '@/components/landing/Footer';
 import { Reveal } from '@/components/landing/Reveal';
 import { testimonials, faqItems } from '@/lib/mockData';
 import {
-  ArrowRight, Check, Star, ChevronDown, Shield, Zap, Globe, Award, DollarSign,
+  ArrowRight, Check, Star, ChevronDown, Zap, Globe, Award, DollarSign,
   TrendingUp, Users, Lock, ShoppingBag, Bell, Network, CreditCard, Sparkles,
   ChartBar as BarChart3, Wallet, ExternalLink,
   Building2, Mountain, Waves, MapPin, Sun, Leaf,
@@ -37,25 +37,20 @@ const regionStats = [
 ];
 
 // ─── payment brands ───────────────────────────────────────────────────────────
-const row1Brands = [
-  { name: 'Visa', style: 'font-black italic tracking-tight text-blue-800 dark:text-blue-200' },
-  { name: 'Mastercard', style: 'font-bold text-red-700 dark:text-red-300' },
-  { name: 'Yape', style: 'font-black tracking-wide text-violet-700 dark:text-violet-400' },
-  { name: 'Plin', style: 'font-black text-teal-700 dark:text-teal-400' },
-  { name: 'BCP', style: 'font-black tracking-widest text-sky-800 dark:text-sky-400' },
-  { name: 'BBVA', style: 'font-black text-blue-900 dark:text-blue-300' },
-  { name: 'Culqi', style: 'font-bold text-rose-700 dark:text-rose-400' },
-  { name: 'Izipay', style: 'font-black italic text-orange-700 dark:text-orange-400' },
-];
-const row2Brands = [
-  { name: 'PayPal', style: 'font-bold tracking-tight text-blue-700 dark:text-blue-300' },
-  { name: 'Interbank', style: 'font-bold text-emerald-800 dark:text-emerald-400' },
-  { name: 'Scotiabank', style: 'font-bold text-red-700 dark:text-red-400' },
-  { name: 'INDECOPI', style: 'font-black tracking-wider text-xs text-zinc-700 dark:text-zinc-300' },
-  { name: 'Diners', style: 'font-bold tracking-wide text-slate-700 dark:text-slate-300' },
-  { name: 'Niubiz', style: 'font-black text-sky-700 dark:text-sky-400' },
-  { name: 'SafetyPay', style: 'font-bold text-amber-700 dark:text-amber-400' },
-  { name: 'GlobalPay', style: 'font-bold text-indigo-700 dark:text-indigo-400' },
+const paymentBrands = [
+  { name: 'VISA', bg: '#1A1F71', text: '#FFFFFF', cls: 'italic font-black tracking-tight text-sm' },
+  { name: 'Mastercard', bg: '#EB001B', text: '#FFFFFF', cls: 'font-bold text-sm' },
+  { name: 'Yape', bg: '#6C1D8E', text: '#FFFFFF', cls: 'font-black tracking-wide text-sm' },
+  { name: 'Plin', bg: '#00B4D8', text: '#FFFFFF', cls: 'font-black text-sm' },
+  { name: 'BCP', bg: '#0047BB', text: '#FFFFFF', cls: 'font-black tracking-widest text-sm' },
+  { name: 'BBVA', bg: '#004B9A', text: '#FFFFFF', cls: 'font-black text-sm' },
+  { name: 'Culqi', bg: '#E63946', text: '#FFFFFF', cls: 'font-bold text-sm' },
+  { name: 'Izipay', bg: '#FF6B00', text: '#FFFFFF', cls: 'font-black italic text-sm' },
+  { name: 'PayPal', bg: '#003087', text: '#FFFFFF', cls: 'font-bold tracking-tight text-sm' },
+  { name: 'Interbank', bg: '#00873D', text: '#FFFFFF', cls: 'font-bold text-sm' },
+  { name: 'Scotiabank', bg: '#EC0000', text: '#FFFFFF', cls: 'font-bold text-sm' },
+  { name: 'Niubiz', bg: '#004B93', text: '#FFFFFF', cls: 'font-black text-sm' },
+  { name: 'SafetyPay', bg: '#1A1A2E', text: '#F4A720', cls: 'font-bold text-sm' },
 ];
 
 // ─── extended testimonials ────────────────────────────────────────────────────
@@ -86,26 +81,25 @@ function SectionDivider() {
 }
 
 // ─── brands marquee ───────────────────────────────────────────────────────────
-function BrandPill({ name, style }: { name: string; style: string }) {
+function BrandBadge({ b }: { b: typeof paymentBrands[0] }) {
   return (
-    <div className="shrink-0 mx-2 px-5 py-2.5 bg-card border border-border/60 rounded-full shadow-sm hover:border-border transition-colors">
-      <span className={cn('text-sm whitespace-nowrap select-none', style)}>{name}</span>
+    <div
+      className="shrink-0 mx-2 h-10 px-4 rounded-lg flex items-center justify-center select-none shadow-sm"
+      style={{ backgroundColor: b.bg }}
+    >
+      <span className={b.cls} style={{ color: b.text }}>{b.name}</span>
     </div>
   );
 }
 
 function BrandsCarousel() {
-  const doubled1 = [...row1Brands, ...row1Brands];
-  const doubled2 = [...row2Brands, ...row2Brands];
+  const row = [...paymentBrands, ...paymentBrands];
   return (
     <div className="relative overflow-hidden py-1">
       <div className="absolute left-0 top-0 bottom-0 w-20 sm:w-40 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
       <div className="absolute right-0 top-0 bottom-0 w-20 sm:w-40 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
-      <div className="flex mb-3 animate-marquee-brands">
-        {doubled1.map((b, i) => <BrandPill key={`r1-${i}`} {...b} />)}
-      </div>
-      <div className="flex animate-marquee-brands-slow">
-        {doubled2.map((b, i) => <BrandPill key={`r2-${i}`} {...b} />)}
+      <div className="flex animate-marquee-brands">
+        {row.map((b, i) => <BrandBadge key={`b-${i}`} b={b} />)}
       </div>
     </div>
   );
@@ -157,10 +151,41 @@ function StoreSection() {
           </Reveal>
 
           {categories.length > 0 && (
-            <div className="flex gap-2 overflow-x-auto pb-3 scrollbar-hide mb-6 -mx-4 px-4 sm:mx-0 sm:px-0">
-              <button onClick={() => setActiveCat('')} className={cn('px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all shrink-0', activeCat === '' ? 'bg-foreground text-background' : 'border border-border/60 text-muted-foreground hover:border-foreground/30 hover:text-foreground')}>Todos</button>
+            <div className="flex gap-3 overflow-x-auto pb-3 scrollbar-hide mb-8 -mx-4 px-4 sm:mx-0 sm:px-0">
+              <button
+                onClick={() => setActiveCat('')}
+                className={cn(
+                  'shrink-0 flex flex-col items-center gap-2 group transition-all',
+                )}
+              >
+                <div className={cn(
+                  'w-16 h-16 rounded-2xl border-2 flex items-center justify-center transition-all bg-muted',
+                  activeCat === '' ? 'border-foreground' : 'border-border/50 group-hover:border-foreground/40',
+                )}>
+                  <ShoppingBag className={cn('w-6 h-6', activeCat === '' ? 'text-foreground' : 'text-muted-foreground')} />
+                </div>
+                <span className={cn('text-xs font-medium whitespace-nowrap', activeCat === '' ? 'text-foreground' : 'text-muted-foreground')}>Todos</span>
+              </button>
               {categories.map(cat => (
-                <button key={cat.id} onClick={() => setActiveCat(activeCat === cat.id ? '' : cat.id)} className={cn('px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all shrink-0', activeCat === cat.id ? 'bg-foreground text-background' : 'border border-border/60 text-muted-foreground hover:border-foreground/30 hover:text-foreground')}>{cat.name}</button>
+                <button
+                  key={cat.id}
+                  onClick={() => setActiveCat(activeCat === cat.id ? '' : cat.id)}
+                  className="shrink-0 flex flex-col items-center gap-2 group transition-all"
+                >
+                  <div className={cn(
+                    'w-16 h-16 rounded-2xl border-2 overflow-hidden transition-all bg-muted',
+                    activeCat === cat.id ? 'border-foreground' : 'border-border/50 group-hover:border-foreground/40',
+                  )}>
+                    {cat.image_url ? (
+                      <img src={cat.image_url} alt={cat.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <ShoppingBag className="w-5 h-5 text-muted-foreground/50" />
+                      </div>
+                    )}
+                  </div>
+                  <span className={cn('text-xs font-medium whitespace-nowrap max-w-[72px] truncate', activeCat === cat.id ? 'text-foreground' : 'text-muted-foreground')}>{cat.name}</span>
+                </button>
               ))}
             </div>
           )}
@@ -383,7 +408,6 @@ export default function LandingPage() {
             <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 text-xs sm:text-sm text-muted-foreground/70 mb-10 sm:mb-12">
               {[
                 { icon: Lock, text: 'SSL 256-bit', color: 'text-emerald-600 dark:text-emerald-400' },
-                { icon: Shield, text: 'INDECOPI', color: 'text-primary' },
                 { icon: Check, text: 'Sin permanencia', color: 'text-primary' },
                 { icon: CreditCard, text: 'Pago quincenal', color: 'text-amber-600 dark:text-amber-400' },
               ].map(item => (
@@ -430,7 +454,7 @@ export default function LandingPage() {
       <section className="py-8 sm:py-12 border-y border-border/40 bg-muted/10">
         <Reveal>
           <p className="text-center text-[11px] font-semibold text-muted-foreground/60 uppercase tracking-widest mb-6">
-            Pagos y certificaciones aceptadas
+            Métodos de pago aceptados
           </p>
         </Reveal>
         <BrandsCarousel />
@@ -453,16 +477,16 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
             {/* Card 1: Comisiones — wide */}
             <Reveal className="md:col-span-2">
-              <div className="h-full bg-card/70 border border-border/50 rounded-2xl p-5 sm:p-7 card-lift hover:border-emerald-500/25 group backdrop-blur-sm overflow-hidden">
+              <div className="h-full bg-card/70 border border-border/50 rounded-2xl p-5 sm:p-7 card-lift hover:border-foreground/15 group backdrop-blur-sm overflow-hidden">
                 <div className="flex items-start justify-between gap-4 mb-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center shrink-0">
-                      <Wallet className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                    <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center shrink-0">
+                      <Wallet className="w-5 h-5 text-foreground" />
                     </div>
                     <h3 className="text-base sm:text-lg font-bold text-foreground">Comisiones automáticas</h3>
                   </div>
                   <div className="text-right shrink-0">
-                    <div className="text-xl font-bold text-emerald-600 dark:text-emerald-400">+S/ 3,240</div>
+                    <div className="text-xl font-bold text-foreground">+S/ 3,240</div>
                     <div className="text-xs text-muted-foreground/60">último mes</div>
                   </div>
                 </div>
@@ -470,12 +494,12 @@ export default function LandingPage() {
                 {/* mini chart */}
                 <div className="flex items-end gap-1 h-14 mb-4 px-1">
                   {[28, 45, 38, 62, 50, 74, 58, 82, 68, 90, 78, 100].map((h, i) => (
-                    <div key={i} className={cn('flex-1 rounded-sm transition-all group-hover:opacity-90', i === 11 ? 'bg-emerald-500' : 'bg-emerald-500/25')} style={{ height: `${h}%` }} />
+                    <div key={i} className={cn('flex-1 rounded-sm transition-all group-hover:opacity-90', i === 11 ? 'bg-foreground' : 'bg-foreground/15')} style={{ height: `${h}%` }} />
                   ))}
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {['7% Directa', '4% Binaria', '2% Unilevel', 'Pago quincenal'].map(tag => (
-                    <span key={tag} className="px-2.5 py-1 bg-emerald-500/8 text-emerald-700 dark:text-emerald-400 rounded-full text-xs font-medium border border-emerald-500/15">{tag}</span>
+                    <span key={tag} className="px-2.5 py-1 bg-muted text-muted-foreground rounded-full text-xs font-medium border border-border/60">{tag}</span>
                   ))}
                 </div>
               </div>
@@ -483,26 +507,23 @@ export default function LandingPage() {
 
             {/* Card 2: Red genealógica — narrow */}
             <Reveal>
-              <div className="h-full bg-card/70 border border-border/50 rounded-2xl p-5 sm:p-7 card-lift hover:border-primary/25 group backdrop-blur-sm flex flex-col">
+              <div className="h-full bg-card/70 border border-border/50 rounded-2xl p-5 sm:p-7 card-lift hover:border-foreground/15 group backdrop-blur-sm flex flex-col">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                    <Network className="w-5 h-5 text-primary" />
+                  <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center shrink-0">
+                    <Network className="w-5 h-5 text-foreground" />
                   </div>
                   <h3 className="text-base sm:text-lg font-bold text-foreground">Red genealógica</h3>
                 </div>
                 <p className="text-sm text-muted-foreground/80 leading-relaxed mb-5 flex-1">Panel visual con árbol binario, zoom dinámico y estadísticas por nodo en tiempo real.</p>
                 {/* mini network tree */}
                 <div className="relative flex flex-col items-center gap-3 py-2">
-                  {/* root */}
-                  <div className="w-8 h-8 rounded-full bg-primary/15 border-2 border-primary/40 flex items-center justify-center">
-                    <div className="w-3 h-3 rounded-full bg-primary" />
+                  <div className="w-8 h-8 rounded-full bg-foreground/10 border-2 border-foreground/30 flex items-center justify-center">
+                    <div className="w-3 h-3 rounded-full bg-foreground/70" />
                   </div>
-                  {/* level 1 */}
                   <div className="flex items-center gap-6">
-                    <div className="w-7 h-7 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center"><div className="w-2.5 h-2.5 rounded-full bg-primary/60" /></div>
-                    <div className="w-7 h-7 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center"><div className="w-2.5 h-2.5 rounded-full bg-primary/60" /></div>
+                    <div className="w-7 h-7 rounded-full bg-foreground/8 border border-foreground/20 flex items-center justify-center"><div className="w-2.5 h-2.5 rounded-full bg-foreground/40" /></div>
+                    <div className="w-7 h-7 rounded-full bg-foreground/8 border border-foreground/20 flex items-center justify-center"><div className="w-2.5 h-2.5 rounded-full bg-foreground/40" /></div>
                   </div>
-                  {/* level 2 */}
                   <div className="flex items-center gap-2">
                     {Array.from({ length: 4 }).map((_, i) => (
                       <div key={i} className="w-5 h-5 rounded-full bg-muted border border-border/60 flex items-center justify-center"><div className="w-2 h-2 rounded-full bg-muted-foreground/30" /></div>
@@ -515,10 +536,10 @@ export default function LandingPage() {
 
             {/* Card 3: Sistema de rangos — narrow */}
             <Reveal>
-              <div className="h-full bg-card/70 border border-border/50 rounded-2xl p-5 sm:p-7 card-lift hover:border-amber-500/25 group backdrop-blur-sm flex flex-col">
+              <div className="h-full bg-card/70 border border-border/50 rounded-2xl p-5 sm:p-7 card-lift hover:border-foreground/15 group backdrop-blur-sm flex flex-col">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center shrink-0">
-                    <Award className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                  <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center shrink-0">
+                    <Award className="w-5 h-5 text-foreground" />
                   </div>
                   <h3 className="text-base sm:text-lg font-bold text-foreground">Sistema de rangos</h3>
                 </div>
@@ -526,13 +547,13 @@ export default function LandingPage() {
                 {/* rank ladder */}
                 <div className="space-y-2">
                   {[
-                    { name: 'Bronce', color: 'bg-amber-700/20 text-amber-700 dark:text-amber-500 border-amber-700/30', w: 'w-1/3' },
-                    { name: 'Plata', color: 'bg-slate-400/15 text-slate-600 dark:text-slate-300 border-slate-400/30', w: 'w-1/2' },
-                    { name: 'Oro', color: 'bg-yellow-400/15 text-yellow-700 dark:text-yellow-400 border-yellow-400/30', w: 'w-2/3' },
-                    { name: 'Platino', color: 'bg-cyan-400/15 text-cyan-700 dark:text-cyan-400 border-cyan-400/30', w: 'w-3/4' },
-                    { name: 'Corona', color: 'bg-primary/15 text-primary border-primary/30', w: 'w-full' },
+                    { name: 'Bronce', w: 'w-1/3', opacity: 'opacity-30' },
+                    { name: 'Plata', w: 'w-1/2', opacity: 'opacity-45' },
+                    { name: 'Oro', w: 'w-2/3', opacity: 'opacity-60' },
+                    { name: 'Platino', w: 'w-3/4', opacity: 'opacity-75' },
+                    { name: 'Corona', w: 'w-full', opacity: 'opacity-100' },
                   ].map(r => (
-                    <div key={r.name} className={cn('h-6 rounded-full flex items-center px-3 border text-xs font-semibold transition-all group-hover:opacity-90', r.color, r.w)}>
+                    <div key={r.name} className={cn('h-6 rounded-full flex items-center px-3 bg-foreground border border-foreground/10 text-background text-xs font-semibold transition-all group-hover:opacity-90', r.w, r.opacity)}>
                       {r.name}
                     </div>
                   ))}
@@ -542,18 +563,18 @@ export default function LandingPage() {
 
             {/* Card 4: Tienda — wide */}
             <Reveal className="md:col-span-2">
-              <div className="h-full bg-card/70 border border-border/50 rounded-2xl p-5 sm:p-7 card-lift hover:border-blue-500/25 group backdrop-blur-sm flex flex-col sm:flex-row gap-5 overflow-hidden">
+              <div className="h-full bg-card/70 border border-border/50 rounded-2xl p-5 sm:p-7 card-lift hover:border-foreground/15 group backdrop-blur-sm flex flex-col sm:flex-row gap-5 overflow-hidden">
                 <div className="flex-1 flex flex-col min-w-0">
                   <div className="flex items-center gap-3 mb-3">
-                    <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0">
-                      <ShoppingBag className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                    <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center shrink-0">
+                      <ShoppingBag className="w-5 h-5 text-foreground" />
                     </div>
                     <h3 className="text-base sm:text-lg font-bold text-foreground">Tienda integrada</h3>
                   </div>
                   <p className="text-sm text-muted-foreground/80 leading-relaxed mb-4 flex-1">Catálogo completo. Cada compra activa comisiones automáticas en toda tu red de forma instantánea.</p>
                   <div className="flex flex-wrap gap-2 mb-4">
                     {['Vitaminas', 'Bienestar', 'Nutrición', 'Cuidado personal'].map(tag => (
-                      <span key={tag} className="px-2.5 py-1 bg-blue-500/8 text-blue-700 dark:text-blue-400 rounded-full text-xs font-medium border border-blue-500/15">{tag}</span>
+                      <span key={tag} className="px-2.5 py-1 bg-muted text-muted-foreground rounded-full text-xs font-medium border border-border/60">{tag}</span>
                     ))}
                   </div>
                   <Link to="/tienda" className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:gap-2.5 transition-all group/link">
@@ -602,21 +623,6 @@ export default function LandingPage() {
               <p className="text-sm sm:text-base lg:text-lg text-white/60 leading-relaxed mb-7 sm:mb-8 max-w-lg">
                 Mientras duermes, el sistema calcula y distribuye comisiones a toda tu red. Sin errores, sin retrasos.
               </p>
-              {/* social proof */}
-              <div className="flex items-center gap-3 mb-7 sm:mb-8">
-                <div className="flex -space-x-2">
-                  {[
-                    'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=60',
-                    'https://images.pexels.com/photos/1680172/pexels-photo-1680172.jpeg?auto=compress&cs=tinysrgb&w=60',
-                    'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=60',
-                  ].map((src, i) => (
-                    <img key={i} src={src} alt="" className="w-8 h-8 rounded-full border-2 border-zinc-800 object-cover" />
-                  ))}
-                </div>
-                <div className="text-xs text-white/50">
-                  <span className="text-white font-semibold">12,540+</span> emprendedores ya confían en Cluv 360
-                </div>
-              </div>
               <div className="flex flex-col sm:flex-row gap-3">
                 <Link
                   to={user ? '/dashboard' : '/registro'}
@@ -636,19 +642,19 @@ export default function LandingPage() {
             <Reveal delay={100}>
               <div className="grid grid-cols-2 gap-3">
                 {[
-                  { icon: DollarSign, title: 'Comisiones en tiempo real', desc: 'Calculadas al instante en cada compra de tu red.', color: 'text-emerald-400', bg: 'bg-emerald-500/15 border-emerald-500/25' },
-                  { icon: Zap, title: 'Pago automático', desc: 'Transferencias quincenales sin trámite de tu parte.', color: 'text-amber-400', bg: 'bg-amber-500/15 border-amber-500/25' },
-                  { icon: Globe, title: 'Red internacional', desc: 'Tus afiliados pueden estar en toda Latinoamérica.', color: 'text-blue-400', bg: 'bg-blue-500/15 border-blue-500/25' },
-                  { icon: TrendingUp, title: 'Crecimiento probado', desc: '+340% anual. Números reales, no promesas.', color: 'text-rose-400', bg: 'bg-rose-500/15 border-rose-500/25' },
+                  { icon: DollarSign, title: 'Comisiones en tiempo real', desc: 'Calculadas al instante en cada compra de tu red.' },
+                  { icon: Zap, title: 'Pago automático', desc: 'Transferencias quincenales sin trámite de tu parte.' },
+                  { icon: Globe, title: 'Red internacional', desc: 'Tus afiliados pueden estar en toda Latinoamérica.' },
+                  { icon: TrendingUp, title: 'Crecimiento probado', desc: '+340% anual. Números reales, no promesas.' },
                 ].map((item, i) => {
                   const Icon = item.icon;
                   return (
-                    <div key={i} className={cn('border rounded-2xl p-4 sm:p-5 hover:opacity-90 transition-all', item.bg)}>
-                      <div className={cn('w-9 h-9 rounded-xl flex items-center justify-center mb-3', item.bg)}>
-                        <Icon className={cn('w-5 h-5', item.color)} />
+                    <div key={i} className="bg-white/8 border border-white/12 rounded-2xl p-4 sm:p-5 hover:bg-white/12 transition-all backdrop-blur-sm">
+                      <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center mb-3">
+                        <Icon className="w-5 h-5 text-white/80" />
                       </div>
                       <div className="text-xs sm:text-sm font-semibold text-white mb-1 sm:mb-1.5">{item.title}</div>
-                      <div className="text-xs text-white/55 leading-relaxed">{item.desc}</div>
+                      <div className="text-xs text-white/50 leading-relaxed">{item.desc}</div>
                     </div>
                   );
                 })}
