@@ -13,6 +13,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuthStore } from '@/store/authStore';
 import { useConfig, formatPrice } from '@/store/configStore';
 import { useDatabase } from '@/lib/backend';
+import { supabase } from '@/lib/backend/client';
 import { useCart } from '@/store/cartStore';
 import type { Product, ProductCategory } from '@/lib/storeTypes';
 import ProductCard from '@/components/store/ProductCard';
@@ -37,19 +38,19 @@ const regionStats = [
 
 // ─── payment brands ───────────────────────────────────────────────────────────
 const paymentBrands = [
-  { name: 'VISA', cls: 'italic font-black tracking-tight text-base leading-none' },
-  { name: 'Mastercard', cls: 'font-bold text-sm' },
-  { name: 'Yape', cls: 'font-black tracking-wide text-sm' },
-  { name: 'Plin', cls: 'font-black text-sm' },
-  { name: 'BCP', cls: 'font-black tracking-widest text-sm' },
-  { name: 'BBVA', cls: 'font-black text-sm' },
-  { name: 'Culqi', cls: 'font-bold text-sm' },
-  { name: 'Izipay', cls: 'font-black italic text-sm' },
-  { name: 'PayPal', cls: 'font-bold tracking-tight text-sm' },
-  { name: 'Interbank', cls: 'font-bold text-sm' },
-  { name: 'Scotiabank', cls: 'font-bold text-sm' },
-  { name: 'Niubiz', cls: 'font-black text-sm' },
-  { name: 'SafetyPay', cls: 'font-bold text-sm' },
+  { name: 'Visa', abbr: 'VISA', color: '#1a1f71', bg: '#e8eaf6' },
+  { name: 'Mastercard', abbr: 'MC', color: '#eb001b', bg: '#fdecea' },
+  { name: 'Yape', abbr: 'YP', color: '#6c1d8e', bg: '#f3e5f5' },
+  { name: 'Plin', abbr: 'PL', color: '#0099cc', bg: '#e0f7fa' },
+  { name: 'BCP', abbr: 'BCP', color: '#0047bb', bg: '#e3f2fd' },
+  { name: 'BBVA', abbr: 'BB', color: '#004b9a', bg: '#e8edf7' },
+  { name: 'Culqi', abbr: 'CQ', color: '#e63946', bg: '#fdecea' },
+  { name: 'Izipay', abbr: 'IZ', color: '#ff6b00', bg: '#fff3e0' },
+  { name: 'PayPal', abbr: 'PP', color: '#003087', bg: '#e3f0fd' },
+  { name: 'Interbank', abbr: 'IB', color: '#00873d', bg: '#e6f7ed' },
+  { name: 'Scotiabank', abbr: 'SB', color: '#ec0000', bg: '#fdecea' },
+  { name: 'Niubiz', abbr: 'NB', color: '#004b93', bg: '#e3eef9' },
+  { name: 'SafetyPay', abbr: 'SP', color: '#856404', bg: '#fef9e7' },
 ];
 
 // ─── extended testimonials ────────────────────────────────────────────────────
@@ -82,8 +83,19 @@ function SectionDivider() {
 // ─── brands marquee ───────────────────────────────────────────────────────────
 function BrandBadge({ b }: { b: typeof paymentBrands[0] }) {
   return (
-    <div className="shrink-0 mx-2.5 h-9 px-5 rounded-lg bg-muted/40 border border-border/40 flex items-center select-none">
-      <span className={cn(b.cls, 'text-foreground/60')}>{b.name}</span>
+    <div className="shrink-0 mx-2.5 select-none">
+      <div
+        className="flex items-center gap-2 px-3.5 py-2 rounded-xl border border-border/40 bg-card/60 backdrop-blur-sm hover:border-border/70 hover:bg-card transition-all duration-200 cursor-default"
+      >
+        {/* Color dot avatar */}
+        <div
+          className="w-6 h-6 rounded-md flex items-center justify-center text-[9px] font-black leading-none shrink-0"
+          style={{ backgroundColor: b.bg, color: b.color }}
+        >
+          {b.abbr.slice(0, 2)}
+        </div>
+        <span className="text-[13px] font-semibold text-foreground/70">{b.name}</span>
+      </div>
     </div>
   );
 }
@@ -91,10 +103,10 @@ function BrandBadge({ b }: { b: typeof paymentBrands[0] }) {
 function BrandsCarousel() {
   const row = [...paymentBrands, ...paymentBrands];
   return (
-    <div className="relative overflow-hidden py-1">
+    <div className="relative overflow-hidden py-2">
       <div className="absolute left-0 top-0 bottom-0 w-20 sm:w-40 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
       <div className="absolute right-0 top-0 bottom-0 w-20 sm:w-40 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
-      <div className="flex animate-marquee-brands">
+      <div className="flex items-center animate-marquee-brands">
         {row.map((b, i) => <BrandBadge key={`b-${i}`} b={b} />)}
       </div>
     </div>
@@ -263,8 +275,8 @@ function AppMockup() {
             </div>
             <div className="space-y-1.5 sm:space-y-2">
               {[
-                { icon: DollarSign, text: 'Comisión binaria — Juan P.', val: '+S/ 120', ic: 'text-emerald-600 dark:text-emerald-400 bg-emerald-500/10' },
-                { icon: Users, text: 'Nuevo afiliado en red', val: '+1 afil.', ic: 'text-primary bg-primary/10' },
+                { icon: DollarSign, text: 'Comisión directa acreditada', val: '+S/ 120', ic: 'text-emerald-600 dark:text-emerald-400 bg-emerald-500/10' },
+                { icon: TrendingUp, text: 'Bono de rango desbloqueado', val: '+S/ 80', ic: 'text-amber-600 dark:text-amber-400 bg-amber-500/10' },
               ].map((item, i) => (
                 <div key={i} className="flex items-center gap-2.5 sm:gap-3 p-2 sm:p-2.5 rounded-xl bg-muted/20 border border-border/40">
                   <div className={cn('w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center flex-shrink-0', item.ic)}><item.icon className="w-3 sm:w-3.5 h-3 sm:h-3.5" /></div>
@@ -350,26 +362,26 @@ function fmtNumber(n: number): string {
 
 // ─── platform stats hook ───────────────────────────────────────────────────────
 function usePlatformStats() {
-  const database = useDatabase();
-  const [stats, setStats] = useState({ totalAffiliates: 0, totalProducts: 0 });
+  const [stats, setStats] = useState({ totalAffiliates: 0, totalProducts: 0, loaded: false });
 
   useEffect(() => {
     const load = async () => {
       try {
-        const [profilesRes, productsRes] = await Promise.all([
-          database.select('profiles', { select: 'count', head: true }),
-          database.select('products', { filter: { status: 'active' }, select: 'count', head: true }),
+        const [affiliatesRes, productsRes] = await Promise.all([
+          supabase.from('profiles').select('*', { count: 'exact', head: true }),
+          supabase.from('products').select('*', { count: 'exact', head: true }).eq('status', 'active'),
         ]);
         setStats({
-          totalAffiliates: (profilesRes as any)?.count || 0,
-          totalProducts: (productsRes as any)?.count || 0,
+          totalAffiliates: affiliatesRes.count ?? 0,
+          totalProducts: productsRes.count ?? 0,
+          loaded: true,
         });
-      } catch (e) {
-        setStats({ totalAffiliates: 12540, totalProducts: 48 });
+      } catch {
+        setStats(s => ({ ...s, loaded: true }));
       }
     };
     load();
-  }, [database]);
+  }, []);
 
   return stats;
 }
@@ -464,7 +476,7 @@ export default function LandingPage() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 sm:gap-4 lg:gap-0 divide-y sm:divide-y-0 sm:divide-x divide-border/40">
             {[
               {
-                value: platformStats.totalAffiliates > 0 ? `${fmtNumber(platformStats.totalAffiliates)}+` : '12.5K+',
+                value: !platformStats.loaded ? '—' : platformStats.totalAffiliates > 0 ? `${fmtNumber(platformStats.totalAffiliates)}+` : '0',
                 label: 'Afiliados activos',
                 sub: 'en toda Latinoamérica',
                 icon: Users,
@@ -472,7 +484,7 @@ export default function LandingPage() {
                 iconBg: 'bg-primary/10',
               },
               {
-                value: platformStats.totalProducts > 0 ? `${fmtNumber(platformStats.totalProducts)}+` : '48+',
+                value: !platformStats.loaded ? '—' : platformStats.totalProducts > 0 ? `${fmtNumber(platformStats.totalProducts)}+` : '0',
                 label: 'Productos en catálogo',
                 sub: 'con comisiones automáticas',
                 icon: ShoppingBag,
@@ -480,7 +492,7 @@ export default function LandingPage() {
                 iconBg: 'bg-blue-500/10',
               },
               {
-                value: ranks.filter(r => r.is_active !== false).length > 0 ? `${ranks.filter(r => r.is_active !== false).length}` : '4',
+                value: ranks.filter(r => r.is_active !== false).length > 0 ? `${ranks.filter(r => r.is_active !== false).length}` : '—',
                 label: 'Rangos disponibles',
                 sub: 'con bonos progresivos',
                 icon: Award,
@@ -488,7 +500,7 @@ export default function LandingPage() {
                 iconBg: 'bg-amber-500/10',
               },
               {
-                value: plans.length > 0 ? `${plans.length}` : '3',
+                value: plans.length > 0 ? `${plans.length}` : '—',
                 label: 'Planes flexibles',
                 sub: 'desde gratis hasta elite',
                 icon: BarChart3,
@@ -512,9 +524,9 @@ export default function LandingPage() {
       </section>
 
       {/* ── BRANDS MARQUEE ────────────────────────────────────────────────────*/}
-      <section className="py-8 sm:py-12">
+      <section className="py-10 sm:py-14">
         <Reveal>
-          <p className="text-center text-[11px] font-semibold text-muted-foreground/50 uppercase tracking-widest mb-5">
+          <p className="text-center text-[11px] font-semibold text-muted-foreground/40 uppercase tracking-widest mb-6">
             Métodos de pago aceptados
           </p>
         </Reveal>
@@ -546,10 +558,12 @@ export default function LandingPage() {
                     </div>
                     <h3 className="text-base sm:text-lg font-bold text-foreground">Comisiones automáticas</h3>
                   </div>
-                  <div className="text-right shrink-0">
-                    <div className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{platformStats.totalAffiliates > 0 ? platformStats.totalAffiliates.toLocaleString() : '12,540'}</div>
-                    <div className="text-xs text-muted-foreground/60">afiliados activos</div>
-                  </div>
+                  {platformStats.totalAffiliates > 0 && (
+                    <div className="text-right shrink-0">
+                      <div className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{fmtNumber(platformStats.totalAffiliates)}</div>
+                      <div className="text-xs text-muted-foreground/60">afiliados activos</div>
+                    </div>
+                  )}
                 </div>
                 <p className="text-sm text-muted-foreground leading-relaxed mb-5">7% directa · 4% binaria · 2% unilevel. Cálculo en tiempo real, pago cada 15 días.</p>
                 {/* mini chart */}
@@ -590,7 +604,9 @@ export default function LandingPage() {
                       <div key={i} className="w-5 h-5 rounded-full bg-muted border border-border/60 flex items-center justify-center"><div className="w-2 h-2 rounded-full bg-muted-foreground/40" /></div>
                     ))}
                   </div>
-                  <div className="text-xs text-muted-foreground font-medium">{platformStats.totalAffiliates > 0 ? platformStats.totalAffiliates.toLocaleString() : '12,540'} afiliados en la red</div>
+                  {platformStats.totalAffiliates > 0 && (
+                    <div className="text-xs text-muted-foreground font-medium">{fmtNumber(platformStats.totalAffiliates)}+ afiliados en la red</div>
+                  )}
                 </div>
               </div>
             </Reveal>
@@ -635,10 +651,12 @@ export default function LandingPage() {
                       </div>
                       <h3 className="text-base sm:text-lg font-bold text-foreground">Tienda integrada</h3>
                     </div>
-                    <div className="text-right shrink-0">
-                      <div className="text-xl font-bold text-blue-600 dark:text-blue-400">{platformStats.totalProducts > 0 ? platformStats.totalProducts : '48'}</div>
-                      <div className="text-xs text-muted-foreground/60">productos</div>
-                    </div>
+                    {platformStats.totalProducts > 0 && (
+                      <div className="text-right shrink-0">
+                        <div className="text-xl font-bold text-blue-600 dark:text-blue-400">{fmtNumber(platformStats.totalProducts)}</div>
+                        <div className="text-xs text-muted-foreground/60">productos</div>
+                      </div>
+                    )}
                   </div>
                   <p className="text-sm text-muted-foreground leading-relaxed mb-4 flex-1">Catálogo completo. Cada compra activa comisiones automáticas en toda tu red de forma instantánea.</p>
                   <div className="flex flex-wrap gap-2 mb-4">
@@ -673,12 +691,15 @@ export default function LandingPage() {
       <SectionDivider />
 
       {/* ── DARK PROMO ────────────────────────────────────────────────────────*/}
-      <section className="relative py-20 sm:py-28 lg:py-32 overflow-hidden bg-zinc-950 dark:bg-[#0d0d0d]">
-        {/* Fade top and bottom to blend with surrounding sections */}
-        <div className="absolute top-0 left-0 right-0 h-20 bg-gradient-to-b from-background to-transparent z-10 pointer-events-none" />
-        <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-background to-transparent z-10 pointer-events-none" />
-        <div className="absolute inset-0 bg-dub-grid-dark opacity-25 mask-fade-center" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] rounded-full bg-primary/6 blur-[140px] pointer-events-none" />
+      <section className="relative py-20 sm:py-28 lg:py-32 overflow-hidden bg-zinc-950 dark:bg-[#0c0a07]">
+        {/* Fade top/bottom only in dark mode — in light mode they create ugly white bands */}
+        <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-background to-transparent z-10 pointer-events-none hidden dark:block" />
+        <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-background to-transparent z-10 pointer-events-none hidden dark:block" />
+        <div className="absolute inset-0 bg-dub-grid-dark opacity-40 mask-fade-center" />
+        {/* Atmospheric glow blobs */}
+        <div className="absolute -top-1/4 -left-1/4 w-[65%] h-[65%] rounded-full bg-primary/10 blur-[150px] pointer-events-none" />
+        <div className="absolute -bottom-1/4 -right-1/4 w-[55%] h-[55%] rounded-full bg-amber-700/8 dark:bg-amber-900/10 blur-[140px] pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[35%] h-[35%] rounded-full bg-primary/6 blur-[110px] pointer-events-none" />
 
         <div className="relative max-w-[1100px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-10 sm:gap-12 lg:gap-16 items-center">
@@ -899,9 +920,16 @@ export default function LandingPage() {
                 <Reveal delay={80}>
                   {(() => {
                     const activeRanks = ranks.filter(r => r.is_active !== false).slice(0, 8);
-                    const useGrid = activeRanks.length > 4;
+                    const count = activeRanks.length;
+                    // Adaptive grid: 3 cols for 6+, 2 cols for 4-5, list for 3 or fewer
+                    const gridClass = count >= 6
+                      ? 'grid grid-cols-2 sm:grid-cols-3 gap-2'
+                      : count >= 4
+                        ? 'grid grid-cols-1 sm:grid-cols-2 gap-2.5'
+                        : 'space-y-2.5';
+                    const isCompact = count >= 6;
                     return (
-                      <div className={cn(useGrid ? 'grid grid-cols-1 sm:grid-cols-2 gap-2.5' : 'space-y-2.5')}>
+                      <div className={cn(gridClass)}>
                         {activeRanks.map((r) => {
                           const borderStyle = r.border_color?.startsWith('#') ? { borderColor: r.border_color } : undefined;
                           const borderClass = r.border_color?.startsWith('#') ? 'border' : cn('border', r.border_color || 'border-border/40');
@@ -911,25 +939,29 @@ export default function LandingPage() {
                           return (
                             <div
                               key={r.id}
-                              className={cn('group relative rounded-xl p-4 transition-all backdrop-blur-sm overflow-hidden cursor-default', borderClass)}
+                              className={cn(
+                                'group relative rounded-xl p-4 transition-all backdrop-blur-sm overflow-hidden cursor-default',
+                                borderClass,
+                                isCompact && 'sm:p-3',
+                              )}
                               style={borderStyle}
                             >
                               {bgHex && <div className="absolute inset-0 opacity-10 group-hover:opacity-15 transition-opacity" style={{ backgroundColor: bgHex }} />}
-                              <div className="relative flex items-center gap-3">
-                                <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 bg-muted/60" style={bgHex ? { backgroundColor: bgHex + '25' } : undefined}>
-                                  <Award className={cn('w-4 h-4', colorClass)} style={colorStyle} />
+                              <div className={cn('relative flex items-center gap-3', isCompact && 'gap-2.5 sm:gap-2')}>
+                                <div className={cn('w-9 h-9 rounded-lg flex items-center justify-center shrink-0 bg-muted/60', isCompact && 'sm:w-8 sm:h-8')} style={bgHex ? { backgroundColor: bgHex + '25' } : undefined}>
+                                  <Award className={cn('w-4 h-4', colorClass, isCompact && 'sm:w-3.5 sm:h-3.5')} style={colorStyle} />
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                  <div className="text-sm font-bold" style={colorStyle}>
+                                  <div className={cn('text-sm font-bold', isCompact && 'sm:text-[13px]')} style={colorStyle}>
                                     <span className={colorClass}>{r.name}</span>
                                   </div>
                                   {r.min_affiliates > 0 && (
-                                    <div className="text-[11px] text-muted-foreground/55 mt-0.5">{r.min_affiliates} afil. mín.</div>
+                                    <div className={cn('text-[11px] text-muted-foreground/55 mt-0.5', isCompact && 'sm:text-[10px]')}>{r.min_affiliates} afil.</div>
                                   )}
                                 </div>
                                 <div className="text-right shrink-0">
-                                  <div className="text-sm font-black text-foreground">{formatPrice(r.bonus, currency, currencySymbol, exchangeRate)}</div>
-                                  <div className="text-[10px] text-muted-foreground/50">bono</div>
+                                  <div className={cn('text-sm font-black text-foreground', isCompact && 'sm:text-[13px]')}>{formatPrice(r.bonus, currency, currencySymbol, exchangeRate)}</div>
+                                  <div className={cn('text-[10px] text-muted-foreground/50', isCompact && 'sm:hidden')}>bono</div>
                                 </div>
                               </div>
                             </div>
@@ -1036,42 +1068,78 @@ export default function LandingPage() {
       {/* ── FAQ ───────────────────────────────────────────────────────────────*/}
       <section className="relative py-16 sm:py-24 overflow-hidden">
         <div className="absolute inset-0 bg-dub-grid opacity-20 mask-fade-center pointer-events-none" />
-        <div className="relative max-w-[800px] mx-auto px-4 sm:px-6 lg:px-8">
-          <Reveal className="text-center mb-10 sm:mb-12">
-            <span className="text-xs font-semibold text-primary uppercase tracking-widest mb-3 block">FAQ</span>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground tracking-tight">
-              Preguntas <span className="text-gradient-animated">frecuentes</span>
-            </h2>
-            <p className="text-muted-foreground/70 leading-relaxed text-sm sm:text-base mt-3 max-w-md mx-auto">
-              Todo lo que necesitas saber antes de empezar tu negocio con Cluv 360.
-            </p>
-          </Reveal>
-          <Reveal delay={60}>
-            <div className="bg-card/60 border border-border/50 rounded-2xl overflow-hidden backdrop-blur-sm shadow-sm">
-              {faqItems.map((faq, i) => (
-                <div key={i} className={cn('border-b last:border-b-0 border-border/40 transition-colors', openFaq === i ? 'bg-muted/20' : 'hover:bg-muted/10')}>
-                  <button
-                    onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                    className="w-full flex items-center justify-between px-5 sm:px-7 py-4 sm:py-5 text-left gap-4"
-                  >
-                    <span className={cn('text-sm sm:text-base transition-colors leading-snug', openFaq === i ? 'font-semibold text-foreground' : 'font-medium text-foreground/85')}>{faq.question}</span>
-                    <ChevronDown className={cn('w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground/50 transition-all shrink-0', openFaq === i && 'rotate-180 text-primary')} />
-                  </button>
-                  {openFaq === i && (
-                    <div className="px-5 sm:px-7 pb-5 sm:pb-6">
-                      <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">{faq.answer}</p>
-                    </div>
-                  )}
+        <div className="relative max-w-[1100px] mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid lg:grid-cols-[380px_1fr] gap-10 lg:gap-16 items-start">
+            <Reveal>
+              <div className="lg:sticky lg:top-24">
+                <span className="text-xs font-semibold text-primary uppercase tracking-widest mb-3 block">FAQ</span>
+                <h2 className="text-3xl sm:text-4xl font-bold text-foreground tracking-tight mb-4">
+                  Preguntas <span className="text-gradient-animated">frecuentes</span>
+                </h2>
+                <p className="text-muted-foreground/70 leading-relaxed text-sm sm:text-base mb-8">
+                  Todo lo que necesitas saber antes de empezar. Si tienes más preguntas, estamos disponibles 24/7.
+                </p>
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/8 border border-primary/20 mb-6">
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+                  <span className="text-xs font-medium text-primary">{faqItems.length} preguntas</span>
                 </div>
-              ))}
-            </div>
-          </Reveal>
-          <Reveal delay={100}>
-            <p className="text-center text-sm text-muted-foreground/60 mt-6">
-              ¿Tienes más preguntas?{' '}
-              <Link to="/contacto" className="text-primary font-medium hover:underline">Contacta con soporte →</Link>
-            </p>
-          </Reveal>
+                <Link to="/contacto" className="inline-flex items-center gap-2 px-5 py-2.5 border border-border/60 rounded-xl text-sm font-medium hover:border-primary/40 hover:text-primary transition-all group">
+                  Contactar soporte
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                </Link>
+              </div>
+            </Reveal>
+            <Reveal delay={80}>
+              <div className="space-y-2">
+                {faqItems.length === 0 ? (
+                  <div className="py-16 flex flex-col items-center justify-center gap-3 text-center">
+                    <div className="w-12 h-12 rounded-2xl bg-muted/60 flex items-center justify-center">
+                      <ChevronDown className="w-5 h-5 text-muted-foreground/40" />
+                    </div>
+                    <p className="text-sm text-muted-foreground/60">No hay preguntas frecuentes configuradas aún.</p>
+                  </div>
+                ) : faqItems.map((faq, i) => (
+                  <div
+                    key={i}
+                    className={cn(
+                      'rounded-2xl border transition-all duration-200 overflow-hidden',
+                      openFaq === i
+                        ? 'border-primary/25 bg-primary/5'
+                        : 'border-border/50 bg-card/60 hover:border-border hover:bg-card/80',
+                    )}
+                  >
+                    <button
+                      onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                      className="w-full flex items-center justify-between px-5 py-4 text-left gap-4"
+                    >
+                      <span className={cn(
+                        'text-sm sm:text-[15px] leading-snug transition-colors',
+                        openFaq === i ? 'font-semibold text-foreground' : 'font-medium text-foreground/85',
+                      )}>
+                        {faq.question}
+                      </span>
+                      <div className={cn(
+                        'w-7 h-7 rounded-full border flex items-center justify-center shrink-0 transition-all duration-200',
+                        openFaq === i
+                          ? 'border-primary/40 bg-primary/10 text-primary rotate-180'
+                          : 'border-border/50 bg-muted/40 text-muted-foreground',
+                      )}>
+                        <ChevronDown className="w-3.5 h-3.5 transition-transform duration-200" />
+                      </div>
+                    </button>
+                    <div className={cn(
+                      'overflow-hidden transition-all duration-300 ease-in-out',
+                      openFaq === i ? 'max-h-96' : 'max-h-0',
+                    )}>
+                      <div className="px-5 pb-5 pt-1">
+                        <p className="text-sm sm:text-[15px] text-muted-foreground leading-relaxed">{faq.answer}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Reveal>
+          </div>
         </div>
       </section>
 
