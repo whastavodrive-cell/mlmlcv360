@@ -7,7 +7,6 @@ import {
   ArrowRight, Check, Star, ChevronDown, Zap, Globe, Award, DollarSign,
   TrendingUp, Users, Lock, ShoppingBag, Bell, Network, CreditCard, Sparkles,
   ChartBar as BarChart3, Wallet, ExternalLink,
-  Building2, Mountain, Waves, MapPin, Sun, Leaf,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState, useEffect, useCallback } from 'react';
@@ -28,29 +27,29 @@ const steps = [
 
 // ─── region stats ─────────────────────────────────────────────────────────────
 const regionStats = [
-  { city: 'Lima', members: '4,820+', icon: Building2 },
-  { city: 'Arequipa', members: '1,940+', icon: Mountain },
-  { city: 'Trujillo', members: '1,560+', icon: Waves },
-  { city: 'Cusco', members: '980+', icon: MapPin },
-  { city: 'Piura', members: '760+', icon: Sun },
-  { city: 'Ica', members: '480+', icon: Leaf },
+  { city: 'Lima', members: '4,820+', img: 'https://images.pexels.com/photos/2610756/pexels-photo-2610756.jpeg?auto=compress&cs=tinysrgb&w=120' },
+  { city: 'Arequipa', members: '1,940+', img: 'https://images.pexels.com/photos/2166553/pexels-photo-2166553.jpeg?auto=compress&cs=tinysrgb&w=120' },
+  { city: 'Trujillo', members: '1,560+', img: 'https://images.pexels.com/photos/1285625/pexels-photo-1285625.jpeg?auto=compress&cs=tinysrgb&w=120' },
+  { city: 'Cusco', members: '980+', img: 'https://images.pexels.com/photos/2325446/pexels-photo-2325446.jpeg?auto=compress&cs=tinysrgb&w=120' },
+  { city: 'Piura', members: '760+', img: 'https://images.pexels.com/photos/1001682/pexels-photo-1001682.jpeg?auto=compress&cs=tinysrgb&w=120' },
+  { city: 'Ica', members: '480+', img: 'https://images.pexels.com/photos/2872580/pexels-photo-2872580.jpeg?auto=compress&cs=tinysrgb&w=120' },
 ];
 
 // ─── payment brands ───────────────────────────────────────────────────────────
 const paymentBrands = [
-  { name: 'VISA', bg: '#1A1F71', text: '#FFFFFF', cls: 'italic font-black tracking-tight text-sm' },
-  { name: 'Mastercard', bg: '#EB001B', text: '#FFFFFF', cls: 'font-bold text-sm' },
-  { name: 'Yape', bg: '#6C1D8E', text: '#FFFFFF', cls: 'font-black tracking-wide text-sm' },
-  { name: 'Plin', bg: '#00B4D8', text: '#FFFFFF', cls: 'font-black text-sm' },
-  { name: 'BCP', bg: '#0047BB', text: '#FFFFFF', cls: 'font-black tracking-widest text-sm' },
-  { name: 'BBVA', bg: '#004B9A', text: '#FFFFFF', cls: 'font-black text-sm' },
-  { name: 'Culqi', bg: '#E63946', text: '#FFFFFF', cls: 'font-bold text-sm' },
-  { name: 'Izipay', bg: '#FF6B00', text: '#FFFFFF', cls: 'font-black italic text-sm' },
-  { name: 'PayPal', bg: '#003087', text: '#FFFFFF', cls: 'font-bold tracking-tight text-sm' },
-  { name: 'Interbank', bg: '#00873D', text: '#FFFFFF', cls: 'font-bold text-sm' },
-  { name: 'Scotiabank', bg: '#EC0000', text: '#FFFFFF', cls: 'font-bold text-sm' },
-  { name: 'Niubiz', bg: '#004B93', text: '#FFFFFF', cls: 'font-black text-sm' },
-  { name: 'SafetyPay', bg: '#1A1A2E', text: '#F4A720', cls: 'font-bold text-sm' },
+  { name: 'VISA', color: '#1A1F71', cls: 'italic font-black tracking-tight text-base leading-none' },
+  { name: 'Mastercard', color: '#EB001B', cls: 'font-bold text-sm' },
+  { name: 'Yape', color: '#6C1D8E', cls: 'font-black tracking-wide text-sm' },
+  { name: 'Plin', color: '#00B4D8', cls: 'font-black text-sm' },
+  { name: 'BCP', color: '#0047BB', cls: 'font-black tracking-widest text-sm' },
+  { name: 'BBVA', color: '#004B9A', cls: 'font-black text-sm' },
+  { name: 'Culqi', color: '#E63946', cls: 'font-bold text-sm' },
+  { name: 'Izipay', color: '#FF6B00', cls: 'font-black italic text-sm' },
+  { name: 'PayPal', color: '#003087', cls: 'font-bold tracking-tight text-sm' },
+  { name: 'Interbank', color: '#00873D', cls: 'font-bold text-sm' },
+  { name: 'Scotiabank', color: '#EC0000', cls: 'font-bold text-sm' },
+  { name: 'Niubiz', color: '#004B93', cls: 'font-black text-sm' },
+  { name: 'SafetyPay', color: '#856404', cls: 'font-bold text-sm' },
 ];
 
 // ─── extended testimonials ────────────────────────────────────────────────────
@@ -83,11 +82,8 @@ function SectionDivider() {
 // ─── brands marquee ───────────────────────────────────────────────────────────
 function BrandBadge({ b }: { b: typeof paymentBrands[0] }) {
   return (
-    <div
-      className="shrink-0 mx-2 h-10 px-4 rounded-lg flex items-center justify-center select-none shadow-sm"
-      style={{ backgroundColor: b.bg }}
-    >
-      <span className={b.cls} style={{ color: b.text }}>{b.name}</span>
+    <div className="shrink-0 mx-2 h-11 px-6 rounded-xl bg-white border border-gray-100 shadow-sm flex items-center select-none">
+      <span className={b.cls} style={{ color: b.color }}>{b.name}</span>
     </div>
   );
 }
@@ -151,40 +147,34 @@ function StoreSection() {
           </Reveal>
 
           {categories.length > 0 && (
-            <div className="flex gap-3 overflow-x-auto pb-3 scrollbar-hide mb-8 -mx-4 px-4 sm:mx-0 sm:px-0">
+            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide mb-8 -mx-4 px-4 sm:mx-0 sm:px-0">
               <button
                 onClick={() => setActiveCat('')}
                 className={cn(
-                  'shrink-0 flex flex-col items-center gap-2 group transition-all',
+                  'shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all',
+                  activeCat === ''
+                    ? 'bg-foreground text-background shadow-sm'
+                    : 'border border-border/60 text-muted-foreground hover:text-foreground hover:border-foreground/30 bg-transparent',
                 )}
               >
-                <div className={cn(
-                  'w-16 h-16 rounded-2xl border-2 flex items-center justify-center transition-all bg-muted',
-                  activeCat === '' ? 'border-foreground' : 'border-border/50 group-hover:border-foreground/40',
-                )}>
-                  <ShoppingBag className={cn('w-6 h-6', activeCat === '' ? 'text-foreground' : 'text-muted-foreground')} />
-                </div>
-                <span className={cn('text-xs font-medium whitespace-nowrap', activeCat === '' ? 'text-foreground' : 'text-muted-foreground')}>Todos</span>
+                <ShoppingBag className="w-3.5 h-3.5" />
+                Todos
               </button>
               {categories.map(cat => (
                 <button
                   key={cat.id}
                   onClick={() => setActiveCat(activeCat === cat.id ? '' : cat.id)}
-                  className="shrink-0 flex flex-col items-center gap-2 group transition-all"
+                  className={cn(
+                    'shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all',
+                    activeCat === cat.id
+                      ? 'bg-foreground text-background shadow-sm'
+                      : 'border border-border/60 text-muted-foreground hover:text-foreground hover:border-foreground/30 bg-transparent',
+                  )}
                 >
-                  <div className={cn(
-                    'w-16 h-16 rounded-2xl border-2 overflow-hidden transition-all bg-muted',
-                    activeCat === cat.id ? 'border-foreground' : 'border-border/50 group-hover:border-foreground/40',
-                  )}>
-                    {cat.image_url ? (
-                      <img src={cat.image_url} alt={cat.name} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <ShoppingBag className="w-5 h-5 text-muted-foreground/50" />
-                      </div>
-                    )}
-                  </div>
-                  <span className={cn('text-xs font-medium whitespace-nowrap max-w-[72px] truncate', activeCat === cat.id ? 'text-foreground' : 'text-muted-foreground')}>{cat.name}</span>
+                  {cat.image_url && (
+                    <img src={cat.image_url} alt="" className="w-4 h-4 rounded object-cover" />
+                  )}
+                  {cat.name}
                 </button>
               ))}
             </div>
@@ -477,29 +467,29 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
             {/* Card 1: Comisiones — wide */}
             <Reveal className="md:col-span-2">
-              <div className="h-full bg-card/70 border border-border/50 rounded-2xl p-5 sm:p-7 card-lift hover:border-foreground/15 group backdrop-blur-sm overflow-hidden">
+              <div className="h-full bg-card/70 border border-border/50 rounded-2xl p-5 sm:p-7 card-lift hover:border-emerald-500/20 group backdrop-blur-sm overflow-hidden">
                 <div className="flex items-start justify-between gap-4 mb-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center shrink-0">
-                      <Wallet className="w-5 h-5 text-foreground" />
+                    <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center shrink-0">
+                      <Wallet className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                     </div>
                     <h3 className="text-base sm:text-lg font-bold text-foreground">Comisiones automáticas</h3>
                   </div>
                   <div className="text-right shrink-0">
-                    <div className="text-xl font-bold text-foreground">+S/ 3,240</div>
+                    <div className="text-xl font-bold text-emerald-600 dark:text-emerald-400">+S/ 3,240</div>
                     <div className="text-xs text-muted-foreground/60">último mes</div>
                   </div>
                 </div>
-                <p className="text-sm text-muted-foreground/80 leading-relaxed mb-5">7% directa · 4% binaria · 2% unilevel. Cálculo en tiempo real, pago cada 15 días.</p>
+                <p className="text-sm text-muted-foreground leading-relaxed mb-5">7% directa · 4% binaria · 2% unilevel. Cálculo en tiempo real, pago cada 15 días.</p>
                 {/* mini chart */}
                 <div className="flex items-end gap-1 h-14 mb-4 px-1">
                   {[28, 45, 38, 62, 50, 74, 58, 82, 68, 90, 78, 100].map((h, i) => (
-                    <div key={i} className={cn('flex-1 rounded-sm transition-all group-hover:opacity-90', i === 11 ? 'bg-foreground' : 'bg-foreground/15')} style={{ height: `${h}%` }} />
+                    <div key={i} className={cn('flex-1 rounded-sm transition-all group-hover:opacity-90', i === 11 ? 'bg-emerald-500' : 'bg-emerald-500/20')} style={{ height: `${h}%` }} />
                   ))}
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {['7% Directa', '4% Binaria', '2% Unilevel', 'Pago quincenal'].map(tag => (
-                    <span key={tag} className="px-2.5 py-1 bg-muted text-muted-foreground rounded-full text-xs font-medium border border-border/60">{tag}</span>
+                    <span key={tag} className="px-2.5 py-1 bg-emerald-500/8 text-emerald-700 dark:text-emerald-400 rounded-full text-xs font-medium border border-emerald-500/15">{tag}</span>
                   ))}
                 </div>
               </div>
@@ -507,74 +497,76 @@ export default function LandingPage() {
 
             {/* Card 2: Red genealógica — narrow */}
             <Reveal>
-              <div className="h-full bg-card/70 border border-border/50 rounded-2xl p-5 sm:p-7 card-lift hover:border-foreground/15 group backdrop-blur-sm flex flex-col">
+              <div className="h-full bg-card/70 border border-border/50 rounded-2xl p-5 sm:p-7 card-lift hover:border-primary/20 group backdrop-blur-sm flex flex-col">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center shrink-0">
-                    <Network className="w-5 h-5 text-foreground" />
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                    <Network className="w-5 h-5 text-primary" />
                   </div>
                   <h3 className="text-base sm:text-lg font-bold text-foreground">Red genealógica</h3>
                 </div>
-                <p className="text-sm text-muted-foreground/80 leading-relaxed mb-5 flex-1">Panel visual con árbol binario, zoom dinámico y estadísticas por nodo en tiempo real.</p>
+                <p className="text-sm text-muted-foreground leading-relaxed mb-5 flex-1">Panel visual con árbol binario, zoom dinámico y estadísticas por nodo en tiempo real.</p>
                 {/* mini network tree */}
                 <div className="relative flex flex-col items-center gap-3 py-2">
-                  <div className="w-8 h-8 rounded-full bg-foreground/10 border-2 border-foreground/30 flex items-center justify-center">
-                    <div className="w-3 h-3 rounded-full bg-foreground/70" />
+                  <div className="w-8 h-8 rounded-full bg-primary/15 border-2 border-primary/40 flex items-center justify-center">
+                    <div className="w-3 h-3 rounded-full bg-primary" />
                   </div>
                   <div className="flex items-center gap-6">
-                    <div className="w-7 h-7 rounded-full bg-foreground/8 border border-foreground/20 flex items-center justify-center"><div className="w-2.5 h-2.5 rounded-full bg-foreground/40" /></div>
-                    <div className="w-7 h-7 rounded-full bg-foreground/8 border border-foreground/20 flex items-center justify-center"><div className="w-2.5 h-2.5 rounded-full bg-foreground/40" /></div>
+                    <div className="w-7 h-7 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center"><div className="w-2.5 h-2.5 rounded-full bg-primary/60" /></div>
+                    <div className="w-7 h-7 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center"><div className="w-2.5 h-2.5 rounded-full bg-primary/60" /></div>
                   </div>
                   <div className="flex items-center gap-2">
                     {Array.from({ length: 4 }).map((_, i) => (
-                      <div key={i} className="w-5 h-5 rounded-full bg-muted border border-border/60 flex items-center justify-center"><div className="w-2 h-2 rounded-full bg-muted-foreground/30" /></div>
+                      <div key={i} className="w-5 h-5 rounded-full bg-muted border border-border/60 flex items-center justify-center"><div className="w-2 h-2 rounded-full bg-muted-foreground/40" /></div>
                     ))}
                   </div>
-                  <div className="text-xs text-muted-foreground/70 font-medium">48 afiliados en tu red</div>
+                  <div className="text-xs text-muted-foreground font-medium">48 afiliados en tu red</div>
                 </div>
               </div>
             </Reveal>
 
             {/* Card 3: Sistema de rangos — narrow */}
             <Reveal>
-              <div className="h-full bg-card/70 border border-border/50 rounded-2xl p-5 sm:p-7 card-lift hover:border-foreground/15 group backdrop-blur-sm flex flex-col">
+              <div className="h-full bg-card/70 border border-border/50 rounded-2xl p-5 sm:p-7 card-lift hover:border-amber-500/20 group backdrop-blur-sm flex flex-col">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center shrink-0">
-                    <Award className="w-5 h-5 text-foreground" />
+                  <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center shrink-0">
+                    <Award className="w-5 h-5 text-amber-600 dark:text-amber-400" />
                   </div>
                   <h3 className="text-base sm:text-lg font-bold text-foreground">Sistema de rangos</h3>
                 </div>
-                <p className="text-sm text-muted-foreground/80 leading-relaxed mb-5 flex-1">Bronce → Corona. Cada nivel desbloquea bonos progresivos exclusivos.</p>
-                {/* rank ladder */}
-                <div className="space-y-2">
-                  {[
-                    { name: 'Bronce', w: 'w-1/3', opacity: 'opacity-30' },
-                    { name: 'Plata', w: 'w-1/2', opacity: 'opacity-45' },
-                    { name: 'Oro', w: 'w-2/3', opacity: 'opacity-60' },
-                    { name: 'Platino', w: 'w-3/4', opacity: 'opacity-75' },
-                    { name: 'Corona', w: 'w-full', opacity: 'opacity-100' },
-                  ].map(r => (
-                    <div key={r.name} className={cn('h-6 rounded-full flex items-center px-3 bg-foreground border border-foreground/10 text-background text-xs font-semibold transition-all group-hover:opacity-90', r.w, r.opacity)}>
-                      {r.name}
-                    </div>
-                  ))}
+                <p className="text-sm text-muted-foreground leading-relaxed mb-5 flex-1">Cada nivel desbloquea bonos y beneficios exclusivos. Tu esfuerzo tiene recompensa.</p>
+                {/* rank ladder from DB */}
+                <div className="space-y-1.5">
+                  {(ranks.filter(r => r.is_active !== false).length > 0
+                    ? ranks.filter(r => r.is_active !== false).slice(0, 5)
+                    : [{ name: 'Bronce', sort_order: 1 }, { name: 'Plata', sort_order: 2 }, { name: 'Oro', sort_order: 3 }, { name: 'Platino', sort_order: 4 }, { name: 'Corona', sort_order: 5 }]
+                  ).map((r, idx, arr) => {
+                    const pct = Math.round(((idx + 1) / arr.length) * 100);
+                    return (
+                      <div key={r.name} className="flex items-center gap-2">
+                        <div className="h-5 rounded-full bg-amber-500/20 border border-amber-500/20 flex items-center px-2.5 transition-all" style={{ width: `${pct}%` }}>
+                          <span className="text-[10px] font-semibold text-amber-700 dark:text-amber-400 truncate">{r.name}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </Reveal>
 
             {/* Card 4: Tienda — wide */}
             <Reveal className="md:col-span-2">
-              <div className="h-full bg-card/70 border border-border/50 rounded-2xl p-5 sm:p-7 card-lift hover:border-foreground/15 group backdrop-blur-sm flex flex-col sm:flex-row gap-5 overflow-hidden">
+              <div className="h-full bg-card/70 border border-border/50 rounded-2xl p-5 sm:p-7 card-lift hover:border-blue-500/20 group backdrop-blur-sm flex flex-col sm:flex-row gap-5 overflow-hidden">
                 <div className="flex-1 flex flex-col min-w-0">
                   <div className="flex items-center gap-3 mb-3">
-                    <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center shrink-0">
-                      <ShoppingBag className="w-5 h-5 text-foreground" />
+                    <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0">
+                      <ShoppingBag className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                     </div>
                     <h3 className="text-base sm:text-lg font-bold text-foreground">Tienda integrada</h3>
                   </div>
-                  <p className="text-sm text-muted-foreground/80 leading-relaxed mb-4 flex-1">Catálogo completo. Cada compra activa comisiones automáticas en toda tu red de forma instantánea.</p>
+                  <p className="text-sm text-muted-foreground leading-relaxed mb-4 flex-1">Catálogo completo. Cada compra activa comisiones automáticas en toda tu red de forma instantánea.</p>
                   <div className="flex flex-wrap gap-2 mb-4">
                     {['Vitaminas', 'Bienestar', 'Nutrición', 'Cuidado personal'].map(tag => (
-                      <span key={tag} className="px-2.5 py-1 bg-muted text-muted-foreground rounded-full text-xs font-medium border border-border/60">{tag}</span>
+                      <span key={tag} className="px-2.5 py-1 bg-blue-500/8 text-blue-700 dark:text-blue-400 rounded-full text-xs font-medium border border-blue-500/15">{tag}</span>
                     ))}
                   </div>
                   <Link to="/tienda" className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:gap-2.5 transition-all group/link">
@@ -642,16 +634,16 @@ export default function LandingPage() {
             <Reveal delay={100}>
               <div className="grid grid-cols-2 gap-3">
                 {[
-                  { icon: DollarSign, title: 'Comisiones en tiempo real', desc: 'Calculadas al instante en cada compra de tu red.' },
-                  { icon: Zap, title: 'Pago automático', desc: 'Transferencias quincenales sin trámite de tu parte.' },
-                  { icon: Globe, title: 'Red internacional', desc: 'Tus afiliados pueden estar en toda Latinoamérica.' },
-                  { icon: TrendingUp, title: 'Crecimiento probado', desc: '+340% anual. Números reales, no promesas.' },
+                  { icon: DollarSign, title: 'Comisiones en tiempo real', desc: 'Calculadas al instante en cada compra de tu red.', iconCls: 'text-emerald-400', iconBg: 'bg-emerald-500/20' },
+                  { icon: Zap, title: 'Pago automático', desc: 'Transferencias quincenales sin trámite de tu parte.', iconCls: 'text-amber-400', iconBg: 'bg-amber-500/20' },
+                  { icon: Globe, title: 'Red internacional', desc: 'Tus afiliados pueden estar en toda Latinoamérica.', iconCls: 'text-sky-400', iconBg: 'bg-sky-500/20' },
+                  { icon: TrendingUp, title: 'Crecimiento probado', desc: '+340% anual. Números reales, no promesas.', iconCls: 'text-rose-400', iconBg: 'bg-rose-500/20' },
                 ].map((item, i) => {
                   const Icon = item.icon;
                   return (
-                    <div key={i} className="bg-white/8 border border-white/12 rounded-2xl p-4 sm:p-5 hover:bg-white/12 transition-all backdrop-blur-sm">
-                      <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center mb-3">
-                        <Icon className="w-5 h-5 text-white/80" />
+                    <div key={i} className="bg-white/8 border border-white/10 rounded-2xl p-4 sm:p-5 hover:bg-white/12 transition-all backdrop-blur-sm">
+                      <div className={cn('w-9 h-9 rounded-xl flex items-center justify-center mb-3', item.iconBg)}>
+                        <Icon className={cn('w-5 h-5', item.iconCls)} />
                       </div>
                       <div className="text-xs sm:text-sm font-semibold text-white mb-1 sm:mb-1.5">{item.title}</div>
                       <div className="text-xs text-white/50 leading-relaxed">{item.desc}</div>
@@ -717,18 +709,15 @@ export default function LandingPage() {
         <div className="max-w-[1100px] mx-auto px-4 sm:px-6 lg:px-8 mb-10 sm:mb-14">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 border border-border/50 rounded-2xl overflow-hidden">
             {/* region stats row */}
-            {[regionStats[0], regionStats[1]].map((stat, idx) => {
-              const StatIcon = stat.icon;
-              return (
-                <div key={stat.city} className={cn('p-6 sm:p-8 flex flex-col items-center justify-center text-center border-b border-border/50', idx === 0 ? 'sm:border-r border-border/50' : 'sm:border-r border-border/50')}>
-                  <div className="w-11 h-11 rounded-2xl bg-muted/60 flex items-center justify-center mb-3">
-                    <StatIcon className="w-5 h-5 text-muted-foreground/60" />
-                  </div>
-                  <div className="text-xl sm:text-2xl font-bold text-foreground">{stat.members}</div>
-                  <div className="text-sm text-muted-foreground/70 mt-1">afiliados en {stat.city}</div>
+            {[regionStats[0], regionStats[1]].map((stat, idx) => (
+              <div key={stat.city} className={cn('p-6 sm:p-8 flex flex-col items-center justify-center text-center border-b border-border/50', idx === 0 ? 'sm:border-r border-border/50' : 'sm:border-r border-border/50')}>
+                <div className="w-14 h-14 rounded-2xl overflow-hidden mb-3 border border-border/40">
+                  <img src={stat.img} alt={stat.city} className="w-full h-full object-cover" />
                 </div>
-              );
-            })}
+                <div className="text-xl sm:text-2xl font-bold text-foreground">{stat.members}</div>
+                <div className="text-sm text-muted-foreground mt-1">afiliados en {stat.city}</div>
+              </div>
+            ))}
 
             <div className="p-6 sm:p-8 flex flex-col justify-between border-b border-border/50 row-span-1 lg:row-span-2">
               <div className="flex gap-0.5 mb-4">{Array.from({ length: 5 }).map((_, i) => <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />)}</div>
@@ -757,18 +746,15 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {[regionStats[2], regionStats[3]].map((stat, idx) => {
-              const StatIcon = stat.icon;
-              return (
-                <div key={stat.city} className={cn('p-6 sm:p-8 flex flex-col items-center justify-center text-center border-t border-border/50', idx === 0 ? 'sm:border-r border-border/50' : 'sm:border-r border-border/50')}>
-                  <div className="w-11 h-11 rounded-2xl bg-muted/60 flex items-center justify-center mb-3">
-                    <StatIcon className="w-5 h-5 text-muted-foreground/60" />
-                  </div>
-                  <div className="text-xl sm:text-2xl font-bold text-foreground">{stat.members}</div>
-                  <div className="text-sm text-muted-foreground/70 mt-1">afiliados en {stat.city}</div>
+            {[regionStats[2], regionStats[3]].map((stat, idx) => (
+              <div key={stat.city} className={cn('p-6 sm:p-8 flex flex-col items-center justify-center text-center border-t border-border/50', idx === 0 ? 'sm:border-r border-border/50' : 'sm:border-r border-border/50')}>
+                <div className="w-14 h-14 rounded-2xl overflow-hidden mb-3 border border-border/40">
+                  <img src={stat.img} alt={stat.city} className="w-full h-full object-cover" />
                 </div>
-              );
-            })}
+                <div className="text-xl sm:text-2xl font-bold text-foreground">{stat.members}</div>
+                <div className="text-sm text-muted-foreground mt-1">afiliados en {stat.city}</div>
+              </div>
+            ))}
 
             <div className="p-6 sm:p-8 border-t border-border/50 flex flex-col justify-between">
               <div className="flex gap-0.5 mb-4">{Array.from({ length: 5 }).map((_, i) => <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />)}</div>
