@@ -37,19 +37,19 @@ const regionStats = [
 
 // ─── payment brands ───────────────────────────────────────────────────────────
 const paymentBrands = [
-  { name: 'VISA', color: '#1A1F71', cls: 'italic font-black tracking-tight text-base leading-none' },
-  { name: 'Mastercard', color: '#EB001B', cls: 'font-bold text-sm' },
-  { name: 'Yape', color: '#6C1D8E', cls: 'font-black tracking-wide text-sm' },
-  { name: 'Plin', color: '#00B4D8', cls: 'font-black text-sm' },
-  { name: 'BCP', color: '#0047BB', cls: 'font-black tracking-widest text-sm' },
-  { name: 'BBVA', color: '#004B9A', cls: 'font-black text-sm' },
-  { name: 'Culqi', color: '#E63946', cls: 'font-bold text-sm' },
-  { name: 'Izipay', color: '#FF6B00', cls: 'font-black italic text-sm' },
-  { name: 'PayPal', color: '#003087', cls: 'font-bold tracking-tight text-sm' },
-  { name: 'Interbank', color: '#00873D', cls: 'font-bold text-sm' },
-  { name: 'Scotiabank', color: '#EC0000', cls: 'font-bold text-sm' },
-  { name: 'Niubiz', color: '#004B93', cls: 'font-black text-sm' },
-  { name: 'SafetyPay', color: '#856404', cls: 'font-bold text-sm' },
+  { name: 'VISA', cls: 'italic font-black tracking-tight text-base leading-none' },
+  { name: 'Mastercard', cls: 'font-bold text-sm' },
+  { name: 'Yape', cls: 'font-black tracking-wide text-sm' },
+  { name: 'Plin', cls: 'font-black text-sm' },
+  { name: 'BCP', cls: 'font-black tracking-widest text-sm' },
+  { name: 'BBVA', cls: 'font-black text-sm' },
+  { name: 'Culqi', cls: 'font-bold text-sm' },
+  { name: 'Izipay', cls: 'font-black italic text-sm' },
+  { name: 'PayPal', cls: 'font-bold tracking-tight text-sm' },
+  { name: 'Interbank', cls: 'font-bold text-sm' },
+  { name: 'Scotiabank', cls: 'font-bold text-sm' },
+  { name: 'Niubiz', cls: 'font-black text-sm' },
+  { name: 'SafetyPay', cls: 'font-bold text-sm' },
 ];
 
 // ─── extended testimonials ────────────────────────────────────────────────────
@@ -82,8 +82,8 @@ function SectionDivider() {
 // ─── brands marquee ───────────────────────────────────────────────────────────
 function BrandBadge({ b }: { b: typeof paymentBrands[0] }) {
   return (
-    <div className="shrink-0 mx-2 h-10 px-5 rounded-xl bg-card/80 border border-border/50 backdrop-blur-sm flex items-center select-none hover:border-border transition-colors">
-      <span className={b.cls} style={{ color: b.color }}>{b.name}</span>
+    <div className="shrink-0 mx-2.5 h-9 px-5 rounded-lg bg-muted/40 border border-border/40 flex items-center select-none">
+      <span className={cn(b.cls, 'text-foreground/60')}>{b.name}</span>
     </div>
   );
 }
@@ -183,6 +183,12 @@ function StoreSection() {
           {loading ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
               {Array.from({ length: 4 }).map((_, i) => <div key={i} className="bg-card rounded-xl overflow-hidden border border-border/60"><Skeleton className="aspect-square" /></div>)}
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="h-48 flex flex-col items-center justify-center gap-3 rounded-2xl border border-border/40 bg-muted/20">
+              <ShoppingBag className="w-8 h-8 text-muted-foreground/30" />
+              <p className="text-sm text-muted-foreground/60">No hay productos en esta categoría</p>
+              <button onClick={() => setActiveCat('')} className="text-xs text-primary font-medium hover:underline">Ver todos los productos</button>
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
@@ -667,14 +673,12 @@ export default function LandingPage() {
       <SectionDivider />
 
       {/* ── DARK PROMO ────────────────────────────────────────────────────────*/}
-      <section className="relative py-20 sm:py-28 lg:py-32 overflow-hidden bg-zinc-950 dark:bg-[#0c0a08]">
-        {/* Top fade into background */}
-        <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-background to-transparent z-10 pointer-events-none" />
-        {/* Bottom fade into background */}
-        <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-background to-transparent z-10 pointer-events-none" />
-        <div className="absolute inset-0 bg-dub-grid-dark opacity-40 mask-fade-center" />
-        <div className="absolute -top-1/4 -left-1/4 w-[70%] h-[70%] rounded-full bg-primary/10 dark:bg-primary/15 blur-[120px]" />
-        <div className="absolute -bottom-1/4 -right-1/4 w-[60%] h-[60%] rounded-full bg-primary/5 dark:bg-amber-900/20 blur-[100px]" />
+      <section className="relative py-20 sm:py-28 lg:py-32 overflow-hidden bg-zinc-950 dark:bg-[#0d0d0d]">
+        {/* Fade top and bottom to blend with surrounding sections */}
+        <div className="absolute top-0 left-0 right-0 h-20 bg-gradient-to-b from-background to-transparent z-10 pointer-events-none" />
+        <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-background to-transparent z-10 pointer-events-none" />
+        <div className="absolute inset-0 bg-dub-grid-dark opacity-25 mask-fade-center" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] rounded-full bg-primary/6 blur-[140px] pointer-events-none" />
 
         <div className="relative max-w-[1100px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-10 sm:gap-12 lg:gap-16 items-center">
@@ -703,6 +707,13 @@ export default function LandingPage() {
                 >
                   Hablar con ventas
                 </Link>
+              </div>
+              <div className="flex flex-wrap gap-x-5 gap-y-2 mt-4">
+                {['Sin tarjeta de crédito', 'Sin permanencia', 'Pago quincenal'].map(t => (
+                  <span key={t} className="flex items-center gap-1.5 text-xs text-white/40">
+                    <Check className="w-3 h-3 text-white/30" /> {t}
+                  </span>
+                ))}
               </div>
             </Reveal>
 
@@ -750,7 +761,7 @@ export default function LandingPage() {
                     <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
                       <step.icon className="w-5 h-5 text-primary" />
                     </div>
-                    <span className="text-4xl sm:text-5xl font-black text-primary/30 dark:text-primary/25 select-none leading-none group-hover:text-primary/50 transition-colors">{step.n}</span>
+                    <span className="text-4xl sm:text-5xl font-black text-muted-foreground/25 select-none leading-none tracking-tight">{step.n}</span>
                   </div>
                   <h3 className="text-base sm:text-lg font-bold text-foreground mb-2">{step.title}</h3>
                   <p className="text-muted-foreground/75 leading-relaxed text-sm">{step.desc}</p>
@@ -886,51 +897,47 @@ export default function LandingPage() {
                 </Reveal>
 
                 <Reveal delay={80}>
-                  <div className="space-y-2.5">
-                    {ranks.filter(r => r.is_active !== false).slice(0, 6).map((r, idx, arr) => {
-                      const pct = Math.round(((idx + 1) / arr.length) * 100);
-                      const borderStyle = r.border_color?.startsWith('#') ? { borderColor: r.border_color } : undefined;
-                      const borderClass = r.border_color?.startsWith('#') ? '' : (r.border_color || 'border-border/40');
-                      const colorStyle = r.color?.startsWith('#') ? { color: r.color } : undefined;
-                      const colorClass = r.color?.startsWith('#') ? '' : (r.color || 'text-amber-500');
-                      const bgStyle = r.bg_color?.startsWith('#') ? { backgroundColor: r.bg_color + '20' } : undefined;
-                      return (
-                        <div
-                          key={r.id}
-                          className={cn('group relative rounded-2xl border p-4 sm:p-5 transition-all hover:scale-[1.01] cursor-default backdrop-blur-sm overflow-hidden', borderClass)}
-                          style={borderStyle}
-                        >
-                          <div className="absolute inset-0 opacity-30 transition-opacity group-hover:opacity-50" style={bgStyle} />
-                          <div className="relative flex items-center gap-4">
+                  {(() => {
+                    const activeRanks = ranks.filter(r => r.is_active !== false).slice(0, 8);
+                    const useGrid = activeRanks.length > 4;
+                    return (
+                      <div className={cn(useGrid ? 'grid grid-cols-1 sm:grid-cols-2 gap-2.5' : 'space-y-2.5')}>
+                        {activeRanks.map((r) => {
+                          const borderStyle = r.border_color?.startsWith('#') ? { borderColor: r.border_color } : undefined;
+                          const borderClass = r.border_color?.startsWith('#') ? 'border' : cn('border', r.border_color || 'border-border/40');
+                          const colorStyle = r.color?.startsWith('#') ? { color: r.color } : undefined;
+                          const colorClass = r.color?.startsWith('#') ? '' : (r.color || 'text-amber-500');
+                          const bgHex = r.bg_color?.startsWith('#') ? r.bg_color : null;
+                          return (
                             <div
-                              className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center shrink-0 bg-muted/50"
-                              style={bgStyle}
+                              key={r.id}
+                              className={cn('group relative rounded-xl p-4 transition-all backdrop-blur-sm overflow-hidden cursor-default', borderClass)}
+                              style={borderStyle}
                             >
-                              <Award className={cn('w-5 h-5 sm:w-6 sm:h-6', colorClass)} style={colorStyle} />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-baseline gap-2 flex-wrap">
-                                <span className={cn('text-sm sm:text-base font-bold', colorClass)} style={colorStyle}>{r.name}</span>
-                                {r.min_affiliates > 0 && (
-                                  <span className="text-xs text-muted-foreground/60">{r.min_affiliates} afiliados mín.</span>
-                                )}
+                              {bgHex && <div className="absolute inset-0 opacity-10 group-hover:opacity-15 transition-opacity" style={{ backgroundColor: bgHex }} />}
+                              <div className="relative flex items-center gap-3">
+                                <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 bg-muted/60" style={bgHex ? { backgroundColor: bgHex + '25' } : undefined}>
+                                  <Award className={cn('w-4 h-4', colorClass)} style={colorStyle} />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="text-sm font-bold" style={colorStyle}>
+                                    <span className={colorClass}>{r.name}</span>
+                                  </div>
+                                  {r.min_affiliates > 0 && (
+                                    <div className="text-[11px] text-muted-foreground/55 mt-0.5">{r.min_affiliates} afil. mín.</div>
+                                  )}
+                                </div>
+                                <div className="text-right shrink-0">
+                                  <div className="text-sm font-black text-foreground">{formatPrice(r.bonus, currency, currencySymbol, exchangeRate)}</div>
+                                  <div className="text-[10px] text-muted-foreground/50">bono</div>
+                                </div>
                               </div>
-                              <div className="mt-1.5 h-1.5 rounded-full bg-muted/40 overflow-hidden w-full">
-                                <div
-                                  className={cn('h-full rounded-full transition-all', !r.color?.startsWith('#') && (colorClass || 'bg-amber-500'))}
-                                  style={{ width: `${pct}%`, backgroundColor: r.color?.startsWith('#') ? r.color : undefined }}
-                                />
-                              </div>
                             </div>
-                            <div className="text-right shrink-0">
-                              <div className="text-base sm:text-lg font-black text-foreground">{formatPrice(r.bonus, currency, currencySymbol, exchangeRate)}</div>
-                              <div className="text-[10px] text-muted-foreground/60 mt-0.5">bono de rango</div>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
                 </Reveal>
               </div>
             </div>
@@ -1027,46 +1034,44 @@ export default function LandingPage() {
       <StoreSection />
 
       {/* ── FAQ ───────────────────────────────────────────────────────────────*/}
-      <section className="relative py-16 sm:py-24 bg-muted/10">
+      <section className="relative py-16 sm:py-24 overflow-hidden">
         <div className="absolute inset-0 bg-dub-grid opacity-20 mask-fade-center pointer-events-none" />
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border/60 to-transparent" />
-        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border/60 to-transparent" />
-        <div className="relative max-w-[1100px] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-[1fr_1.6fr] gap-12 lg:gap-16 items-start">
-            <Reveal>
-              <span className="text-xs font-semibold text-primary uppercase tracking-widest mb-3 block">FAQ</span>
-              <h2 className="text-3xl sm:text-4xl font-bold text-foreground tracking-tight mb-4">
-                Preguntas <span className="text-gradient-animated">frecuentes</span>
-              </h2>
-              <p className="text-muted-foreground/70 leading-relaxed text-sm sm:text-base mb-6">
-                Todo lo que necesitas saber antes de empezar. Si tienes más dudas, nuestro equipo está disponible 24/7.
-              </p>
-              <Link to="/contacto" className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:gap-3 transition-all group">
-                Contactar soporte <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-              </Link>
-            </Reveal>
-            <Reveal delay={60}>
-              <div className="divide-y divide-border/40 border border-border/50 rounded-2xl overflow-hidden shadow-sm">
-                {faqItems.map((faq, i) => (
-                  <div key={i} className={cn('bg-card/80 transition-colors backdrop-blur-sm', openFaq === i && 'bg-card')}>
-                    <button onClick={() => setOpenFaq(openFaq === i ? null : i)} className="w-full flex items-center justify-between px-5 sm:px-6 py-4 sm:py-5 text-left gap-4">
-                      <span className={cn('text-sm sm:text-base font-medium transition-colors', openFaq === i ? 'text-foreground font-semibold' : 'text-foreground/80')}>{faq.question}</span>
-                      <div className={cn('w-5 h-5 rounded-full border flex items-center justify-center shrink-0 transition-all', openFaq === i ? 'border-primary bg-primary/10 rotate-180' : 'border-border/60 bg-muted/30')}>
-                        <ChevronDown className={cn('w-3 h-3 text-muted-foreground transition-colors', openFaq === i && 'text-primary')} />
-                      </div>
-                    </button>
-                    <div className={cn('grid transition-all', openFaq === i ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0')}>
-                      <div className="overflow-hidden">
-                        <div className="px-5 sm:px-6 pb-5 sm:pb-6 pt-0">
-                          <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">{faq.answer}</p>
-                        </div>
-                      </div>
+        <div className="relative max-w-[800px] mx-auto px-4 sm:px-6 lg:px-8">
+          <Reveal className="text-center mb-10 sm:mb-12">
+            <span className="text-xs font-semibold text-primary uppercase tracking-widest mb-3 block">FAQ</span>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground tracking-tight">
+              Preguntas <span className="text-gradient-animated">frecuentes</span>
+            </h2>
+            <p className="text-muted-foreground/70 leading-relaxed text-sm sm:text-base mt-3 max-w-md mx-auto">
+              Todo lo que necesitas saber antes de empezar tu negocio con Cluv 360.
+            </p>
+          </Reveal>
+          <Reveal delay={60}>
+            <div className="bg-card/60 border border-border/50 rounded-2xl overflow-hidden backdrop-blur-sm shadow-sm">
+              {faqItems.map((faq, i) => (
+                <div key={i} className={cn('border-b last:border-b-0 border-border/40 transition-colors', openFaq === i ? 'bg-muted/20' : 'hover:bg-muted/10')}>
+                  <button
+                    onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                    className="w-full flex items-center justify-between px-5 sm:px-7 py-4 sm:py-5 text-left gap-4"
+                  >
+                    <span className={cn('text-sm sm:text-base transition-colors leading-snug', openFaq === i ? 'font-semibold text-foreground' : 'font-medium text-foreground/85')}>{faq.question}</span>
+                    <ChevronDown className={cn('w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground/50 transition-all shrink-0', openFaq === i && 'rotate-180 text-primary')} />
+                  </button>
+                  {openFaq === i && (
+                    <div className="px-5 sm:px-7 pb-5 sm:pb-6">
+                      <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">{faq.answer}</p>
                     </div>
-                  </div>
-                ))}
-              </div>
-            </Reveal>
-          </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </Reveal>
+          <Reveal delay={100}>
+            <p className="text-center text-sm text-muted-foreground/60 mt-6">
+              ¿Tienes más preguntas?{' '}
+              <Link to="/contacto" className="text-primary font-medium hover:underline">Contacta con soporte →</Link>
+            </p>
+          </Reveal>
         </div>
       </section>
 
